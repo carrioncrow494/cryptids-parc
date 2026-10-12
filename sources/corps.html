@@ -1,0 +1,233 @@
+<video id="camera" playsinline autoplay muted></video>
+<button id="son" class="son" type="button" aria-label="Couper ou remettre le son">♪</button>
+
+<!-- Décor réutilisé par les écrans -->
+<template id="tpl-decor">
+  <svg class="decor" viewBox="0 0 400 800" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+    <g fill="#06222b">
+      <path d="M58 150c10-8 22-6 30 2-8-2-14 2-15 8-4-6-10-8-15-10zm30 2c8-8 20-10 30-2-5 2-11 4-15 10-1-6-7-10-15-8z"/>
+      <path d="M300 110c7-6 16-4 22 2-6-1-10 1-11 6-3-4-7-6-11-8zm22 2c6-6 15-7 22-1-4 1-8 3-11 7-1-4-5-7-11-6z"/>
+      <path d="M318 300c-6-10-4-22 6-30l4 8 4-8c10 8 12 20 6 30l26-18c-4 22-16 34-30 38v24h-12v-24c-14-4-26-16-30-38z" opacity=".8"/>
+      <path d="M40 560c0-18 12-30 26-30s26 12 26 30v90H40z"/>
+      <path d="M150 600h14v-22h14v22h14v14h-14v46h-14v-46h-14z"/>
+      <path d="M270 590c0-14 10-24 22-24s22 10 22 24v80h-44z" transform="rotate(-6 292 620)"/>
+      <path d="M352 680V520c-2-30-14-44-30-56 14 4 24 14 30 30 2-26 10-42 24-52-8 16-12 32-10 50 6-12 14-18 24-20-10 10-14 24-14 40v168z"/>
+      <path d="M0 650c60-14 120-8 200 2s150 4 200-6v154H0z"/>
+    </g>
+  </svg>
+  <svg class="cadre" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+    <defs><linearGradient id="roche" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#5fa3a8"/><stop offset=".45" stop-color="#2f6a72"/><stop offset="1" stop-color="#123a42"/></linearGradient></defs>
+    <path fill="url(#roche)" fill-rule="evenodd" stroke="#03141a" stroke-width=".5"
+      d="M0 0H100V100H0Z M8 9 L17 6 L25 10 L38 7 L52 10 L66 6 L79 9 L92 7 L93 20 L90 33 L94 46 L91 59 L94 71 L91 83 L92 90 L79 92 L65 89 L51 92 L36 89 L22 92 L8 90 L6 78 L9 65 L5 52 L9 39 L6 25 Z"/>
+    <path fill="none" stroke="#9de8e6" stroke-opacity=".35" stroke-width=".35" d="M3 3 L22 2 L48 4 L75 2 L97 3 L98 30 L96 60 L98 97 L70 98 L40 96 L2 98 L3 70 L1 40 Z"/>
+  </svg>
+</template>
+
+<!-- Entrée : le premier toucher lance la musique -->
+<div id="entree" class="ecran">
+  <div class="contenu">
+    <h1>Cryptids</h1>
+    <img class="chat-entree" src="menu-catsith-2.webp" alt="">
+    <p class="clignote">Touche l'écran pour ouvrir le grimoire</p>
+  </div>
+</div>
+
+<!-- Accueil -->
+<div id="accueil" class="ecran" hidden>
+  <img class="chat-menu" src="menu-catsith-3.webp" alt="">
+  <div class="contenu">
+    <div class="colonne">
+      <h1>Cryptids</h1>
+      <div class="sous-titre">Le grimoire des créatures perdues</div>
+    </div>
+    <p id="intro-accueil">Des créatures se sont échappées du grimoire de Sporran. Aide-le à les retrouver !</p>
+    <div class="colonne">
+      <button id="commencer" class="planche principal" type="button">Commencer l'aventure</button>
+      <button class="planche petit ouvrir-grimoire" type="button">Mon grimoire</button>
+      <button id="ouvrirParents" class="planche petit orange" type="button">Préparer le sauvetage</button>
+    </div>
+    <p id="modeActuel" class="etat"></p>
+  </div>
+</div>
+
+<!-- Nouvelle aventure : combien de cryptides ? -->
+<div id="partie" class="ecran" hidden>
+  <button class="croix" type="button" data-ferme="partie" aria-label="Fermer">✕</button>
+  <img class="chat-menu" src="menu-catsith-2.webp" alt="">
+  <div class="contenu defile">
+    <h2>Nouvelle aventure</h2>
+    <div id="reprise" class="choix" hidden>
+      <h3>Reprendre</h3>
+      <p id="repriseTexte"></p>
+      <div class="boutons"><button id="reprendre" class="mini cyan" type="button">Continuer cette aventure</button></div>
+    </div>
+    <div id="blocParc" class="choix" hidden>
+      <h3>Cachés dans le parc</h3>
+      <ul id="listeParc" class="liste-qr"></ul>
+      <div class="boutons"><button id="modifierCarte" class="mini" type="button">Modifier la carte</button></div>
+    </div>
+    <div class="onglets">
+      <button id="ongletHasard" class="mini cyan" type="button">Au hasard</button>
+      <button id="ongletChoix" class="mini" type="button">Je choisis</button>
+    </div>
+    <div id="blocHasard" class="colonne">
+    <p>Combien de cryptides veux-tu sauver ?</p>
+    <div class="compteur-choix">
+      <button id="moins" class="rond gros" type="button" aria-label="Une créature de moins">−</button>
+      <div id="nombre" class="grand-nombre">6</div>
+      <button id="plus" class="rond gros" type="button" aria-label="Une créature de plus">+</button>
+    </div>
+    <div class="boutons"><button class="mini" data-n="2" type="button">2</button><button class="mini" data-n="4" type="button">4</button>
+      <button class="mini" data-n="6" type="button">6</button><button class="mini" data-n="8" type="button">8</button><button class="mini" data-n="12" type="button">12</button></div>
+    </div>
+    <div id="blocChoix" class="colonne" hidden>
+      <p>Coche les cryptides à sauver (au moins 2).</p>
+      <div id="grilleChoix" class="grille-choix"></div>
+      <div class="boutons"><button id="toutCocher" class="mini" type="button">Tout cocher</button><button id="toutDecocher" class="mini" type="button">Tout décocher</button></div>
+    </div>
+    <p id="duree" class="etat"></p>
+    <div id="aCacher" class="choix" hidden>
+      <h3>QR codes à cacher</h3>
+      <p>Pour les parents : cachez seulement ces QR codes de la planche.</p>
+      <ul id="listeQr" class="liste-qr"></ul>
+      <div class="boutons"><button id="retirer" class="mini" type="button">Tirer d'autres créatures</button></div>
+    </div>
+    <button id="cestParti" class="planche principal" type="button">C'est parti !</button>
+    <button id="fermerPartie" class="lien" type="button">Retour</button>
+  </div>
+</div>
+
+<!-- Préparer le sauvetage (parents) -->
+<div id="parents" class="ecran" hidden>
+  <button class="croix" type="button" data-ferme="parents" aria-label="Fermer">✕</button>
+  <img class="chat-menu" src="menu-catsith-3.webp" alt="">
+  <div class="contenu defile">
+    <h2>Préparer le sauvetage</h2>
+    <p>Pour les parents : choisissez comment les créatures seront cachées.</p>
+    <div class="choix carte-mode" data-mode="qr" role="button" tabindex="0">
+      <h3>QR codes à cacher</h3>
+      <p>Imprimez la planche, découpez les cartes et cachez-les où vous voulez. Les enfants les trouvent puis les visent avec l'œil magique.</p>
+      <div class="boutons"><a class="mini cyan" href="qr-codes-cryptids.pdf" target="_blank" rel="noopener">Planche à imprimer</a></div>
+    </div>
+    <div class="choix carte-mode" data-mode="interieur" role="button" tabindex="0">
+      <h3>Géolocalisation · intérieur</h3>
+      <p>Dans un rayon de 5 m, sans papier. Le GPS ne fonctionne pas dans une maison : les créatures apparaissent une à une autour de l'enfant, qui doit tourner sur lui-même pour les trouver.</p>
+    </div>
+    <div class="choix carte-mode" data-mode="exterieur" role="button" tabindex="0">
+      <h3>Dans un parc · carte</h3>
+      <p>Placez vous-même chaque créature sur la carte du parc : derrière un arbre, près d'un banc, au bout d'un chemin… Les enfants suivent la carte jusqu'à une brume magique, puis cherchent la créature avec l'œil magique.</p>
+      <div class="boutons"><span class="mini">Placer les créatures sur la carte</span></div>
+    </div>
+    <p id="modeParents" class="etat"></p>
+    <button id="fermerParents" class="planche petit" type="button">Retour</button>
+    <button id="raz" class="lien" type="button">Remettre toute l'aventure à zéro</button>
+  </div>
+</div>
+
+<!-- Carte du parc (parents) -->
+<div id="carteParents" class="ecran" hidden>
+  <div class="entete-carte"><h2>Cacher les créatures</h2><button class="croix" type="button" data-ferme="carteParents" aria-label="Fermer">✕</button></div>
+  <div id="carteP"></div>
+  <div class="panneau-carte">
+    <p id="aideCarte"></p>
+    <div id="puces" class="bande-creatures"></div>
+    <div class="boutons">
+      <button id="centrerMoi" class="mini cyan" type="button">Ma position</button>
+      <button id="retirerLieu" class="mini" type="button" hidden>Retirer</button>
+      <button id="effacerLieux" class="mini" type="button">Tout effacer</button>
+      <button id="finiCarte" class="mini cyan" type="button">Terminé</button>
+    </div>
+  </div>
+</div>
+
+<!-- Introduction : Sporran le Cat sìth -->
+<div id="intro" class="ecran" hidden>
+  <button class="croix" type="button" data-ferme="intro" aria-label="Fermer">✕</button>
+  <img id="guide" src="menu-catsith-1.webp" alt="Sporran, le Cat sìth">
+  <div class="bulle">
+    <div class="qui">Sporran, le Cat sìth</div>
+    <p id="texteIntro"></p>
+    <div class="boutons"><button id="passerIntro" class="lien" type="button">Passer</button><button id="suiteIntro" class="planche petit" type="button">Suite</button></div>
+  </div>
+</div>
+
+<!-- Œil magique -->
+<div id="scene" hidden>
+  <canvas id="vue"></canvas>
+  <button id="quitter" class="quitter" type="button" aria-label="Retour à l'accueil">✕</button>
+  <div id="viseur" hidden></div>
+  <div id="nomMonstre" class="planche hud-haut">Œil magique</div>
+  <div id="radar" hidden>
+    <svg id="radarFleche" viewBox="0 0 40 40" aria-hidden="true"><path d="M20 3 L31 33 L20 26 L9 33 Z" fill="#ffb04a"/></svg>
+    <span id="radarTexte">…</span>
+  </div>
+  <div id="carteJeu" hidden><div id="carteJ"></div><button id="recentrer" class="rond" type="button" aria-label="Recentrer sur moi">◎</button></div>
+  <div id="chargement" hidden>La créature approche…</div>
+  <div id="gauche" class="fleche" hidden>❮</div>
+  <div id="droite" class="fleche" hidden>❯</div>
+  <div id="bandeau" hidden></div>
+  <div id="consigne" class="consigne"></div>
+  <div class="barre-bas">
+    <div><button class="rond ouvrir-grimoire" type="button">Grimoire</button></div>
+    <div><button id="sceau" type="button" disabled aria-label="Sceau magique">
+      <svg viewBox="0 0 64 64" aria-hidden="true"><g fill="none" stroke="#bff9ff" stroke-width="2.4" stroke-linejoin="round">
+        <circle cx="32" cy="32" r="27"/><circle cx="32" cy="32" r="21" stroke-dasharray="3 4"/>
+        <path d="M32 12 L49 42 L15 42 Z"/><path d="M32 4v8M32 52v8M4 32h8M52 32h8"/><circle cx="32" cy="33" r="4" fill="#bff9ff"/></g></svg>
+    </button><div class="legende">Sceau magique</div></div>
+    <div style="width:58px"></div>
+  </div>
+</div>
+<img id="sigil" alt="" hidden>
+<div id="eclair"></div>
+
+<!-- Sauvé ! -->
+<div id="victoire" class="ecran voile" hidden>
+  <button class="croix" type="button" data-ferme="victoire" aria-label="Fermer">✕</button>
+  <div class="contenu defile">
+    <div class="titre">Sauvé !</div>
+    <img id="portrait" class="portrait" alt="">
+    <div class="fiche"><div id="ficheNom" class="nom"></div><p id="ficheTexte"></p></div>
+    <p id="compteur"></p>
+    <p id="final" class="final" hidden>Aventure terminée, tous les cryptides sont sauvés ! Ouvre ton grimoire pour les relâcher et gagner leurs figurines, ou lance une nouvelle aventure.</p>
+    <div class="boutons">
+      <button id="continuer" class="planche petit" type="button">Continuer le sauvetage</button>
+      <button id="rejouer" class="planche petit orange" type="button" hidden>Nouvelle aventure</button>
+      <button class="planche petit ouvrir-grimoire" type="button">Grimoire</button>
+    </div>
+  </div>
+</div>
+
+<!-- Grimoire -->
+<div id="grimoire" class="ecran" hidden>
+  <button class="croix" type="button" data-ferme="grimoire" aria-label="Fermer">✕</button>
+  <div class="contenu defile">
+    <h2>Mon grimoire</h2>
+    <div class="compte" id="compteGrimoire"></div>
+    <div class="grille" id="grille"></div>
+    <button id="fermerGrimoire" class="planche petit" type="button">Fermer</button>
+  </div>
+</div>
+
+<!-- Relâcher -->
+<div id="relache" class="plein" hidden>
+  <button class="croix" type="button" data-ferme="relache" aria-label="Fermer">✕</button>
+  <video id="videoRelache" playsinline preload="auto" hidden></video>
+  <img id="envol" alt="" hidden>
+  <div class="plein-bas">
+    <div id="titreRelache" class="plein-titre"></div>
+    <div class="boutons">
+      <button id="voirFigurine" class="planche petit orange" type="button" hidden>Voir la figurine</button>
+      <button id="fermerRelache" class="planche petit" type="button">Retour au grimoire</button>
+    </div>
+  </div>
+</div>
+
+<!-- Figurine 360° -->
+<div id="figurine" class="plein" hidden>
+  <button class="croix" type="button" data-ferme="figurine" aria-label="Fermer">✕</button>
+  <canvas id="figCanvas"></canvas>
+  <div class="socle-haut"><div id="figNom" class="nom"></div><div class="aide">Fais-la tourner avec ton doigt</div></div>
+  <div id="figChargement" class="plein-titre" hidden>Chargement…</div>
+  <div class="plein-bas"><button id="fermerFigurine" class="planche petit" type="button">Retour au grimoire</button></div>
+</div>
