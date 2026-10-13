@@ -44,7 +44,7 @@ La version 1 est dans le dépôt `carrioncrow494/chasse-monstres` et n'est pas m
   - Une fois vaincu, il est enregistré dans la clé `cryptidsParc-boss`.
 - **Sans GPS** (refus, pas de signal pendant 15 s, ou intérieur) : bouton 👣. On avance en touchant la carte.
 - **Interface**
-  - Polices : Creepster seulement pour les gros titres ; Figtree en capitales pour les boutons et étiquettes ; Figtree pour les textes ; IM Fell English SC pour les noms des créatures.
+  - Polices (hébergées dans le dépôt) : Creepster, la police dégoulinante, pour les gros titres et les noms des créatures ; IM Fell English SC pour tout le reste.
   - Couleur d'accent (`--citrouille`, ex-orange) : vert lumineux de la queue de Sporran `#6ef0a4`.
   - Les spirales des boutons et les silhouettes du fond sont retirées, ainsi que l'estimation de durée.
   - Volume général : le bouton ♪ ouvre un curseur.

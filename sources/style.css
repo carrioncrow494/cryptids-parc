@@ -1,5 +1,4 @@
-  @font-face { font-family: "Figtree"; src: url("police-figtree.woff2") format("woff2"); font-weight: 300 900; font-style: normal; font-display: swap; }
-  @font-face { font-family: "Figtree"; src: url("police-figtree-italique.woff2") format("woff2"); font-weight: 300 900; font-style: italic; font-display: swap; }
+  @font-face { font-family: "Creepster"; src: url("police-creepster.woff2") format("woff2"); font-display: swap; }
   @font-face { font-family: "IM Fell English SC"; src: url("police-fell.woff2") format("woff2"); font-display: swap; }
   /* Cryptids : nuit bleu-vert, cadre de pierre, planches sombres à lueur cyan ; le grimoire en parchemin sombre */
   :root {
@@ -12,9 +11,9 @@
     --citrouille: #6ef0a4;   /* vert lumineux de la queue de Sporran (ancien orange, puis violet) */
     --planche: #06141a;
     --titre: "Creepster", "Chiller", fantasy;          /* police dégoulinante : seulement les gros titres */
-    --deco: "Figtree", system-ui, sans-serif;         /* boutons, étiquettes : Figtree en capitales */
-    --texte: "Figtree", system-ui, sans-serif;        /* textes courants */
-    --nom: "IM Fell English SC", Georgia, serif;      /* noms des créatures */
+    --deco: "IM Fell English SC", Georgia, serif;     /* boutons, étiquettes */
+    --texte: "IM Fell English SC", Georgia, serif;    /* textes courants */
+    --nom: "Creepster", "Chiller", fantasy;           /* noms des créatures : police dégoulinante */
     color-scheme: dark;
   }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -42,7 +41,7 @@
   .titre { font-size: clamp(2.8rem, 14vw, 4.6rem); }
   h2 { margin: 0; font-family: var(--titre); font-weight: 400; font-size: clamp(2.1rem, 10vw, 3rem); letter-spacing: .05em;
     color: var(--menthe); text-shadow: 0 0 14px rgba(79,243,255,.5); }
-  .sous-titre { font-family: var(--deco); text-transform: uppercase; font-weight: 600; letter-spacing: .14em; color: var(--cyan); font-size: 1.05rem; }
+  .sous-titre { font-family: var(--deco); font-weight: 400; letter-spacing: .14em; color: var(--cyan); font-size: 1.05rem; }
   .ecran p { margin: 0; max-width: 32ch; font-size: 1.15rem; line-height: 1.4; text-shadow: 0 2px 6px var(--abysse); }
   .colonne { display: flex; flex-direction: column; align-items: center; gap: 16px; width: 100%; }
 
@@ -51,7 +50,7 @@
     border-radius: 30px 12px 28px 14px / 22px 28px 16px 26px; color: var(--cyan);
     background: linear-gradient(180deg, #102a33 0%, var(--planche) 55%, #020a0e 100%);
     box-shadow: 0 6px 0 #01080b, 0 0 18px rgba(79,243,255,.35), inset 0 1px 0 rgba(157,255,200,.25);
-    font-family: var(--deco); text-transform: uppercase; font-weight: 600; font-size: 1.6rem; letter-spacing: .08em; text-shadow: 0 0 10px var(--cyan); text-decoration: none; }
+    font-family: var(--deco); font-weight: 400; font-size: 1.6rem; letter-spacing: .08em; text-shadow: 0 0 10px var(--cyan); text-decoration: none; }
   button.planche, a.planche { cursor: pointer; transition: transform .12s, box-shadow .12s; display: inline-block; }
   button.planche:active, a.planche:active { transform: translateY(4px); box-shadow: 0 2px 0 #01080b, 0 0 24px rgba(79,243,255,.6); }
   .planche.principal { font-size: 1.9rem; padding: 18px 34px 15px; }
@@ -72,10 +71,10 @@
   .choix { width: 100%; max-width: 460px; display: flex; flex-direction: column; gap: 12px; padding: 18px 18px 20px; text-align: left;
     border: 2px solid #2f6670; border-radius: 22px 10px 22px 10px; background: linear-gradient(180deg, rgba(16,42,51,.92), rgba(2,10,14,.92)); }
   .choix.actif { border-color: var(--cyan); box-shadow: 0 0 16px rgba(79,243,255,.35); }
-  .choix h3 { margin: 0; font-family: var(--deco); text-transform: uppercase; font-weight: 600; font-size: 1.5rem; letter-spacing: .05em; color: var(--cyan); }
+  .choix h3 { margin: 0; font-family: var(--deco); font-weight: 400; font-size: 1.5rem; letter-spacing: .05em; color: var(--cyan); }
   .choix p { font-size: 1.05rem; max-width: none; }
   .choix .boutons { justify-content: flex-start; }
-  .etat { font-family: var(--deco); text-transform: uppercase; font-weight: 600; letter-spacing: .1em; color: var(--citrouille); }
+  .etat { font-family: var(--deco); font-weight: 400; letter-spacing: .1em; color: var(--citrouille); }
 
   /* ---------- Intro : Sporran raconte ---------- */
   #intro { background: radial-gradient(ellipse 80% 60% at 30% 80%, rgba(42,154,166,.6), var(--abysse) 75%); }
@@ -91,14 +90,14 @@
   /* ---------- Chasse ---------- */
   #vue { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
   #chargement { position: absolute; top: 50%; left: 16px; right: 16px; transform: translateY(-50%); text-align: center;
-    font-family: var(--deco); text-transform: uppercase; font-weight: 600; font-size: 1.4rem; letter-spacing: .08em; color: var(--cyan); text-shadow: 0 0 10px var(--abysse); }
+    font-family: var(--deco); font-weight: 400; font-size: 1.4rem; letter-spacing: .08em; color: var(--cyan); text-shadow: 0 0 10px var(--abysse); }
   .hud-haut { position: absolute; top: calc(10px + env(safe-area-inset-top, 0px)); left: 50%; transform: translateX(-50%);
     min-width: 0; max-width: calc(100% - 130px); font-size: 1.2rem; padding: 9px 22px 7px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .quitter { position: absolute; top: calc(10px + env(safe-area-inset-top, 0px)); right: 12px; width: 46px; height: 46px; border-radius: 50%;
     border: 2px solid rgba(79,243,255,.5); background: rgba(2,10,14,.7); color: var(--cyan); font-size: 1.3rem; cursor: pointer; z-index: 5; }
   .consigne { position: absolute; left: 16px; right: 16px; bottom: calc(132px + env(safe-area-inset-bottom, 0px));
     text-align: center; font-size: 1.15rem; text-shadow: 0 0 6px var(--abysse), 0 2px 4px var(--abysse); }
-  .fleche { position: absolute; top: 50%; font-family: var(--deco); text-transform: uppercase; font-weight: 600; font-size: 4rem; color: var(--cyan);
+  .fleche { position: absolute; top: 50%; font-family: var(--deco); font-weight: 400; font-size: 4rem; color: var(--cyan);
     text-shadow: 0 0 14px var(--cyan); transform: translateY(-50%); animation: pouls 1s ease-in-out infinite; }
   #gauche { left: 14px; } #droite { right: 14px; }
   @keyframes pouls { 50% { opacity: .3; } }
@@ -108,7 +107,7 @@
   #radar { position: absolute; top: calc(70px + env(safe-area-inset-top, 0px)); left: 50%; transform: translateX(-50%);
     display: flex; align-items: center; gap: 12px; padding: 8px 18px; border-radius: 999px; background: rgba(2,10,14,.75); border: 2px solid rgba(110,240,164,.55); }
   #radarFleche { width: 34px; height: 34px; transition: transform .25s; }
-  #radarTexte { font-family: var(--deco); text-transform: uppercase; font-weight: 600; letter-spacing: .08em; color: var(--citrouille); font-size: 1.2rem; white-space: nowrap; }
+  #radarTexte { font-family: var(--deco); font-weight: 400; letter-spacing: .08em; color: var(--citrouille); font-size: 1.2rem; white-space: nowrap; }
   .barre-bas { position: absolute; left: 0; right: 0; bottom: 0; z-index: 3; display: flex; align-items: flex-end; justify-content: center; gap: 22px;
     padding: 14px 16px calc(16px + env(safe-area-inset-bottom, 0px)); background: linear-gradient(180deg, transparent, rgba(2,10,14,.8) 45%); }
   #sceau { width: 92px; height: 92px; border-radius: 50%; border: 3px solid var(--cyan); cursor: pointer;
@@ -119,7 +118,7 @@
   #sceau.pret { animation: appel 1s ease-in-out infinite; }
   @keyframes appel { 50% { box-shadow: 0 0 34px var(--cyan), 0 0 6px #fff inset; } }
   .rond { width: 58px; height: 58px; border-radius: 50%; border: 2px solid rgba(79,243,255,.5); background: rgba(2,10,14,.75);
-    color: var(--cyan); font-family: var(--deco); text-transform: uppercase; font-weight: 600; font-size: .85rem; letter-spacing: .05em; cursor: pointer; }
+    color: var(--cyan); font-family: var(--deco); font-weight: 400; font-size: .85rem; letter-spacing: .05em; cursor: pointer; }
   .legende { font-size: .8rem; color: var(--brume); text-align: center; margin-top: 4px; }
   #sigil { position: fixed; left: 0; top: 0; width: 82vmin; height: 82vmin; margin: -41vmin 0 0 -41vmin; z-index: 8; pointer-events: none; }
   #eclair { position: fixed; inset: 0; background: var(--brume); opacity: 0; pointer-events: none; z-index: 9; }
@@ -137,7 +136,7 @@
 
   /* ---------- Grimoire ---------- */
   #grimoire { z-index: 6; }
-  .compte { font-family: var(--deco); text-transform: uppercase; font-weight: 600; letter-spacing: .12em; color: var(--cyan); font-variant-numeric: tabular-nums; }
+  .compte { font-family: var(--deco); font-weight: 400; letter-spacing: .12em; color: var(--cyan); font-variant-numeric: tabular-nums; }
   .grille { width: 100%; max-width: 560px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
   .carte { min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 10px 8px 12px;
     border: 2px solid #2f6670; border-radius: 22px 10px 22px 10px; background: linear-gradient(180deg, rgba(16,42,51,.92), rgba(2,10,14,.92));
@@ -152,7 +151,7 @@
   .carte .astuce { font-size: .98rem; line-height: 1.25; color: var(--brume); }
   .carte .astuce b { color: var(--citrouille); font-weight: 600; }
   .mini { margin-top: 4px; padding: 7px 14px 6px; border: 2px solid var(--citrouille); border-radius: 999px; background: rgba(110,240,164,.12);
-    color: var(--citrouille); font-family: var(--deco); text-transform: uppercase; font-weight: 600; font-size: .95rem; letter-spacing: .06em; cursor: pointer; }
+    color: var(--citrouille); font-family: var(--deco); font-weight: 400; font-size: .95rem; letter-spacing: .06em; cursor: pointer; }
   .mini.cyan { border-color: var(--cyan); color: var(--cyan); background: rgba(79,243,255,.1); }
   .mini:disabled { opacity: .35; cursor: default; }
 
@@ -164,7 +163,7 @@
   @keyframes part { 0% { transform: scale(1); opacity: 1; } 40% { transform: scale(1.08) translateY(-4vh); } 100% { transform: scale(.2) translateY(-60vh); opacity: 0; } }
   .plein-bas { position: absolute; left: 0; right: 0; bottom: 0; display: flex; flex-direction: column; align-items: center; gap: 12px;
     padding: 18px 16px calc(22px + env(safe-area-inset-bottom, 0px)); background: linear-gradient(180deg, transparent, rgba(0,0,0,.8) 40%); }
-  .plein-titre { font-family: var(--deco); text-transform: uppercase; font-weight: 600; font-size: 1.6rem; letter-spacing: .06em; color: var(--menthe); text-align: center; text-shadow: 0 0 12px rgba(79,243,255,.5); }
+  .plein-titre { font-family: var(--deco); font-weight: 400; font-size: 1.6rem; letter-spacing: .06em; color: var(--menthe); text-align: center; text-shadow: 0 0 12px rgba(79,243,255,.5); }
   #figurine { background: radial-gradient(ellipse 70% 60% at 50% 45%, #1d5a66, #04121a 75%); }
   #figCanvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: none; cursor: grab; }
   .socle-haut { position: absolute; top: calc(14px + env(safe-area-inset-top, 0px)); left: 64px; right: 64px; text-align: center; pointer-events: none; }
@@ -193,7 +192,7 @@
   .choix-carte.coche::after { content: "✓"; display: grid; place-items: center; background: var(--citrouille); border-color: var(--citrouille); color: #04121a; font-weight: 700; font-size: .9rem; }
   .carte-mode { cursor: pointer; transition: opacity .3s, transform .15s; }
   .carte-mode.eteint { opacity: .35; filter: grayscale(.7); }
-  .carte-mode.actif::after { content: "✓ Choisi"; align-self: flex-end; font-family: var(--deco); text-transform: uppercase; font-weight: 600; letter-spacing: .08em; color: var(--citrouille); }
+  .carte-mode.actif::after { content: "✓ Choisi"; align-self: flex-end; font-family: var(--deco); font-weight: 400; letter-spacing: .08em; color: var(--citrouille); }
   .chat-entree { width: min(60vw, 280px); filter: drop-shadow(0 0 18px rgba(79,243,255,.4)); }
   .clignote { animation: pouls 1.6s ease-in-out infinite; font-size: 1.25rem; }
   #entree { z-index: 40; cursor: pointer; }
@@ -226,14 +225,14 @@
   .marqueur.choisi { border-color: var(--cyan); box-shadow: 0 0 14px var(--cyan); transform: scale(1.2); }
   .marqueur.sauve { border-color: rgba(79,243,255,.6); opacity: .75; }
   .moi { width: 18px; height: 18px; border-radius: 50%; background: #3aa0ff; border: 3px solid #fff; box-shadow: 0 0 12px #3aa0ff; }
-  .mystere { width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: var(--deco); text-transform: uppercase; font-weight: 600;
+  .mystere { width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: var(--deco); font-weight: 400;
     font-size: 1.4rem; color: var(--cyan); text-shadow: 0 0 8px var(--cyan); background: rgba(2,10,14,.8); border: 2px solid var(--cyan); animation: pouls 1.4s ease-in-out infinite; }
   .leaflet-container { font-family: inherit; background: #0a1a20; }
 
   /* V3 : textes de récit */
   #texteIntro, .fiche p, #ficheTexte { font-family: var(--texte); font-size: 1.05rem; line-height: 1.55; }
   /* noms des créatures en IM Fell, partout */
-  #nomMonstre, #figNom, #ficheNom, .choix-carte span, .puce span, #listeParc li, .liste-qr li { font-family: var(--nom); text-transform: none; font-weight: 400; letter-spacing: .03em; }
+  #nomMonstre, #figNom, #ficheNom, .choix-carte span, .puce span, #listeParc li, .liste-qr li { font-family: var(--nom); text-transform: none; font-weight: 400; letter-spacing: .05em; }
   #nomMonstre { font-size: 1.45rem; }
 
   /* V3 : picto du grimoire (livre ouvert) */
@@ -266,7 +265,7 @@
     background: linear-gradient(180deg, #3a3f48, #1b1e24 60%, #121418); border: 2px solid #6a717d; box-shadow: 0 5px 0 #08090b, 0 0 20px rgba(0,0,0,.6); }
   .emf-oeil { width: 34px; height: 34px; border-radius: 50%; background: #2a0d10; border: 3px solid #0d0e10; box-shadow: inset 0 3px 5px rgba(0,0,0,.7); transition: background .15s, box-shadow .15s; }
   .emf-oeil.flash { box-shadow: 0 0 18px 6px var(--led), inset 0 0 6px rgba(255,255,255,.6); background: var(--led); }
-  .emf-titre { font-family: var(--deco); text-transform: uppercase; font-weight: 600; color: #cfd6df; font-size: .95rem; letter-spacing: .08em; margin-bottom: 4px; }
+  .emf-titre { font-family: var(--deco); font-weight: 400; color: #cfd6df; font-size: .95rem; letter-spacing: .08em; margin-bottom: 4px; }
   .emf-leds { display: flex; gap: 7px; }
   .emf-leds i { width: 20px; height: 20px; border-radius: 50%; background: #1d1f24; border: 2px solid #0b0c0e; box-shadow: inset 0 2px 3px rgba(0,0,0,.7); transition: background .12s, box-shadow .12s; }
   .emf-leds i:nth-child(1) { --led: #ff3b3b; } .emf-leds i:nth-child(2) { --led: #ff7a2e; } .emf-leds i:nth-child(3) { --led: #ffd23b; }
@@ -274,7 +273,7 @@
   .emf-leds i.on { background: var(--led); box-shadow: 0 0 10px var(--led), inset 0 -2px 3px rgba(0,0,0,.35); }
   /* jauge de capture */
   #jauge { position: absolute; z-index: 5; top: calc(66px + env(safe-area-inset-top, 0px)); left: 50%; transform: translateX(-50%); width: min(80vw, 320px); }
-  .jauge-titre { text-align: center; font-family: var(--deco); text-transform: uppercase; font-weight: 600; color: var(--cyan); letter-spacing: .08em; margin-bottom: 5px; text-shadow: 0 0 8px var(--abysse); }
+  .jauge-titre { text-align: center; font-family: var(--deco); font-weight: 400; color: var(--cyan); letter-spacing: .08em; margin-bottom: 5px; text-shadow: 0 0 8px var(--abysse); }
   #jaugeEtoiles { color: var(--citrouille); letter-spacing: .1em; }
   .jauge-fond { height: 20px; border-radius: 999px; border: 2px solid var(--cyan); background: rgba(2,10,14,.85); overflow: hidden; box-shadow: 0 0 12px rgba(79,243,255,.4); }
   #jaugeBarre { height: 100%; width: 0; background: linear-gradient(90deg, var(--citrouille), var(--cyan)); transition: width .1s; }
