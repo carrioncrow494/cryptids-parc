@@ -51,10 +51,10 @@ const TRAQUES = {
 const GARDIEN = { cle: "catsith", nom: "Sporran, le Cat sìth",
   texte: "Un grand chat noir d'Écosse avec une tache blanche en forme de cœur sur le poitrail. Certains disent que c'est en fait une sorcière transformée. Il adore se glisser sans bruit dans les collines et ronronne si fort qu'on le prend pour le vent." };
 const INTRO = [
-  "Chapristi ! On m'a volé mon précieux grimoire contenant l'ensemble des cryptides. J'ai pu le retrouver, mais certains se sont égarés et perdus dans notre monde. Aide-moi à les sauver.",
-  "Quoi !! Tu ne sais pas ce que c'est qu'un cryptide ?\nUn cryptide est une petite créature souvent craintive, qui vit cachée. Elles sont difficiles à voir avec des yeux d'humains.",
-  "Tiens ! Prends cet œil magique pour les trouver. Une fois fait, capture-les avec le sceau magique ou en tapotant l'écran. Nous les relâcherons ensemble dans leur environnement.",
-  "Tu gagneras des figurines à collectionner pour chaque sauvetage.\nAllez vite, dépêche-toi !"
+  "Chapristi !!!\nOn m'a volé mon précieux grimoire contenant l'ensemble des Cryptides. J'ai pu le retrouver, mais certains se sont égarés et perdus. Aide-moi à les sauver.",
+  "Quoi !! Tu ne sais pas ce qu'est un Cryptide ?\nUn Cryptide est une créature souvent craintive, qui vit cachée et qui est difficile à voir avec des yeux d'humains.",
+  "Tiens ! Prends cet œil magique et ce détecteur pour les trouver. Une fois localisés, capture-les avec le sceau magique en tapotant l'écran. Nous les relâcherons ensemble dans leur environnement.",
+  "Pour chaque sauvetage réussi, tu gagneras des figurines à collectionner.\n\nAllez vite, dépêche-toi !"
 ];
 const YEUX = 1.2;   // hauteur du téléphone (mètres)
 /* =========================================================== */
@@ -86,12 +86,14 @@ function majPartie(f) { const p = partie(); if (!p) return; f(p); ecrire(CLES.pa
 try { ["monstresPris", "chasseMonstres-inventaire-v2", "chasseMonstres-relaches-v1"].forEach(k => localStorage.removeItem(k)); } catch (e) {}
 
 /* ===================== Sons : musique et bruitages fabriqués par code ===================== */
-let audio = null, maitre = null, musiqueOn = false, sonActif = lire(CLES.son, true);
+let audio = null, maitre = null, musiqueOn = false;
+let volume = (v => v === true ? .8 : v === false ? 0 : Math.max(0, Math.min(1, +v || 0)))(lire(CLES.son, .8)), sonActif = volume > 0;
+const gainVolume = () => volume * volume;   // courbe plus naturelle à l'oreille
 const tampons = {};
 function initAudio() {
   if (audio) { audio.resume(); return; }
   try { audio = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { return; }
-  maitre = audio.createGain(); maitre.gain.value = sonActif ? 1 : 0; maitre.connect(audio.destination);
+  maitre = audio.createGain(); maitre.gain.value = gainVolume(); maitre.connect(audio.destination);
   audio.resume();
   charger("sigil", "sigil.m4a");
   lancerMusique();
@@ -133,7 +135,10 @@ const SFX = {
       note(hz(m), d, 2.4, { vol: .07 }); note(hz(m), d + .32, 2, { vol: .03 }); note(hz(m), d + .64, 1.6, { vol: .015 }); });
   },
   figurine: () => [72, 76, 79, 84, 88, 91].forEach((m, i) => note(hz(m), i * .06, 1.6, { vol: .08 })),
-  page: () => { souffle(0, .25, 1500, 600, .1); }
+  page: () => { souffle(0, .25, 1500, 600, .1); },
+  tape: () => { note(hz(84 + Math.floor(Math.random() * 5)), 0, .14, { vol: .09, type: "triangle" }); },
+  fuite: () => { souffle(0, .5, 3500, 500, .16); note(hz(79), 0, .2, { vol: .06, type: "square", filtre: 1800 }); note(hz(72), .1, .25, { vol: .06, type: "square", filtre: 1800 }); },
+  hop: () => { note(hz(76), 0, .08, { vol: .05, type: "square", filtre: 2500 }); note(hz(83), .05, .1, { vol: .05, type: "square", filtre: 2500 }); }
 };
 const sfx = nom => { if (audio && sonActif && SFX[nom]) SFX[nom](); };
 // musique d'ambiance : nappe mystérieuse et clochettes en ré mineur
@@ -219,7 +224,16 @@ function changerAmbiance(type) {   // "menu", "chasse" ou "silence" (pendant les
   busMenu.gain.setTargetAtTime(type === "menu" ? .22 : 0, t, .4); busChasse.gain.setTargetAtTime(type === "chasse" ? .16 : 0, t, .6);
 }
 function majBoutonSon() { $("son").classList.toggle("coupe", !sonActif); $("son").textContent = sonActif ? "♪" : "✕"; }
-$("son").addEventListener("click", () => { sonActif = !sonActif; ecrire(CLES.son, sonActif); initAudio(); if (maitre) maitre.gain.value = sonActif ? 1 : 0; majBoutonSon(); });
+$("son").addEventListener("click", e => { e.stopPropagation(); initAudio(); $("panneauSon").hidden = !$("panneauSon").hidden; });
+$("volume").value = Math.round(volume * 100);
+$("volume").addEventListener("input", () => {
+  volume = $("volume").value / 100; sonActif = volume > 0; ecrire(CLES.son, volume); initAudio();
+  if (maitre) maitre.gain.setTargetAtTime(gainVolume(), audio.currentTime, .03);
+  document.querySelectorAll("video").forEach(v => { if (v.id !== "camera") v.muted = !sonActif; });
+  majBoutonSon();
+});
+$("volume").addEventListener("change", () => sfx("clic"));
+document.addEventListener("pointerdown", e => { if (!$("panneauSon").hidden && !e.target.closest("#panneauSon, #son")) $("panneauSon").hidden = true; }, true);
 majBoutonSon();
 ["pointerdown", "touchend"].forEach(ev => document.addEventListener(ev, () => initAudio(), { once: true, capture: true }));
 document.addEventListener("click", e => { const b = e.target.closest("button, a"); if (!b) return; initAudio();
@@ -228,7 +242,7 @@ document.addEventListener("pointerdown", e => { const b = e.target.closest("butt
   b.classList.remove("appuye"); void b.offsetWidth; b.classList.add("appuye"); setTimeout(() => b.classList.remove("appuye"), 450); if (navigator.vibrate) navigator.vibrate(12); }, true);
 
 /* ===================== Accueil, parents ===================== */
-const LIBELLES = { qr: "Mode : QR codes cachés", interieur: "Mode : géolocalisation en intérieur (5 m)", exterieur: "Mode : carte du parc" };
+const LIBELLES = { qr: "Mode : QR codes cachés", interieur: "Mode : intérieur (10 m)", exterieur: "Mode : extérieur (20 m)" };
 function majModes() {
   majAccueil(); $("modeParents").textContent = LIBELLES[mode()];
   document.querySelectorAll(".carte-mode").forEach(c => { c.classList.toggle("actif", c.dataset.mode === mode()); c.classList.toggle("eteint", c.dataset.mode !== mode()); });
@@ -238,7 +252,7 @@ $("fermerParents").addEventListener("click", () => { majModes(); montrer("accuei
 document.querySelectorAll(".carte-mode").forEach(b => b.addEventListener("click", e => {
   if (e.target.closest("a")) return;   // le lien de la planche reste un lien
   ecrire(CLES.mode, b.dataset.mode); majModes(); sfx("valider");
-  if (b.dataset.mode === "exterieur") return setTimeout(ouvrirCarteParents, 400);
+  if (e.target.closest("[data-placer]")) return setTimeout(ouvrirCarteParents, 300);
   setTimeout(() => { majAccueil(); montrer("accueil"); }, 900);
 }));
 $("raz").addEventListener("click", () => {
@@ -251,7 +265,7 @@ majModes();
 $("entree").addEventListener("click", () => { initAudio(); changerAmbiance("menu"); sfx("valider"); majAccueil(); montrer("accueil"); });
 
 /* ===================== Introduction ===================== */
-let pageIntro = 0, ecrit = null;
+let pageIntro = 0, ecrit = null, textesIntro = INTRO, finIntro = () => apresIntro();
 function taire() { try { speechSynthesis.cancel(); } catch (e) {} }
 function parler(texte) {
   return;   // voix de synthèse retirée à la demande
@@ -264,14 +278,14 @@ function parler(texte) {
   } catch (e) {}
 }
 function afficherIntro(i) {
-  const txt = INTRO[i], p = $("texteIntro"); clearInterval(ecrit); p.textContent = ""; let n = 0;
+  const txt = textesIntro[i], p = $("texteIntro"); clearInterval(ecrit); p.textContent = ""; let n = 0;
   parler(txt);
   ecrit = setInterval(() => { n += 2; p.textContent = txt.slice(0, n); if (n >= txt.length) clearInterval(ecrit); }, 28);
-  $("suiteIntro").textContent = i === INTRO.length - 1 ? "À l'aventure !" : "Suite";
+  $("suiteIntro").textContent = i === textesIntro.length - 1 ? (textesIntro === INTRO ? "À l'aventure !" : "Relever le défi !") : "Suite";
   sfx("page");
 }
 function lancerAventure() { initAudio(); ouvrirOeil(); }
-$("commencer").addEventListener("click", () => { initAudio(); pageIntro = 0; montrer("intro"); afficherIntro(0); });
+$("commencer").addEventListener("click", () => { initAudio(); pageIntro = 0; textesIntro = INTRO; finIntro = apresIntro; montrer("intro"); afficherIntro(0); });
 function apresIntro() { clearInterval(ecrit); taire(); ecrire(CLES.intro, true); preparerChoix(); montrer("partie"); }
 
 /* ===================== Nouvelle partie : combien de cryptides ? ===================== */
@@ -283,7 +297,7 @@ function dessinerChoix() {
   $("grilleChoix").innerHTML = ids.map(k => '<button type="button" class="choix-carte' + (coches.has(k) ? " coche" : "") + '" data-k="' + k + '"><img alt="" src="' + TRAQUES[k].ombre + '"><span>' + TRAQUES[k].nom.split(",")[0] + '</span></button>').join("");
 }
 function basculer(libre) {
-  if (mode() === "exterieur") return majChoix();
+  if (mode() === "exterieur" && places().length) return majChoix();
   choixLibre = libre; $("blocHasard").hidden = libre; $("blocChoix").hidden = !libre;
   $("ongletHasard").classList.toggle("cyan", !libre); $("ongletChoix").classList.toggle("cyan", libre);
   if (libre) dessinerChoix(); else tirer();
@@ -296,7 +310,7 @@ $("grilleChoix").addEventListener("click", e => { const b = e.target.closest(".c
 $("toutCocher").addEventListener("click", () => { coches = new Set(ids); dessinerChoix(); majChoix(); });
 $("toutDecocher").addEventListener("click", () => { coches = new Set(); dessinerChoix(); majChoix(); });
 function majChoix() {
-  const parc = mode() === "exterieur";
+  const parc = mode() === "exterieur" && places().length > 0;
   document.querySelector("#partie .onglets").hidden = parc; $("blocParc").hidden = !parc;
   if (parc) {
     $("blocHasard").hidden = $("blocChoix").hidden = true; $("aCacher").hidden = true;
@@ -309,8 +323,7 @@ function majChoix() {
   if (choixLibre) { tirage = ids.filter(k => coches.has(k)); nombre = tirage.length; ecrire("cryptidsParc-coches", tirage); }
   $("cestParti").disabled = tirage.length < 2;
   $("nombre").textContent = nombre; $("moins").disabled = nombre <= 2; $("plus").disabled = nombre >= 12;
-  const min = nombre * 4, max = nombre * 7;
-  $("duree").textContent = nombre < 2 ? "Choisis au moins 2 cryptides" : nombre + " cryptides · environ " + min + " à " + max + " minutes";
+  $("duree").textContent = nombre < 2 ? "Choisis au moins 2 cryptides" : nombre + " cryptides à sauver";
   document.querySelectorAll("[data-n]").forEach(b => b.classList.toggle("cyan", +b.dataset.n === nombre));
   if (mode() === "qr") {
     $("aCacher").hidden = false;
@@ -337,14 +350,15 @@ $("cestParti").addEventListener("click", () => {
 });
 function majAccueil() {
   const p = enCours();
+  $("defiAccueil").hidden = !bossDispo();
   $("modeActuel").textContent = LIBELLES[mode()] + (p ? " · partie en cours " + p.pris.length + " / " + p.liste.length : "");
 }
-$("passerIntro").addEventListener("click", apresIntro);
+$("passerIntro").addEventListener("click", () => finIntro());
 $("suiteIntro").addEventListener("click", () => {
   const p = $("texteIntro");
-  if (p.textContent.length < INTRO[pageIntro].length) { clearInterval(ecrit); p.textContent = INTRO[pageIntro]; return; }   // termine la phrase
-  if (pageIntro < INTRO.length - 1) { afficherIntro(++pageIntro); return; }
-  apresIntro();
+  if (p.textContent.length < textesIntro[pageIntro].length) { clearInterval(ecrit); p.textContent = textesIntro[pageIntro]; return; }   // termine la phrase
+  if (pageIntro < textesIntro.length - 1) { afficherIntro(++pageIntro); return; }
+  finIntro();
 });
 
 /* ===================== Grimoire ===================== */
@@ -431,6 +445,7 @@ $("voirFigurine").addEventListener("click", () => { fermerVideo(true); ouvrirFig
 
 /* ===================== Figurine 360° ===================== */
 let fig = null;
+const ECH_FIG = { thunderbird: 1.3 };   // Huhuk : ses grandes ailes le rendaient tout petit sur le socle
 function ouvrirFigurine(cle) {
   const nom = cle === "catsith" ? GARDIEN.nom : Object.values(TRAQUES).find(t => t.cle === cle).nom;
   $("figurine").hidden = false; $("figNom").textContent = nom; $("figChargement").hidden = false; sfx("figurine");
@@ -467,7 +482,7 @@ function ouvrirFigurine(cle) {
   const fichiers = FIGURINES[cle]; let restants = fichiers.length;
   fichiers.forEach((f, i) => new GLTFLoader().load(f, g => {
     const o = g.scene, b = new THREE.Box3().setFromObject(o), s = b.getSize(new THREE.Vector3()), c = b.getCenter(new THREE.Vector3());
-    const ech = 1.1 / Math.max(s.y, s.x * 1.1, s.z * 1.1);
+    const ech = 1.1 / Math.max(s.y, s.x * 1.1, s.z * 1.1) * (ECH_FIG[cle] || 1);
     o.position.set(-c.x, -b.min.y, -c.z); const env = new THREE.Group(); env.add(o); env.scale.setScalar(ech * (fichiers.length > 1 ? .7 : 1));
     if (fichiers.length > 1) env.position.x = (i ? 1 : -1) * .3;
     fig.plateau.add(env);
@@ -570,8 +585,9 @@ function boucle() {
     // révélation : la créature n'apparaît que lorsqu'on la regarde
     if (!c.trouve && visible && t - c.tApparition > 900 && c.v.readyState >= 2) {
       c.trouve = true; c.tReveal = t; c.tCri = t; sfx("revele"); setTimeout(() => jouerTampon("cri-" + c.m.id, 1, s.x), 350);
-      $("consigne").textContent = "Le voilà ! Touche-le ou utilise le sceau magique.";
+      $("consigne").textContent = "Le voilà ! Tapote-le vite pour remplir la jauge de capture !";
       $("nomMonstre").textContent = c.m.nom || traque.nom.split(",")[0]; $("gauche").hidden = $("droite").hidden = true;
+      $("jauge").hidden = false; $("jaugeEtoiles").textContent = "★".repeat(c.diff) + "☆".repeat(Math.max(0, 4 - c.diff));
       jaillir(c, 26);
     }
     if (!c.pris) c.mat.opacity = c.trouve ? Math.min(1, (t - c.tReveal) / 700) : 0;
@@ -583,6 +599,11 @@ function boucle() {
       if (t - dernierPing > periode) { dernierPing = t; sfx("proche"); }
       const aide = !visible;   // flèches bleues dès le début
       $("gauche").hidden = !aide || !s.gauche; $("droite").hidden = !aide || s.gauche;
+    }
+    if (c.trouve && !c.pris) {   // la jauge se vide doucement quand on ne tapote pas
+      if (visible) c.jauge = Math.max(0, c.jauge - DRAIN[c.diff] * dt);
+      $("jaugeBarre").style.width = (c.jauge * 100) + "%";
+      $("gauche").hidden = visible || !s.gauche; $("droite").hidden = visible || s.gauche;
     }
     $("sceau").disabled = !c.trouve || c.pris;
     $("sceau").classList.toggle("pret", c.trouve && !c.pris && visible && Math.abs(s.x) < .45);
@@ -609,16 +630,17 @@ toile.addEventListener("pointerdown", e => {
   const c = moteur && moteur.creature; if (!c || !c.trouve || c.pris) return;
   doigt.set(e.clientX / innerWidth * 2 - 1, -(e.clientY / innerHeight) * 2 + 1);
   rayon.setFromCamera(doigt, moteur.camera);
-  if (rayon.intersectObject(c.plan, false).length) capturer();
+  if (rayon.intersectObject(c.plan, false).length) frapper();
 });
 $("sceau").addEventListener("click", () => {
   const c = moteur && moteur.creature; if (!c || !c.trouve || c.pris) return;
   const s = situation(c);
-  if (s.devant && Math.abs(s.x) < .6 && Math.abs(s.y) < 1) { sfx("sceau"); capturer(); }
+  if (s.devant && Math.abs(s.x) < .6 && Math.abs(s.y) < 1) frapper();
   else { sfx("rate"); $("consigne").textContent = "Vise la créature avec l'œil pour utiliser le sceau !"; }
 });
 function capturer() {
-  const c = moteur.creature; c.pris = true; c.tPris = performance.now();
+  const c = moteur.creature; c.pris = true; c.tPris = performance.now(); $("jaugeBarre").style.width = "100%";
+  $("gauche").hidden = $("droite").hidden = true;
   if (navigator.vibrate) navigator.vibrate(120);
   sfx("capture");
   centre.copy(c.pivot.position); centre.y += c.m.taille / 2; centre.project(moteur.camera);
@@ -628,7 +650,8 @@ function capturer() {
   setTimeout(() => { s.hidden = true; $("eclair").classList.remove("flash"); apresCapture(); }, 2900);
 }
 function apresCapture() {
-  moteur.creature.detruire(); moteur.creature = null;
+  moteur.creature.detruire(); moteur.creature = null; $("jauge").hidden = true;
+  if (traque.boss) return bossVaincu();
   majPartie(p => { p.membres[traque.id] = membreIdx + 1; });
   if (membreIdx + 1 < traque.membres.length) {          // les lutins : au tour du second
     const fait = traque.membres[membreIdx].nom, suivant = traque.membres[membreIdx + 1].nom;
@@ -640,6 +663,8 @@ function apresCapture() {
   const p = partie() || { liste: ids, pris: pris() }, n = p.pris.length, total = p.liste.length;
   $("compteur").textContent = n >= total ? "" : n + " / " + total + " cryptides sauvés dans cette aventure.";
   $("final").hidden = n < total; $("continuer").hidden = n >= total; $("rejouer").hidden = n < total;
+  $("titreVictoire").textContent = "Sauvé !"; $("defi").hidden = !(n >= total && bossDispo());
+  $("final").textContent = $("defi").hidden ? TEXTE_FINAL : "Tous les cryptides sont sauvés ! Mais Sporran a un dernier défi pour toi…";
   $("scene").hidden = true; montrer("victoire");
 }
 function bandeau(texte, duree) { $("bandeau").textContent = texte; $("bandeau").hidden = false; setTimeout(() => $("bandeau").hidden = true, duree); }
@@ -666,16 +691,18 @@ async function ouvrirOeil() {
   prochaineTraque();
 }
 function prochaineTraque() {
-  $("viseur").hidden = true; $("radar").hidden = true; $("gauche").hidden = $("droite").hidden = true;
-  if (mode() === "exterieur") return carteJeu();
+  $("viseur").hidden = true; $("radar").hidden = true; $("gauche").hidden = $("droite").hidden = true; $("jauge").hidden = true;
+  if (enBoss) return mode() === "qr" ? demarrerBossAR() : ouvrirPixel();
   const demande = new URLSearchParams(location.search).get("m");
   const p = partie() || { liste: ids, pris: [] };
   if (demande && p.liste.includes(demande) && !p.pris.includes(demande) && !prochaineTraque.lu) { prochaineTraque.lu = true; return demarrerTraque(demande); }
   prochaineTraque.lu = true;
   const restantes = p.liste.filter(k => !p.pris.includes(k));
-  if (!restantes.length) { $("nomMonstre").textContent = "Œil magique"; $("consigne").textContent = "Aventure terminée ! Ouvre ton grimoire ou lance une nouvelle aventure."; return; }
+  if (!restantes.length) {
+    if (bossDispo()) return lancerDefi();
+    $("nomMonstre").textContent = "Œil magique"; $("consigne").textContent = "Aventure terminée ! Ouvre ton grimoire ou lance une nouvelle aventure."; return; }
   if (mode() === "qr") return scanner();
-  demarrerTraque(restantes[Math.floor(Math.random() * restantes.length)]);
+  ouvrirPixel();
 }
 function demarrerTraque(k, extra) {
   traque = Object.assign({ id: k }, TRAQUES[k], extra || {});
@@ -688,9 +715,10 @@ function lancerMembre() {
   const m = traque.membres[membreIdx];
   if (audio && !tampons["cri-" + m.id]) charger("cri-" + m.id, "cri-" + m.id + ".m4a");
   if (mode() === "exterieur" && !traque.gpsFait) return chercherGPS();
-  const c = creerCreature(m); moteur.creature = c; placer(c, traque.angleGPS);
+  const c = creerCreature(m); c.diff = traque.boss ? 4 : (DIFF[traque.cle] || 2); c.jauge = 0; c.esquives = 0;
+  moteur.creature = c; placer(c, traque.angleGPS);
   tDebutRecherche = performance.now();
-  $("nomMonstre").textContent = traque.membres.length > 1 ? m.nom + " (" + (membreIdx + 1) + "/2)" : "???";
+  $("nomMonstre").textContent = traque.boss ? "Sporran" : traque.membres.length > 1 ? m.nom + " (" + (membreIdx + 1) + "/2)" : "???";
   if (gyro || gyroOK) $("consigne").textContent = "Une créature se cache tout près… Tourne sur toi-même et écoute le tintement !"; else aideDoigt();
 }
 
@@ -837,69 +865,11 @@ $("effacerLieux").addEventListener("click", () => {
 $("finiCarte").addEventListener("click", () => { if (suiviP != null) { navigator.geolocation.clearWatch(suiviP); suiviP = null; } majModes(); montrer("accueil"); });
 $("modifierCarte").addEventListener("click", ouvrirCarteParents);
 
-// --- enfants : suivre la carte jusqu'à une brume ---
-let carteJ = null, moiJ = null, precJ = null, calquesJ = [], suiviJ = null, toucheCarte = 0;
-const restantesParc = () => { const p = partie() || { liste: [], pris: [] }, l = lieux(); return p.liste.filter(k => !p.pris.includes(k) && l[k]); };
-function brumeDe(k) {   // la brume est décalée de quelques mètres : il faut chercher autour
-  const p = partie(); p.brume = p.brume || {};
-  if (!p.brume[k]) { p.brume[k] = [Math.random() * 360, 2 + Math.random() * 5]; ecrire(CLES.partie, p); }
-  const [la, lo] = lieux()[k], q = versPoint({ lat: la, lon: lo }, p.brume[k][1], p.brume[k][0]); return [q.lat, q.lon];
-}
-function carteJeu() {
-  traque = null; $("viseur").hidden = true; $("radar").hidden = true; $("gauche").hidden = $("droite").hidden = true;
-  const restantes = restantesParc();
-  if (!restantes.length) { $("carteJeu").hidden = true; $("nomMonstre").textContent = "Œil magique"; $("consigne").textContent = "Aventure terminée ! Ouvre ton grimoire ou lance une nouvelle aventure."; return; }
-  $("carteJeu").hidden = false; $("nomMonstre").textContent = "Carte du parc";
-  $("consigne").textContent = "Marche jusqu'à une brume magique : une créature s'y cache !";
-  if (!window.L) return erreur("La carte n'a pas pu se charger : vérifie la connexion internet.");
-  if (!carteJ) {
-    carteJ = L.map("carteJ", { zoomControl: false }).setView(brumeDe(restantes[0]), 18); tuiles().addTo(carteJ);
-    carteJ.on("dragstart zoomstart", () => toucheCarte = performance.now());
-  }
-  calquesJ.forEach(c => c.remove()); calquesJ = []; moiJ = precJ = null;
-  const p = partie(), l = lieux(), points = [];
-  p.liste.forEach(k => { if (!l[k]) return;
-    if (p.pris.includes(k)) { calquesJ.push(L.marker(l[k], { icon: iconeCreature(k, "sauve"), interactive: false }).addTo(carteJ)); return; }
-    const c = brumeDe(k); points.push(c);
-    calquesJ.push(L.circle(c, { radius: 12, color: "#4ff3ff", weight: 2, fillColor: "#4ff3ff", fillOpacity: .2, interactive: false }).addTo(carteJ));
-    calquesJ.push(L.marker(c, { icon: L.divIcon({ className: "", html: '<div class="mystere">?</div>', iconSize: [34, 34], iconAnchor: [17, 17] }), interactive: false }).addTo(carteJ));
-  });
-  setTimeout(() => { carteJ.invalidateSize(); const b = positionGPS ? points.concat([[positionGPS.lat, positionGPS.lon]]) : points;
-    if (b.length > 1) carteJ.fitBounds(L.latLngBounds(b).pad(.2), { maxZoom: 19 }); else carteJ.setView(b[0], 18); }, 80);
-  if (!navigator.geolocation) return erreur("Pas de GPS sur ce téléphone.");
-  if (suiviJ == null) suiviJ = navigator.geolocation.watchPosition(p => {
-    positionGPS = { lat: p.coords.latitude, lon: p.coords.longitude, precision: p.coords.accuracy }; majJoueur();
-  }, () => erreur("Le GPS ne répond pas : autorise la localisation pour ce site (Réglages › Safari › Position)."), { enableHighAccuracy: true, maximumAge: 1000 });
-  else majJoueur();
-}
-function majJoueur() {
-  if (!positionGPS || $("carteJeu").hidden || !carteJ || traque) return;
-  const ll = [positionGPS.lat, positionGPS.lon];
-  if (!moiJ) { precJ = L.circle(ll, { radius: positionGPS.precision, color: "#3aa0ff", weight: 1, fillOpacity: .1, interactive: false }).addTo(carteJ);
-    moiJ = L.marker(ll, { icon: iconeMoi(), interactive: false, zIndexOffset: 1000 }).addTo(carteJ); calquesJ.push(precJ, moiJ); }
-  moiJ.setLatLng(ll); precJ.setLatLng(ll).setRadius(positionGPS.precision);
-  if (performance.now() - toucheCarte > 8000) carteJ.panTo(ll, { animate: true });
-  const l = lieux(); let proche = null, dmin = 1e9;
-  restantesParc().forEach(k => { const d = distance(positionGPS, { lat: l[k][0], lon: l[k][1] }); if (d < dmin) { dmin = d; proche = k; } });
-  if (!proche) return;
-  const seuil = Math.max(6, Math.min(12, positionGPS.precision * .8));
-  if (dmin < seuil) return entrerBrume(proche);
-  $("consigne").textContent = (dmin < seuil + 8 ? "Tu brûles ! " : dmin < seuil + 20 ? "Tu chauffes… " : "") + "Brume la plus proche : " + Math.round(dmin) + " m";
-}
-function entrerBrume(k) {
-  $("carteJeu").hidden = true; sfx("oeil"); if (navigator.vibrate) navigator.vibrate([80, 60, 80]);
-  const l = lieux()[k], brg = relevement(positionGPS, { lat: l[0], lon: l[1] });
-  // la créature apparaît dans la direction de sa cachette (si la boussole est disponible)
-  demarrerTraque(k, { gpsFait: true, angleGPS: cap != null ? lacetCamera() - (brg - cap) * DEG : null });
-}
-$("recentrer").addEventListener("click", () => { toucheCarte = 0; if (positionGPS && carteJ) carteJ.setView([positionGPS.lat, positionGPS.lon], 19); });
-
 $("continuer").addEventListener("click", () => { montrer(null); $("scene").hidden = false; history.replaceState(null, "", location.pathname); prochaineTraque.lu = true; prochaineTraque(); });
 $("rejouer").addEventListener("click", () => { $("scene").hidden = true; preparerChoix(); montrer("partie"); });
 $("quitter").addEventListener("click", () => {
   if (moteur && moteur.creature) { moteur.creature.detruire(); moteur.creature = null; }
-  $("scene").hidden = true; $("viseur").hidden = true; $("radar").hidden = true; $("carteJeu").hidden = true;
-  if (suiviJ != null) { navigator.geolocation.clearWatch(suiviJ); suiviJ = null; }
+  $("scene").hidden = true; $("viseur").hidden = true; $("radar").hidden = true; fermerPixel(); arreterGPS(); $("jauge").hidden = true; enBoss = false;
   majAccueil(); montrer("accueil");
 });
 
@@ -912,7 +882,377 @@ if (demandeInitiale && TRAQUES[demandeInitiale]) {
     : "Une créature se cache tout près d'ici… Commence l'aventure pour la sauver !";
 }
 
+/* ===================== V3 : chasse sur carte pixel art, détecteur, jauge, boss ===================== */
+const CLE_BOSS = "cryptidsParc-boss";
+const TEXTE_FINAL = $("final").textContent;
+// difficulté de capture (1 = facile … 4 = boss)
+const DIFF = { mothman: 2, nessie: 1, thunderbird: 3, barghest: 2, faery: 2, lutins: 1, jackalope: 3, yeti: 1, gargouille: 2, chupacabra: 3, kraken: 2, swamp: 1 };
+const GAIN = { 1: .2, 2: .14, 3: .11, 4: .08 };            // jauge gagnée par tapotement
+const DRAIN = { 1: .03, 2: .06, 3: .09, 4: .12 };          // jauge perdue par seconde
+const ESQUIVES = { 1: [], 2: [.5], 3: [.35, .7], 4: [.25, .5, .75] };   // la créature s'échappe à ces niveaux de jauge
+const SAUT = { 1: 1900, 2: 1500, 3: 1150, 4: 800 };       // sur la carte : temps entre deux sauts (ms)
+const BOSS_MEMBRE = { nom: "Sporran", id: "catsith", ar: "ar-catsith.mp4", ratio: 1.0706, taille: 1.85, pied: 0.046, altitude: 0 };
+const DEFI = [
+  "Bravo !!! Tu as sauvé tous les Cryptides de mon grimoire. Je n'en reviens pas…",
+  "Mais es-tu assez rapide pour attraper le plus malin de tous… MOI ?\nHé hé ! Je me cache tout près. Sors ton détecteur et attrape-moi si tu peux !"
+];
+let enBoss = false, bossPhase = 0;
+function bossDispo() { return pris().length >= ids.length && !lire("cryptidsParc-boss", false); }   // déclarée tôt : utilisée dès l'accueil
+const pixDe = k => k === "catsith" ? "pix-catsith.gif" : "pix-" + TRAQUES[k].cle + ".gif";
+const rayonJeu = () => mode() === "interieur" ? 10 : 20;
+const restantesJeu = () => { const p = partie(); return p ? p.liste.filter(k => !p.pris.includes(k)) : []; };
+
+// ---------- défi de Sporran ----------
+function lancerDefi() {
+  fermerPixel(); $("scene").hidden = true; $("jauge").hidden = true;
+  textesIntro = DEFI; finIntro = demarrerBoss; pageIntro = 0; montrer("intro"); afficherIntro(0);
+}
+function demarrerBoss() {
+  clearInterval(ecrit); enBoss = true; bossPhase = 0; textesIntro = INTRO; finIntro = apresIntro;
+  const p = partie(); if (p) { delete p.posBoss; ecrire(CLES.partie, p); }
+  if (!$("camera").srcObject) return ouvrirOeil();     // l'œil magique n'est pas encore ouvert
+  montrer(null); $("scene").hidden = false; changerAmbiance("chasse"); prochaineTraque();
+}
+function demarrerBossAR() {
+  fermerPixel();
+  traque = { id: "boss", boss: true, cle: "catsith", nom: GARDIEN.nom, texte: GARDIEN.texte, image: GARDIEN.image, membres: [BOSS_MEMBRE], gpsFait: true, angleGPS: null };
+  membreIdx = 0; lancerMembre();
+  $("consigne").textContent = "Sporran se cache autour de toi… Tourne sur toi-même !";
+}
+function bossVaincu() {
+  ecrire(CLE_BOSS, true); enBoss = false; sfx("victoire");
+  $("titreVictoire").textContent = "Défi relevé !";
+  $("portrait").src = GARDIEN.image; $("ficheNom").textContent = GARDIEN.nom;
+  $("ficheTexte").textContent = "Grrr… Tu m'as attrapé ! Tu as l'œil vif et les pattes rapides. Te voilà Gardien du grimoire, pour toujours !";
+  $("compteur").textContent = ""; $("final").hidden = true; $("continuer").hidden = true; $("rejouer").hidden = false; $("defi").hidden = true;
+  $("scene").hidden = true; montrer("victoire");
+}
+$("defi").addEventListener("click", lancerDefi);
+$("defiAccueil").addEventListener("click", () => { initAudio(); if (!partie()) ecrire(CLES.partie, { liste: [], pris: [], membres: {}, debut: Date.now() }); lancerDefi(); });
+
+// ---------- AR : tapoter pour remplir la jauge ----------
+function frapper() {
+  const c = moteur && moteur.creature; if (!c || !c.trouve || c.pris) return;
+  c.jauge = Math.min(1, c.jauge + GAIN[c.diff]); jaillir(c, 5); sfx("tape"); if (navigator.vibrate) navigator.vibrate(15);
+  $("jaugeBarre").style.width = (c.jauge * 100) + "%";
+  if (c.jauge >= 1) { sfx("sceau"); return capturer(); }
+  const seuils = ESQUIVES[c.diff];
+  if (c.esquives < seuils.length && c.jauge >= seuils[c.esquives]) { c.esquives++; esquiver(c); }
+}
+function esquiver(c) {
+  jaillir(c, 22); sfx("fuite");
+  c.angle += (Math.random() < .5 ? -1 : 1) * (55 + Math.random() * 55) * DEG;
+  c.tReveal = performance.now() + 250;   // réapparaît en fondu à sa nouvelle place
+  $("consigne").textContent = (traque.boss ? "Hé hé ! Raté !" : "Oh ! Il s'est échappé !") + " Retrouve-le et continue à tapoter !";
+  setTimeout(() => jouerTampon("cri-" + c.m.id, .8, 0), 400);
+}
+
+// ---------- carte pixel art ----------
+const PAL = {
+  herbe: "#2e4a2c", herbe2: "#35552f", herbe3: "#284126", parc: "#3b6b34", terrain: "#45803c", bois: "#1f3a24", quartier: "#36443a",
+  cimetiere: "#33463a", eau: "#1d4e7a", eau2: "#2f74a8", route: "#4b4b55", bordure: "#2a2a30", marquage: "#c9b26a", dalle: "#6a6670",
+  chemin: "#a6875a", chemin2: "#7a623e", parking: "#43434b", facade: "#3d2a3a", toit: "#6e4a63", toitClair: "#8a6280",
+  arbre1: "#173a20", arbre2: "#24572c", arbre3: "#3a7a3a", tronc: "#4a3020", ombre: "#1a2a1c", mur: "#77727a", cloture: "#6b5236"
+};
+const PAL_RGB = Object.values(PAL).map(h => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)]);
+const EAU_RGB = PAL_RGB[Object.keys(PAL).indexOf("eau")];
+let PXC = null, suiviPX = null, fixPX = null, tAttentePX = 0;
+const M_LAT = 110540;
+const versM = (lat, lon) => ({ x: (lon - PXC.origine[1]) * 111320 * Math.cos(PXC.origine[0] * DEG), y: -(lat - PXC.origine[0]) * M_LAT });
+const versGeo = (x, y) => [PXC.origine[0] - y / M_LAT, PXC.origine[1] + x / (111320 * Math.cos(PXC.origine[0] * DEG))];
+function hasard(graine) { let a = graine >>> 0; return () => { a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+
+function ouvrirPixel() {
+  traque = null; $("viseur").hidden = true; $("jauge").hidden = true; $("sceau").disabled = true; $("gauche").hidden = $("droite").hidden = true;
+  if (!enBoss && !restantesJeu().length) { fermerPixel(); return prochaineTraque(); }
+  $("pixel").hidden = false; $("detecteur").hidden = false;
+  $("nomMonstre").textContent = enBoss ? "Sporran" : "Œil magique";
+  if (!PXC) PXC = { carte: null, origine: null, joueur: { x: 0, y: 0 }, manuel: false, vise: null, cibles: [], revele: null, signal: 0, dernierBip: 0, raf: 0, t: 0 };
+  PXC.revele = null; $("pixelSprites").innerHTML = "";
+  const p = partie();
+  if (p && p.origine) preparerCarte(p.origine, p.fictif);
+  else { $("consigne").textContent = "Recherche de ta position…"; tAttentePX = performance.now(); }
+  demarrerGPS();
+  if (!PXC.raf) PXC.raf = requestAnimationFrame(bouclePixel);
+}
+function fermerPixel() {
+  $("pixel").hidden = true; $("detecteur").hidden = true;
+  if (PXC) { if (PXC.raf) cancelAnimationFrame(PXC.raf); PXC.raf = 0; PXC.revele = null; }
+  $("pixelSprites").innerHTML = "";
+}
+function demarrerGPS() {
+  if (suiviPX != null) return;
+  if (!navigator.geolocation) return passerManuel("Pas de GPS sur cet appareil");
+  suiviPX = navigator.geolocation.watchPosition(pos => {
+    fixPX = { lat: pos.coords.latitude, lon: pos.coords.longitude, acc: pos.coords.accuracy || 50 };
+    const p = partie();
+    if (p && !p.origine && !$("pixel").hidden && (fixPX.acc < 40 || performance.now() - tAttentePX > 12000)) {
+      majPartie(q => { q.origine = [fixPX.lat, fixPX.lon]; q.fictif = false; }); preparerCarte([fixPX.lat, fixPX.lon], false);
+    }
+  }, err => {   // refus ou GPS absent : on passe en marche au doigt (une simple attente trop longue n'est pas une erreur)
+    if (PXC && !PXC.manuel && (err.code === 1 || !fixPX)) passerManuel(err.code === 1 ? "Localisation refusée" : "Le GPS ne répond pas");
+  }, { enableHighAccuracy: true, maximumAge: 1000 });
+  setTimeout(() => { if (!fixPX && PXC && !PXC.manuel && !$("pixel").hidden) passerManuel("Pas de signal GPS"); }, 15000);
+}
+function arreterGPS() { if (suiviPX != null) { navigator.geolocation.clearWatch(suiviPX); suiviPX = null; } }
+function passerManuel(msg) {
+  if (!PXC) return;
+  PXC.manuel = true; $("marcher").classList.add("actif");
+  if (msg) bandeau(msg + " : touche la carte pour te déplacer.", 5500);
+  const p = partie();
+  if (p && !p.origine) { majPartie(q => { q.origine = [45, 0]; q.fictif = true; }); preparerCarte([45, 0], true); }
+}
+$("marcher").addEventListener("click", () => {
+  if (!PXC) return;
+  if (PXC.manuel && fixPX && !(partie() || {}).fictif) { PXC.manuel = false; PXC.vise = null; $("marcher").classList.remove("actif"); bandeau("Le GPS te suit de nouveau.", 2500); }
+  else { PXC.manuel = true; $("marcher").classList.add("actif"); bandeau("Touche la carte pour te déplacer.", 2500); }
+});
+$("pixelCanvas").addEventListener("pointerdown", e => {
+  if (!PXC || !PXC.manuel || !PXC.ech) return;
+  const r = $("pixelCanvas").getBoundingClientRect(), d = PXC.dpr;
+  PXC.vise = { x: ((e.clientX - r.left) * d - PXC.ox) / PXC.ech - PXC.H, y: ((e.clientY - r.top) * d - PXC.oy) / PXC.ech - PXC.H };
+});
+
+function preparerCarte(orig, fictif) {
+  const meme = PXC.origine && PXC.origine[0] === orig[0] && PXC.origine[1] === orig[1] && PXC.carte;
+  if (!meme) {
+    PXC.origine = orig; PXC.fictif = !!fictif;
+    const ind = mode() === "interieur"; PXC.H = ind ? 40 : 70; PXC.ppm = ind ? 3 : 2; PXC.zoom = ind ? 4 : 3;
+    PXC.joueur = fixPX && !fictif ? versM(fixPX.lat, fixPX.lon) : { x: 0, y: 0 };
+    dessinerCarte(null);
+    if (!fictif) chargerOSM(orig).then(d => { if (PXC.origine === orig) dessinerCarte(d); })
+      .catch(() => bandeau("La carte du quartier n'a pas pu se charger (réseau ?). Le détecteur marche quand même.", 5000));
+  }
+  placerCibles();
+  $("consigne").textContent = enBoss ? "Sporran se cache tout près… Suis le détecteur !" : "Marche et suis le détecteur : plus il s'allume, plus un cryptide est proche !";
+}
+function placerCibles() {
+  const p = partie(); if (!p) return;
+  p.pos = p.pos || {};
+  const R = rayonJeu(), ind = mode() === "interieur", ecart = ind ? 3 : 6, mini = ind ? 3 : 6, l = mode() === "exterieur" ? lieux() : {};
+  const pris = Object.values(p.pos).map(g => versM(g[0], g[1]));
+  const tirer = (rMin, rMax, cx, cy) => { let b = null;
+    for (let i = 0; i < 60; i++) { const a = Math.random() * 2 * Math.PI, r = rMin + Math.random() * (rMax - rMin), x = cx + Math.cos(a) * r, y = cy + Math.sin(a) * r;
+      b = { x, y }; if (pris.every(e => Math.hypot(e.x - x, e.y - y) >= ecart)) break; }
+    pris.push(b); return b; };
+  p.liste.forEach(k => { if (p.pos[k]) return; if (l[k]) { p.pos[k] = l[k]; return; } const b = tirer(mini, R, 0, 0); p.pos[k] = versGeo(b.x, b.y); });
+  if (enBoss && !p.posBoss) { const b = tirer(ind ? 4 : 8, ind ? 9 : 16, PXC.joueur.x, PXC.joueur.y); p.posBoss = versGeo(b.x, b.y); }
+  ecrire(CLES.partie, p);
+  PXC.cibles = enBoss ? [Object.assign({ k: "catsith" }, versM(p.posBoss[0], p.posBoss[1]))]
+                      : restantesJeu().map(k => Object.assign({ k }, versM(p.pos[k][0], p.pos[k][1])));
+}
+
+async function chargerOSM(orig) {
+  const H = PXC.H, R = Math.round(H * 1.45), [la, lo] = orig.map(v => +v.toFixed(6));
+  const cle = "cryptidsParc-osm-" + la.toFixed(4) + "," + lo.toFixed(4) + "," + R;
+  try { const c = sessionStorage.getItem(cle); if (c) return JSON.parse(c); } catch (e) {}
+  const a = `(around:${R},${la},${lo})`;
+  const q = `[out:json][timeout:25];(way["building"]${a};way["highway"]${a};way["natural"~"water|wood|scrub|grassland|wetland|beach|sand"]${a};relation["natural"="water"]${a};` +
+    `way["waterway"]${a};way["landuse"~"grass|forest|meadow|recreation_ground|village_green|cemetery|allotments|residential|basin|reservoir"]${a};` +
+    `way["leisure"~"park|garden|pitch|playground|swimming_pool"]${a};way["amenity"="parking"]${a};node["natural"="tree"]${a};way["barrier"~"wall|fence|hedge"]${a};);out geom;`;
+  let dernier = null;
+  for (const url of ["https://overpass-api.de/api/interpreter", "https://overpass.kumi.systems/api/interpreter"]) {
+    try {
+      const ctl = new AbortController(), minuterie = setTimeout(() => ctl.abort(), 25000);
+      const r = await fetch(url, { method: "POST", body: "data=" + encodeURIComponent(q), headers: { "Content-Type": "application/x-www-form-urlencoded" }, signal: ctl.signal });
+      clearTimeout(minuterie); if (!r.ok) throw new Error("HTTP " + r.status);
+      const d = await r.json(); try { sessionStorage.setItem(cle, JSON.stringify(d)); } catch (e) {}
+      return d;
+    } catch (e) { dernier = e; }
+  }
+  throw dernier;
+}
+
+function dessinerCarte(d) {
+  const H = PXC.H, k = PXC.ppm, N = Math.round(2 * H * k);
+  const cv = document.createElement("canvas"); cv.width = cv.height = N; const g = cv.getContext("2d", { willReadFrequently: true });
+  const P = (lat, lon) => { const m = versM(lat, lon); return [(m.x + H) * k, (m.y + H) * k]; };
+  const rnd = hasard(Math.round((PXC.origine[0] + PXC.origine[1]) * 1e5));
+  g.fillStyle = PAL.herbe; g.fillRect(0, 0, N, N);
+  for (let i = 0; i < N * N * .14; i++) { g.fillStyle = rnd() < .5 ? PAL.herbe2 : PAL.herbe3; g.fillRect((rnd() * N) | 0, (rnd() * N) | 0, 1, 1); }
+  const arbres = [];
+  if (d && d.elements) {
+    const t = e => e.tags || {}, ways = d.elements.filter(e => e.type === "way" && e.geometry && e.geometry.length > 1);
+    const chemin = geom => { const p = new Path2D(); geom.forEach((pt, i) => { const [x, y] = P(pt.lat, pt.lon); i ? p.lineTo(x, y) : p.moveTo(x, y); }); return p; };
+    const surface = (geom, couleur) => { const p = chemin(geom); p.closePath(); g.fillStyle = couleur; g.fill(p); return p; };
+    const trait = (geom, largeur, couleur, pointilles) => { g.strokeStyle = couleur; g.lineWidth = Math.max(1, largeur * k); g.lineCap = g.lineJoin = "round"; g.setLineDash(pointilles || []); g.stroke(chemin(geom)); g.setLineDash([]); };
+    const semer = (geom, pas, densite) => { const p = chemin(geom); p.closePath();
+      for (let y = 0; y < N; y += pas * k) for (let x = 0; x < N; x += pas * k) { const jx = x + (rnd() - .5) * pas * k, jy = y + (rnd() - .5) * pas * k;
+        if (rnd() < densite && g.isPointInPath(p, jx, jy)) arbres.push([jx, jy]); } };
+    ways.filter(e => /^(residential|allotments)$/.test(t(e).landuse)).forEach(e => surface(e.geometry, PAL.quartier));
+    ways.filter(e => t(e).landuse === "cemetery").forEach(e => surface(e.geometry, PAL.cimetiere));
+    ways.filter(e => /^(grass|meadow|village_green|recreation_ground)$/.test(t(e).landuse) || /^(park|garden|playground)$/.test(t(e).leisure) || t(e).natural === "grassland").forEach(e => surface(e.geometry, PAL.parc));
+    ways.filter(e => t(e).leisure === "pitch").forEach(e => surface(e.geometry, PAL.terrain));
+    ways.filter(e => t(e).landuse === "forest" || /^(wood|scrub)$/.test(t(e).natural)).forEach(e => surface(e.geometry, PAL.bois));
+    ways.filter(e => t(e).natural === "water" || t(e).leisure === "swimming_pool" || /^(basin|reservoir)$/.test(t(e).landuse)).forEach(e => surface(e.geometry, PAL.eau));
+    d.elements.filter(e => e.type === "relation" && t(e).natural === "water").forEach(r => (r.members || []).filter(m => m.role === "outer" && m.geometry).forEach(m => surface(m.geometry, PAL.eau)));
+    ways.filter(e => t(e).waterway).forEach(e => trait(e.geometry, t(e).waterway === "river" ? 8 : 2.5, PAL.eau));
+    ways.filter(e => t(e).amenity === "parking").forEach(e => surface(e.geometry, PAL.parking));
+    const L = { motorway: 14, trunk: 12, primary: 10, secondary: 9, tertiary: 8, residential: 6, unclassified: 6, living_street: 5, service: 4, pedestrian: 4 };
+    const routes = ways.filter(e => L[t(e).highway]);
+    routes.forEach(e => trait(e.geometry, L[t(e).highway] + 1.2, PAL.bordure));
+    routes.forEach(e => trait(e.geometry, L[t(e).highway], t(e).highway === "pedestrian" ? PAL.dalle : PAL.route));
+    routes.filter(e => L[t(e).highway] >= 8).forEach(e => trait(e.geometry, .4, PAL.marquage, [3 * k, 3 * k]));
+    const sentiers = ways.filter(e => /^(footway|path|cycleway|track|bridleway|steps)$/.test(t(e).highway));
+    sentiers.forEach(e => trait(e.geometry, 2.4, PAL.chemin2)); sentiers.forEach(e => trait(e.geometry, 1.7, PAL.chemin));
+    ways.filter(e => t(e).barrier === "hedge").forEach(e => trait(e.geometry, 1.3, PAL.arbre2));
+    ways.filter(e => /^(wall|fence)$/.test(t(e).barrier)).forEach(e => trait(e.geometry, .5, t(e).barrier === "wall" ? PAL.mur : PAL.cloture));
+    const bat = ways.filter(e => t(e).building);
+    bat.forEach(e => { g.save(); g.translate(0, Math.max(2, Math.round(k * 1.3))); surface(e.geometry, PAL.facade); g.restore(); });
+    bat.forEach(e => { const p = surface(e.geometry, PAL.toit); g.strokeStyle = PAL.toitClair; g.lineWidth = 1; g.stroke(p); });
+    ways.filter(e => t(e).landuse === "forest" || t(e).natural === "wood").forEach(e => semer(e.geometry, 5, .9));
+    ways.filter(e => t(e).leisure === "park" || t(e).leisure === "garden").forEach(e => semer(e.geometry, 9, .22));
+    d.elements.filter(e => e.type === "node" && t(e).natural === "tree").forEach(e => arbres.push(P(e.lat, e.lon)));
+  }
+  arbres.sort((a, b) => a[1] - b[1]).forEach(([x, y]) => dessinerArbre(g, x, y, k));
+  // palette réduite : bords nets, vrai rendu pixel art ; on garde la liste des pixels d'eau pour les reflets
+  const img = g.getImageData(0, 0, N, N), px = img.data, eau = [];
+  for (let i = 0; i < px.length; i += 4) {
+    let m = 0, dm = 1e9; for (let c = 0; c < PAL_RGB.length; c++) { const q = PAL_RGB[c], dd = (px[i] - q[0]) ** 2 + (px[i + 1] - q[1]) ** 2 + (px[i + 2] - q[2]) ** 2; if (dd < dm) { dm = dd; m = c; } }
+    const q = PAL_RGB[m]; px[i] = q[0]; px[i + 1] = q[1]; px[i + 2] = q[2]; px[i + 3] = 255;
+    if (q === EAU_RGB && eau.length < 3000 && rnd() < .2) eau.push(i / 4);
+  }
+  g.putImageData(img, 0, 0);
+  PXC.carte = cv; PXC.eau = eau; PXC.N = N;
+}
+function dessinerArbre(g, x, y, k) {
+  const r = Math.max(3, 2.1 * k);
+  g.fillStyle = PAL.ombre; g.beginPath(); g.ellipse(x + r * .35, y + r * .75, r, r * .45, 0, 0, 7); g.fill();
+  g.fillStyle = PAL.tronc; g.fillRect(Math.round(x - k * .3), Math.round(y - r * .2), Math.max(1, Math.round(k * .6)), Math.max(2, Math.round(r * .7)));
+  g.fillStyle = PAL.arbre1; g.beginPath(); g.arc(x, y - r * .45, r, 0, 7); g.fill();
+  g.fillStyle = PAL.arbre2; g.beginPath(); g.arc(x - r * .18, y - r * .62, r * .72, 0, 7); g.fill();
+  g.fillStyle = PAL.arbre3; g.beginPath(); g.arc(x - r * .38, y - r * .85, r * .32, 0, 7); g.fill();
+}
+// le joueur : un petit enfant encapuchonné avec une lanterne
+const SPRITE = ["....hhhh....", "...hppppph..", "..hpffffph..", "..hfeffefh..", "..hpffffph..", "...hppppph..", "..pppppppp.l",
+                ".pppppppppLL", ".pp.pppp.pLL", "....pppp..l.", "....p..p....", "...bb..bb..."];
+const SPRITE_C = { h: "#3d2366", p: "#7a4bb3", f: "#f2c9a0", e: "#1a1020", l: "#2b2b2b", L: "#ffd75e", b: "#2a1a12" };
+function dessinerJoueur(g, cx, cy, z, t) {
+  const s = Math.max(2, Math.round(z * .75)), w = SPRITE[0].length * s, h = SPRITE.length * s, x0 = Math.round(cx - w / 2), y0 = Math.round(cy - h + s);
+  const lueur = g.createRadialGradient(cx + w * .4, cy - h * .35, 0, cx + w * .4, cy - h * .35, w * 1.6);
+  lueur.addColorStop(0, "rgba(255,215,94," + (.35 + .08 * Math.sin(t / 180)) + ")"); lueur.addColorStop(1, "rgba(255,215,94,0)");
+  g.fillStyle = lueur; g.fillRect(cx - w * 2, cy - h * 2, w * 4, h * 4);
+  g.fillStyle = "rgba(0,0,0,.35)"; g.fillRect(x0 + s, y0 + h - s, w - 2 * s, s);
+  SPRITE.forEach((ligne, j) => [...ligne].forEach((ch, i) => { if (ch === ".") return; g.fillStyle = SPRITE_C[ch]; g.fillRect(x0 + i * s, y0 + j * s, s, s); }));
+  if (cap != null && !PXC.manuel) {   // petite flèche : la direction du regard (boussole)
+    const a = cap * DEG, rr = h * .95; g.save(); g.translate(cx, cy - h / 2); g.rotate(a); g.fillStyle = "#4ff3ff";
+    g.beginPath(); g.moveTo(0, -rr - s * 2); g.lineTo(s * 1.6, -rr); g.lineTo(-s * 1.6, -rr); g.closePath(); g.fill(); g.restore();
+  }
+}
+
+function bouclePixel(t) {
+  PXC.raf = 0;
+  if ($("pixel").hidden || $("scene").hidden) return;
+  PXC.raf = requestAnimationFrame(bouclePixel);
+  const cv = $("pixelCanvas"), dpr = Math.min(devicePixelRatio || 1, 2), W = cv.clientWidth, Hc = cv.clientHeight;
+  if (cv.width !== Math.round(W * dpr) || cv.height !== Math.round(Hc * dpr)) { cv.width = Math.round(W * dpr); cv.height = Math.round(Hc * dpr); }
+  const g = cv.getContext("2d"); g.imageSmoothingEnabled = false;
+  const dt = Math.min(.1, (t - (PXC.t || t)) / 1000); PXC.t = t;
+  if (PXC.origine) {
+    if (PXC.manuel) {
+      if (PXC.vise) { const dx = PXC.vise.x - PXC.joueur.x, dy = PXC.vise.y - PXC.joueur.y, dd = Math.hypot(dx, dy), v = 1.8 * dt;
+        if (dd <= v) { PXC.joueur.x = PXC.vise.x; PXC.joueur.y = PXC.vise.y; PXC.vise = null; } else { PXC.joueur.x += dx / dd * v; PXC.joueur.y += dy / dd * v; } }
+    } else if (fixPX && !PXC.fictif) {
+      const m = versM(fixPX.lat, fixPX.lon), f = Math.min(1, dt * 2.5); PXC.joueur.x += (m.x - PXC.joueur.x) * f; PXC.joueur.y += (m.y - PXC.joueur.y) * f;
+    }
+  }
+  const z = (PXC.zoom || 3) * dpr, k = PXC.ppm || 2, ech = k * z, H = PXC.H || 70;
+  const cx = cv.width / 2, cy = cv.height * .54;
+  const ox = Math.round(cx - (PXC.joueur.x + H) * ech), oy = Math.round(cy - (PXC.joueur.y + H) * ech);
+  Object.assign(PXC, { ox, oy, ech, dpr, H });
+  g.fillStyle = PAL.herbe; g.fillRect(0, 0, cv.width, cv.height);
+  if (PXC.carte) {
+    g.drawImage(PXC.carte, ox, oy, PXC.N * z, PXC.N * z);
+    // reflets sur l'eau
+    g.fillStyle = "#7fc8ff";
+    for (let i = 0; i < PXC.eau.length; i += 7) { const n = PXC.eau[i], ph = (t / 600 + i * 1.7) % 6; if (ph > 1) continue;
+      g.fillRect(ox + (n % PXC.N) * z, oy + Math.floor(n / PXC.N) * z, z * 2, z); }
+  }
+  dessinerJoueur(g, cx, cy, z, t);
+  majApparition(t);
+  if (t - (PXC.tDet || 0) > 180) { PXC.tDet = t; majDetecteur(t); }
+}
+const versEcran = (x, y) => [(PXC.ox + (x + PXC.H) * PXC.ech) / PXC.dpr, (PXC.oy + (y + PXC.H) * PXC.ech) / PXC.dpr];
+function seuilApparition() {
+  const ind = mode() === "interieur";
+  if (PXC.manuel || !fixPX) return ind ? 2.5 : 4;
+  return ind ? Math.max(3, Math.min(6, fixPX.acc * .5)) : Math.max(5, Math.min(10, fixPX.acc * .7));
+}
+function majDetecteur(t) {
+  if (!PXC.origine) { allumer(0); return; }
+  let c = null, dmin = 1e9;
+  PXC.cibles.forEach(q => { const d = Math.hypot(q.x - PXC.joueur.x, q.y - PXC.joueur.y); if (d < dmin) { dmin = d; c = q; } });
+  if (!c) { allumer(0); return; }
+  const s0 = seuilApparition(), R = rayonJeu(), Dmax = 1.6 * R, e = dmin - s0;
+  const s = Math.max(0, Math.min(1, 1 - e / (Dmax - s0)));
+  PXC.signal += (s - PXC.signal) * .4;
+  PXC.ecart = PXC.ecart == null ? e : PXC.ecart + (e - PXC.ecart) * .4;   // lissé : le GPS tremble
+  // LED : rouge = loin, jaune = on approche, vert = tout près
+  const n = PXC.revele ? 5 : PXC.ecart < .15 * R ? 5 : PXC.ecart < .35 * R ? 4 : PXC.ecart < .6 * R ? 3 : PXC.ecart < R ? 2 : 1;
+  allumer(n);
+  const periode = PXC.revele ? 260 : 1500 - 1200 * PXC.signal;
+  if (t - PXC.dernierBip > periode) {
+    PXC.dernierBip = t; if (audio && sonActif) note(480 + 900 * (PXC.revele ? 1 : PXC.signal), 0, .07, { type: "square", vol: .045, filtre: 2600 });
+    const oeil = document.querySelector(".emf-oeil"), led = document.querySelector(".emf-leds i:nth-child(" + Math.max(1, n) + ")");
+    oeil.style.setProperty("--led", getComputedStyle(led).getPropertyValue("--led")); oeil.classList.add("flash"); setTimeout(() => oeil.classList.remove("flash"), 90);
+  }
+  if (!PXC.revele) {
+    if (dmin < s0) return reveler(c);
+    $("consigne").textContent = ["", "Rien par ici… Marche un peu !", "Un faible signal…", "Ça chauffe !", "Tu brûles !!", "Tout près !!!"][n];
+  }
+}
+function allumer(n) { document.querySelectorAll(".emf-leds i").forEach((l, i) => l.classList.toggle("on", i < n)); }
+
+function reveler(c) {
+  const el = new Image(); el.className = "pix-creature"; el.alt = ""; el.draggable = false;
+  el.onload = () => { el.style.width = Math.round(el.naturalWidth * .45) + "px"; };
+  el.src = pixDe(c.k);
+  $("pixelSprites").appendChild(el);
+  const d = enBoss ? 4 : (DIFF[TRAQUES[c.k] ? TRAQUES[c.k].cle : ""] || 2);
+  PXC.revele = { c, el, dx: 0, dy: 0, prochain: performance.now() + SAUT[d] + 600, d };
+  el.addEventListener("pointerdown", e => { e.stopPropagation(); attraper(); });
+  sfx("revele"); if (navigator.vibrate) navigator.vibrate([60, 40, 60]);
+  $("consigne").textContent = enBoss ? "Le voilà ! Touche Sporran avant qu'il ne file !" : "Un cryptide ! Touche-le vite avant qu'il ne bondisse !";
+}
+function majApparition(t) {
+  const r = PXC.revele; if (!r) return;
+  const dj = Math.hypot(r.c.x - PXC.joueur.x, r.c.y - PXC.joueur.y);
+  if (dj > seuilApparition() + 8) {   // on s'est trop éloigné : il se cache de nouveau
+    r.el.remove(); PXC.revele = null; $("consigne").textContent = "Il s'est caché de nouveau… Reviens vers lui !"; return; }
+  if (t > r.prochain) {
+    const rr = mode() === "interieur" ? 1.8 : 3.5, a = Math.random() * 2 * Math.PI;
+    r.vx = Math.cos(a) * rr * Math.random(); r.vy = Math.sin(a) * rr * Math.random(); r.prochain = t + SAUT[r.d]; r.tSaut = t; sfx("hop");
+  }
+  // petit bond en 3 images (style pixel art) vers la nouvelle place
+  if (r.tSaut != null) { const q = Math.min(1, Math.floor((t - r.tSaut) / 50) / 3); r.dx += ((r.vx || 0) - r.dx) * q; r.dy += ((r.vy || 0) - r.dy) * q; if (q >= 1) r.tSaut = null; }
+  const bond = r.tSaut != null ? -Math.sin(Math.min(1, (t - r.tSaut) / 150) * Math.PI) * 14 : 0;
+  const [x, y] = versEcran(r.c.x + r.dx, r.c.y + r.dy), w = r.el.offsetWidth || 120, h = r.el.offsetHeight || 120;
+  const W = $("pixel").clientWidth, Hh = $("pixel").clientHeight;
+  const ex = Math.max(4, Math.min(W - w - 4, x - w / 2)), ey = Math.max(150, Math.min(Hh - h - 210, y - h * .85));
+  r.el.style.transform = "translate(" + Math.round(ex) + "px," + Math.round(ey + bond) + "px)";
+}
+function attraper() {
+  const r = PXC.revele; if (!r) return;
+  const box = r.el.getBoundingClientRect(), pouf = document.createElement("div"); pouf.className = "pouf";
+  pouf.style.left = (box.left + box.width / 2) + "px"; pouf.style.top = (box.top + box.height / 2) + "px"; $("pixelSprites").appendChild(pouf); setTimeout(() => pouf.remove(), 600);
+  r.el.remove(); PXC.revele = null; if (navigator.vibrate) navigator.vibrate(40);
+  if (enBoss && bossPhase < 2) {   // Sporran file ailleurs deux fois avant de se laisser attraper
+    bossPhase++; sfx("fuite");
+    const p = partie(), ind = mode() === "interieur", a = Math.random() * 2 * Math.PI, d = ind ? 4 + Math.random() * 4 : 8 + Math.random() * 7;
+    p.posBoss = versGeo(PXC.joueur.x + Math.cos(a) * d, PXC.joueur.y + Math.sin(a) * d); ecrire(CLES.partie, p); placerCibles();
+    bandeau(bossPhase === 1 ? "Hé hé ! Trop lent ! Attrape-moi si tu peux !" : "Encore raté ! Dernière chance, petit humain !", 3200);
+    $("consigne").textContent = "Sporran s'est enfui ! Suis le détecteur !"; return;
+  }
+  sfx("sceau"); bandeau(enBoss ? "Tu as débusqué Sporran ! Ouvre l'œil magique…" : "Débusqué ! Ouvre l'œil magique et cherche-le autour de toi…", 2400);
+  const k = r.c.k;
+  setTimeout(() => { fermerPixel(); sfx("oeil"); if (enBoss) demarrerBossAR(); else demarrerTraque(k, { gpsFait: true, angleGPS: null }); }, 900);
+}
+
 // pour les tests sur ordinateur
 window.__test = { ouvrir: () => { montrer(null); $("scene").hidden = false; initMoteur(); prochaineTraque(); }, capturer: () => capturer(),
   regarder: () => { const c = moteur.creature; if (c) c.angle = lacetCamera(); },
+  dbg: () => { const m = versM(fixPX.lat, fixPX.lon); return { m, manuel: PXC.manuel, fictif: PXC.fictif, org: PXC.origine, jo: PXC.joueur }; },
+  pixel: () => PXC && { t: PXC.t, raf: PXC.raf, fix: fixPX, fictif: PXC.fictif, origine: PXC.origine, joueur: PXC.joueur, cibles: PXC.cibles, revele: PXC.revele && PXC.revele.c.k, manuel: PXC.manuel, carte: !!PXC.carte, N: PXC.N, signal: PXC.signal },
+  aller: (x, y) => { PXC.manuel = true; PXC.vise = { x, y }; }, attraper: () => attraper(), frapper: () => frapper(),
+  jauge: () => moteur && moteur.creature && moteur.creature.jauge, figurine: c => ouvrirFigurine(c),
   etat: () => { const c = moteur && moteur.creature; return { angle: c && c.angle, lacet: moteur && lacetCamera(), gyro, gyroOK, trouve: c && c.trouve, consigne: $("consigne").textContent }; } };
