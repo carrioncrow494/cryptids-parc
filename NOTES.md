@@ -17,12 +17,7 @@ La version 1 est dans le dépôt `carrioncrow494/chasse-monstres` et n'est pas m
 - **Nouvelle aventure en mode parc**
   - La partie se compose des créatures placées sur la carte.
   - Pas de tirage au hasard ni de cases à cocher : bloc « Cachés dans le parc ».
-- **Chasse**
-  - Une carte sombre affiche le joueur (point bleu et cercle de précision GPS).
-  - Chaque créature restante apparaît comme une **brume** de 12 m de rayon, décalée de 2 à 7 m de la vraie cachette (`partie.brume`).
-  - Les créatures déjà sauvées s'affichent sur la carte.
-  - Quand le joueur arrive à moins de max(6 m, min(12 m, 0,8 × précision GPS)) d'une cachette, la carte se ferme et l'AR démarre. La créature est placée dans la direction de la cachette si la boussole est disponible.
-  - Après la capture, « Continuer » ramène à la carte.
+- **Chasse** : la carte Leaflet à brumes de la V2 a été remplacée par la carte pixel art et le détecteur (voir ci-dessous). Leaflet ne sert plus qu'aux parents pour placer les créatures.
 - **Sauvegarde séparée de la V1**
   - Toutes les clés sont `cryptidsParc-…`, alors que la V1 utilise `cryptids-…`.
   - Les deux sites ont la même origine github.io : sans ce préfixe, leurs sauvegardes se mélangeraient.
