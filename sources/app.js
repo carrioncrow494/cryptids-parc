@@ -1205,7 +1205,7 @@ function allumer(n) { document.querySelectorAll(".emf-leds i").forEach((l, i) =>
 
 function reveler(c) {
   const el = new Image(); el.className = "pix-creature"; el.alt = ""; el.draggable = false;
-  el.onload = () => { el.style.width = Math.round(el.naturalWidth * .45) + "px"; };
+  el.onload = () => { el.style.width = Math.round(el.naturalWidth * .225) + "px"; };   // moitié de la taille précédente
   el.src = pixDe(c.k);
   $("pixelSprites").appendChild(el);
   const d = enBoss ? 4 : (DIFF[TRAQUES[c.k] ? TRAQUES[c.k].cle : ""] || 2);
