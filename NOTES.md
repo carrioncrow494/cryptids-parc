@@ -63,6 +63,12 @@ La version 1 est dans le dépôt `carrioncrow494/chasse-monstres` et n'est pas m
 - Si aucune case ne correspond, la créature va sur n'importe quelle case accessible. Sans carte OSM (réseau, Overpass), on garde le tirage au hasard.
 - Les créatures posées par un parent ne bougent pas. Le mode intérieur n'est pas concerné.
 
+## Style de la carte (14/10/2026)
+
+- Nouveau style inspiré des images de référence de Sam : herbe vive, contours sombres, arbres ronds et bosselés éclairés en haut à gauche, bâtiments de trois quarts (toit coloré à rangées de tuiles, façade avec fenêtres éclairées, ombre portée), rive rocheuse autour de l'eau, rues sombres avec trottoirs et pointillés, lampadaires, touffes d'herbe et fleurs.
+- 4 pixels par mètre (6 en intérieur) au lieu de 2 (3), avec un zoom deux fois plus petit : même échelle à l'écran, plus de détails.
+- Toutes les couleurs sont dans `PAL` (la carte est ramenée à cette palette). Les familles de toits sont dans `TOITS`. Les arbres semés ne tombent plus sur les toits, les routes ni l'eau.
+
 ## Tout le reste vient de la V1 (état au 12/10/2026)
 
 - **Contenu** : 12 traques et 13 créatures. Kumquat et Kiwi, les lutins, forment une seule traque. Sporran le Cat sìth est le guide.
