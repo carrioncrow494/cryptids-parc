@@ -1038,7 +1038,7 @@ function placerCibles() {
   const habitats = !ind && !PXC.fictif;   // en extérieur, la créature tirée au hasard ira dans son habitat dès que la carte du quartier sera chargée
   p.auHasard = p.auHasard || [];
   p.liste.forEach(k => { if (p.pos[k]) return; if (l[k]) { p.pos[k] = l[k]; return; } const b = tirer(mini, R, 0, 0); p.pos[k] = versGeo(b.x, b.y); if (habitats) p.auHasard.push(k); });
-  if (enBoss && !p.posBoss) { const b = tirer(ind ? 4 : 8, ind ? 9 : 16, PXC.joueur.x, PXC.joueur.y); p.posBoss = versGeo(b.x, b.y); }
+  if (enBoss && !p.posBoss) { const b = caseSure(PXC.joueur.x, PXC.joueur.y, 8, 16) || tirer(ind ? 4 : 8, ind ? 9 : 16, PXC.joueur.x, PXC.joueur.y); p.posBoss = versGeo(b.x, b.y); }
   ecrire(CLES.partie, p);
   PXC.cibles = enBoss ? [Object.assign({ k: "catsith" }, versM(p.posBoss[0], p.posBoss[1]))]
                       : restantesJeu().map(k => Object.assign({ k }, versM(p.pos[k][0], p.pos[k][1])));
@@ -1074,22 +1074,45 @@ function pres(x, y, couleurs, dist) {   // distance 0 : la case est bien à l'in
     if (dx * dx + dy * dy <= dist * dist && couleurs.includes(terrain(x + dx, y + dy)) && ++n >= 3) return true;
   return false;
 }
-function caseHabitat(k, rMin, rMax, autres, ecart) {
+// zone de jeu : les cases qu'on rejoint à pied depuis (cx, cy) sans traverser de rue, d'eau ni de bâtiment (pour que les enfants ne traversent pas la route)
+function zoneSure(cx, cy, R) {
+  if (!PXC.grille || mode() === "interieur") return null;
+  const S = 2 * PXC.H, H = PXC.H, libre = (i, j) => i >= 0 && j >= 0 && i < S && j < S && !INTERDIT.has(PXC.grille[j * S + i]) && Math.hypot(i + .5 - H - cx, j + .5 - H - cy) <= R + 1;
+  let i0 = Math.floor(cx + H), j0 = Math.floor(cy + H), d0 = 1e9;
+  if (!libre(i0, j0)) {   // le GPS place parfois le joueur sur la chaussée : on part de la case libre la plus proche
+    const ci = i0, cj = j0;
+    for (let dj = -4; dj <= 4; dj++) for (let di = -4; di <= 4; di++) if (libre(ci + di, cj + dj) && di * di + dj * dj < d0) { d0 = di * di + dj * dj; i0 = ci + di; j0 = cj + dj; }
+    if (d0 === 1e9) return new Set();
+  }
+  const vu = new Set([j0 * S + i0]), file = [[i0, j0]];
+  while (file.length) { const [i, j] = file.pop();
+    for (const [a, b] of [[i + 1, j], [i - 1, j], [i, j + 1], [i, j - 1]]) { const n = b * S + a; if (!vu.has(n) && libre(a, b)) { vu.add(n); file.push([a, b]); } } }
+  return vu;
+}
+const dansZone = (z, x, y) => !z || z.has(Math.floor(y + PXC.H) * 2 * PXC.H + Math.floor(x + PXC.H));
+function caseSure(cx, cy, rMin, rMax) {   // une case au hasard dans la zone sûre autour de (cx, cy), ou null sans carte
+  const z = zoneSure(cx, cy, rMax); if (!z) return null;
+  const S = 2 * PXC.H, l = [...z].map(n => ({ x: n % S - PXC.H + .5, y: Math.floor(n / S) - PXC.H + .5 }));
+  const ok = l.filter(c => Math.hypot(c.x - cx, c.y - cy) >= rMin), t = ok.length ? ok : l;
+  return t.length ? t[Math.floor(Math.random() * t.length)] : null;
+}
+function caseHabitat(k, rMin, rMax, autres, ecart, z) {
   const regles = HABITAT[TRAQUES[k].cle] || [], cases = [];
   for (let y = -rMax; y <= rMax; y++) for (let x = -rMax; x <= rMax; x++) {
     const cx = x + .5, cy = y + .5, r = Math.hypot(cx, cy);
-    if (r >= rMin && r <= rMax && accessible(cx, cy) && autres.every(e => Math.hypot(e.x - cx, e.y - cy) >= ecart)) cases.push({ x: cx, y: cy });
+    if (r >= rMin && r <= rMax && accessible(cx, cy) && dansZone(z, cx, cy) && autres.every(e => Math.hypot(e.x - cx, e.y - cy) >= ecart)) cases.push({ x: cx, y: cy });
   }
   for (const [couleurs, dist] of regles) { const ok = cases.filter(c => pres(c.x, c.y, couleurs, dist)); if (ok.length) return ok[Math.floor(Math.random() * ok.length)]; }
   return cases.length ? cases[Math.floor(Math.random() * cases.length)] : null;
 }
 function habiter() {
   const p = partie(); if (!p || !p.pos || !p.auHasard || !p.auHasard.length || !PXC.grille || enBoss) return;
-  const R = rayonJeu(), vu = PXC.revele && PXC.revele.c.k;
+  const R = rayonJeu(), vu = PXC.revele && PXC.revele.c.k, z = zoneSure(0, 0, R);
   const autres = Object.keys(p.pos).filter(k => !p.auHasard.includes(k)).map(k => versM(p.pos[k][0], p.pos[k][1]));
   p.auHasard.slice().forEach(k => {
     if (p.pris.includes(k) || k === vu) return;
-    const c = caseHabitat(k, 6, R, autres, 6); if (!c) return;
+    const c = caseHabitat(k, 6, R, autres, 6, z) || caseHabitat(k, 3, R, autres, 3, z);   // petite zone : on rapproche les créatures
+    if (!c) return;
     p.pos[k] = versGeo(c.x, c.y); autres.push(c); p.auHasard.splice(p.auHasard.indexOf(k), 1);
   });
   ecrire(CLES.partie, p); placerCibles();
@@ -1299,7 +1322,8 @@ function attraper() {
   if (enBoss && bossPhase < 2) {   // Sporran file ailleurs deux fois avant de se laisser attraper
     bossPhase++; sfx("fuite");
     const p = partie(), ind = mode() === "interieur", a = Math.random() * 2 * Math.PI, d = ind ? 4 + Math.random() * 4 : 8 + Math.random() * 7;
-    p.posBoss = versGeo(PXC.joueur.x + Math.cos(a) * d, PXC.joueur.y + Math.sin(a) * d); ecrire(CLES.partie, p); placerCibles();
+    const sur = caseSure(PXC.joueur.x, PXC.joueur.y, 8, 15);
+    p.posBoss = sur ? versGeo(sur.x, sur.y) : versGeo(PXC.joueur.x + Math.cos(a) * d, PXC.joueur.y + Math.sin(a) * d); ecrire(CLES.partie, p); placerCibles();
     bandeau(bossPhase === 1 ? "Hé hé ! Trop lent ! Attrape-moi si tu peux !" : "Encore raté ! Dernière chance, petit humain !", 3200);
     $("consigne").textContent = "Sporran s'est enfui ! Suis le détecteur !"; return;
   }
@@ -1313,6 +1337,7 @@ window.__test = { ouvrir: () => { montrer(null); $("scene").hidden = false; init
   regarder: () => { const c = moteur.creature; if (c) c.angle = lacetCamera(); },
   dbg: () => { const m = versM(fixPX.lat, fixPX.lon); return { m, manuel: PXC.manuel, fictif: PXC.fictif, org: PXC.origine, jo: PXC.joueur }; },
   pixel: () => PXC && { t: PXC.t, raf: PXC.raf, fix: fixPX, fictif: PXC.fictif, origine: PXC.origine, joueur: PXC.joueur, cibles: PXC.cibles, revele: PXC.revele && PXC.revele.c.k, manuel: PXC.manuel, carte: !!PXC.carte, N: PXC.N, signal: PXC.signal },
+  zone: () => { const z = zoneSure(0, 0, rayonJeu()); return z && z.size; },
   aller: (x, y) => { PXC.manuel = true; PXC.vise = { x, y }; }, terrain: (x, y) => terrain(x, y), carte: () => PXC.carte && { url: PXC.carte.toDataURL(), H: PXC.H, ppm: PXC.ppm }, attraper: () => attraper(), frapper: () => frapper(),
   jauge: () => moteur && moteur.creature && moteur.creature.jauge, figurine: c => ouvrirFigurine(c),
   etat: () => { const c = moteur && moteur.creature; return { angle: c && c.angle, lacet: moteur && lacetCamera(), gyro, gyroOK, trouve: c && c.trouve, consigne: $("consigne").textContent }; } };
