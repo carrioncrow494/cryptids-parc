@@ -57,7 +57,7 @@ La version 1 est dans le dépôt `carrioncrow494/chasse-monstres` et n'est pas m
 ## Habitats des créatures (mode extérieur)
 
 - Une fois la carte OSM chargée, chaque créature tirée au hasard est déplacée dans l'habitat que décrit son indice (table `HABITAT`, fonction `habiter`) : Michmuche sous un lampadaire (`highway=street_lamp`), Ness et Bloop au bord de l'eau, Huhuk dans les grands espaces, Whitby sous les arbres, Loupiote et Migou sur les chemins, les lutins dans les buissons, Bucky dans l'herbe, Ardoise et Moca près des maisons, Gadoo près de l'eau ou sous les arbres.
-- Les indices du grimoire (13/10/2026) ont été réécrits pour des enfants de 10 ans, et pour marcher en ville comme à la campagne.
+- Les indices du grimoire (14/10/2026) ont été réécrits pour des enfants de 10 ans, et pour marcher en ville comme à la campagne.
 - Le terrain est lu dans une grille d'une case par mètre (`PXC.grille`), prise sur la carte pixel art déjà dessinée. Une créature n'est jamais posée dans l'eau, dans un bâtiment, sur une route ou un parking (`INTERDIT`).
 - Si aucune case ne correspond, la créature va sur n'importe quelle case accessible. Sans carte OSM (réseau, Overpass), on garde le tirage au hasard.
 - Les créatures posées par un parent ne bougent pas. Le mode intérieur n'est pas concerné.
