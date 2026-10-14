@@ -69,6 +69,14 @@ La version 1 est dans le dépôt `carrioncrow494/chasse-monstres` et n'est pas m
 - 4 pixels par mètre (6 en intérieur) au lieu de 2 (3), avec un zoom deux fois plus petit : même échelle à l'écran, plus de détails.
 - Toutes les couleurs sont dans `PAL` (la carte est ramenée à cette palette). Les familles de toits sont dans `TOITS`. Les arbres semés ne tombent plus sur les toits, les routes ni l'eau.
 
+## Assets dessinés par Sam (14/10/2026)
+
+- Les images générées par Sam sont préparées par `python3 sources/assets.py <dossier des images>` (nécessite Pillow, numpy, scipy). Le script détoure les planches (faux damier ou fond noir), découpe les cases, rend les textures sans couture et met tout à 6 pixels par mètre dans `carte/` : `tex-*.png` (sols, chemins de terre, gravier, asphalte, eau, quatre toits), `fac-*.png` (façades), `spr-*.png` (arbres, maisons, immeubles, mobilier, eau, Halloween) et `sprites.json`. Le script repère chaque image d'origine par le début de son nom de fichier tel qu'il a été envoyé (par exemple `07f291bc` pour la planche d'arbres).
+- La carte est d'abord dessinée par le code (`dessinerCarteCode`) : elle sert à lire le terrain pour les habitats, et d'image de secours. Quand les assets sont chargés (`chargerAssets`), `dessinerAvecAssets` la redessine avec les textures et les sprites.
+- Bâtiments : église, école et supermarché d'après les étiquettes OSM ; une maison pour les petits bâtiments à peu près rectangulaires (moins de 20 m) ; un immeuble ou un commerce jusqu'à 40 m ; sinon toit et façade en textures. Une citrouille devant presque une maison sur deux.
+- Mobilier OSM dessiné : bancs, poubelles, boîtes aux lettres, bornes à incendie, arrêts de bus, feux, stops, vélos, cabines, fontaines, statues, lampadaires.
+- 6 pixels par mètre (12 en intérieur), sans zoom : même échelle à l'écran qu'avant.
+
 ## Tout le reste vient de la V1 (état au 12/10/2026)
 
 - **Contenu** : 12 traques et 13 créatures. Kumquat et Kiwi, les lutins, forment une seule traque. Sporran le Cat sìth est le guide.
