@@ -1,0 +1,2028 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Cryptids · Parc (test)</title>
+<style>
+  @font-face { font-family: "Creepster"; src: url("police-creepster.woff2") format("woff2"); font-display: swap; }
+  @font-face { font-family: "IM Fell English SC"; src: url("police-fell.woff2") format("woff2"); font-display: swap; }
+  /* Cryptids : nuit bleu-vert, cadre de pierre, planches sombres à lueur cyan ; le grimoire en parchemin sombre */
+  :root {
+    --abysse: #04121a;
+    --lagon: #0f4a57;
+    --halo: #2a9aa6;
+    --cyan: #4ff3ff;
+    --menthe: #9dffc8;
+    --brume: #d8f7f5;
+    --citrouille: #00ffcc;   /* vert lumineux #00ffcc (ancien orange, puis violet) */
+    --planche: #06141a;
+    --titre: "Creepster", "Chiller", fantasy;          /* police dégoulinante : seulement les gros titres */
+    --deco: "IM Fell English SC", Georgia, serif;     /* boutons, étiquettes */
+    --texte: "IM Fell English SC", Georgia, serif;    /* textes courants */
+    --nom: "Creepster", "Chiller", fantasy;           /* noms des créatures : police dégoulinante */
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; margin: 0; overflow: hidden; background: var(--abysse); color: var(--brume);
+    font-family: var(--texte); touch-action: manipulation; user-select: none; -webkit-user-select: none; }
+  [hidden] { display: none !important; }
+  video#camera { position: fixed; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  #scene { position: fixed; inset: 0; overflow: hidden; }
+
+  /* ---------- Écrans ---------- */
+  .ecran { position: fixed; inset: 0; overflow: hidden;
+    background: radial-gradient(ellipse 70% 55% at 50% 48%, var(--halo) 0%, var(--lagon) 38%, var(--abysse) 85%); }
+  .ecran.voile { background: radial-gradient(ellipse 70% 55% at 50% 48%, rgba(42,154,166,.88) 0%, rgba(15,74,87,.92) 40%, rgba(4,18,26,.97) 85%); }
+  .decor, .cadre { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+  .decor { opacity: .55; }
+  .contenu { position: relative; z-index: 2; height: 100%; display: flex; flex-direction: column; align-items: center;
+    justify-content: center; gap: 20px; padding: calc(56px + env(safe-area-inset-top, 0px)) 34px calc(48px + env(safe-area-inset-bottom, 0px)); text-align: center; }
+  .defile { justify-content: flex-start; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+
+  h1, .titre { margin: 0; font-family: var(--titre); font-weight: 400; line-height: .95; letter-spacing: .05em;
+    text-wrap: balance; background: linear-gradient(180deg, var(--menthe) 10%, #3fd6b4 60%, #1d8f86 100%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    filter: drop-shadow(0 3px 0 var(--abysse)) drop-shadow(0 0 14px rgba(79,243,255,.45)); }
+  h1 { font-size: clamp(3.6rem, 19vw, 6rem); }
+  .titre { font-size: clamp(2.8rem, 14vw, 4.6rem); }
+  h2 { margin: 0; font-family: var(--titre); font-weight: 400; font-size: clamp(2.1rem, 10vw, 3rem); letter-spacing: .05em;
+    color: var(--menthe); text-shadow: 0 0 14px rgba(79,243,255,.5); }
+  .sous-titre { font-family: var(--deco); font-weight: 400; letter-spacing: .14em; color: var(--cyan); font-size: 1.05rem; }
+  .ecran p { margin: 0; max-width: 32ch; font-size: 1.15rem; line-height: 1.4; text-shadow: 0 2px 6px var(--abysse); }
+  .colonne { display: flex; flex-direction: column; align-items: center; gap: 16px; width: 100%; }
+
+  /* Planche sombre */
+  .planche { position: relative; min-width: 250px; padding: 15px 30px 13px; border: 2px solid rgba(79,243,255,.55);
+    border-radius: 30px 12px 28px 14px / 22px 28px 16px 26px; color: var(--cyan);
+    background: linear-gradient(180deg, #102a33 0%, var(--planche) 55%, #020a0e 100%);
+    box-shadow: 0 6px 0 #01080b, 0 0 18px rgba(79,243,255,.35), inset 0 1px 0 rgba(157,255,200,.25);
+    font-family: var(--deco); font-weight: 400; font-size: 1.6rem; letter-spacing: .08em; text-shadow: 0 0 10px var(--cyan); text-decoration: none; }
+  button.planche, a.planche { cursor: pointer; transition: transform .12s, box-shadow .12s; display: inline-block; }
+  button.planche:active, a.planche:active { transform: translateY(4px); box-shadow: 0 2px 0 #01080b, 0 0 24px rgba(79,243,255,.6); }
+  .planche.principal { font-size: 1.9rem; padding: 18px 34px 15px; }
+  .planche.petit { min-width: 0; font-size: 1.2rem; padding: 11px 22px 9px; }
+  .planche.orange { color: var(--citrouille); border-color: rgba(0,255,204,.6); text-shadow: 0 0 10px rgba(0,255,204,.7);
+    box-shadow: 0 6px 0 #01080b, 0 0 16px rgba(0,255,204,.3); }
+  button:focus-visible, a:focus-visible { outline: 3px solid var(--menthe); outline-offset: 5px; }
+  .lien { background: none; border: 0; color: #8fbfc4; font: inherit; font-size: 1rem; text-decoration: underline; padding: 8px; cursor: pointer; }
+  .boutons { display: flex; flex-wrap: wrap; justify-content: center; gap: 16px; }
+  #erreur { color: var(--citrouille); }
+
+  /* bouton du son, en haut à droite */
+  .son { position: fixed; z-index: 30; top: calc(10px + env(safe-area-inset-top, 0px)); left: 12px; width: 46px; height: 46px; border-radius: 50%;
+    border: 2px solid rgba(79,243,255,.5); background: rgba(2,10,14,.7); color: var(--cyan); font-size: 1.3rem; cursor: pointer; }
+  .son.coupe { color: #567; border-color: #345; }
+
+  /* ---------- Parents ---------- */
+  .choix { width: 100%; max-width: 460px; display: flex; flex-direction: column; gap: 12px; padding: 18px 18px 20px; text-align: left;
+    border: 2px solid #2f6670; border-radius: 22px 10px 22px 10px; background: linear-gradient(180deg, rgba(16,42,51,.92), rgba(2,10,14,.92)); }
+  .choix.actif { border-color: var(--cyan); box-shadow: 0 0 16px rgba(79,243,255,.35); }
+  .choix h3 { margin: 0; font-family: var(--deco); font-weight: 400; font-size: 1.5rem; letter-spacing: .05em; color: var(--cyan); }
+  .choix p { font-size: 1.05rem; max-width: none; }
+  .choix .boutons { justify-content: flex-start; }
+  .etat { font-family: var(--deco); font-weight: 400; letter-spacing: .1em; color: var(--citrouille); }
+
+  /* ---------- Intro : Sporran raconte ---------- */
+  #intro { background: radial-gradient(ellipse 80% 60% at 30% 80%, rgba(42,154,166,.6), var(--abysse) 75%); }
+  #guide { position: absolute; left: 50%; transform: translateX(-50%); bottom: calc(-4px + env(safe-area-inset-bottom, 0px));
+    width: min(56vw, 260px); z-index: 3; filter: drop-shadow(0 0 16px rgba(79,243,255,.35)); pointer-events: none; }   /* Sporran centré sous la bulle */
+  .bulle { position: absolute; z-index: 4; left: 16px; right: 16px; bottom: calc(min(56vw, 260px) * .86 + env(safe-area-inset-bottom, 0px));
+    max-width: 560px; margin: 0 auto; padding: 18px 20px 16px; border: 2px solid rgba(79,243,255,.55); border-radius: 22px 22px 22px 6px;
+    background: rgba(3,14,20,.92); box-shadow: 0 0 22px rgba(79,243,255,.25); display: flex; flex-direction: column; gap: 14px; }
+  .bulle p { margin: 0; font-size: 1.18rem; line-height: 1.45; min-height: 7.5em; white-space: pre-line; }
+  .bulle .qui { font-family: var(--nom); text-transform: none; font-weight: 400; letter-spacing: .1em; color: var(--citrouille); font-size: 1.05rem; }
+  .bulle .boutons { justify-content: flex-end; }
+
+  /* ---------- Chasse ---------- */
+  #vue { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+  #chargement { position: absolute; top: 50%; left: 16px; right: 16px; transform: translateY(-50%); text-align: center;
+    font-family: var(--deco); font-weight: 400; font-size: 1.4rem; letter-spacing: .08em; color: var(--cyan); text-shadow: 0 0 10px var(--abysse); }
+  .hud-haut { position: absolute; top: calc(10px + env(safe-area-inset-top, 0px)); left: 50%; transform: translateX(-50%);
+    min-width: 0; max-width: calc(100% - 130px); font-size: 1.2rem; padding: 9px 22px 7px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .quitter { position: absolute; top: calc(10px + env(safe-area-inset-top, 0px)); right: 12px; width: 46px; height: 46px; border-radius: 50%;
+    border: 2px solid rgba(79,243,255,.5); background: rgba(2,10,14,.7); color: var(--cyan); font-size: 1.3rem; cursor: pointer; z-index: 5; }
+  .consigne { position: absolute; left: 16px; right: 16px; bottom: calc(132px + env(safe-area-inset-bottom, 0px));
+    text-align: center; font-size: 1.15rem; text-shadow: 0 0 6px var(--abysse), 0 2px 4px var(--abysse); }
+  .fleche { position: absolute; top: 50%; font-family: var(--deco); font-weight: 400; font-size: 4rem; color: var(--cyan);
+    text-shadow: 0 0 14px var(--cyan); transform: translateY(-50%); animation: pouls 1s ease-in-out infinite; }
+  #gauche { left: 14px; } #droite { right: 14px; }
+  @keyframes pouls { 50% { opacity: .3; } }
+  #viseur { position: absolute; left: 50%; top: 45%; width: 62vmin; height: 62vmin; transform: translate(-50%, -50%);
+    border: 3px solid var(--cyan); border-radius: 28px; box-shadow: 0 0 0 100vmax rgba(4,18,26,.35), 0 0 22px var(--cyan) inset, 0 0 22px var(--cyan);
+    animation: pouls 1.4s ease-in-out infinite; pointer-events: none; }
+  #radar { position: absolute; top: calc(70px + env(safe-area-inset-top, 0px)); left: 50%; transform: translateX(-50%);
+    display: flex; align-items: center; gap: 12px; padding: 8px 18px; border-radius: 999px; background: rgba(2,10,14,.75); border: 2px solid rgba(0,255,204,.55); }
+  #radarFleche { width: 34px; height: 34px; transition: transform .25s; }
+  #radarTexte { font-family: var(--deco); font-weight: 400; letter-spacing: .08em; color: var(--citrouille); font-size: 1.2rem; white-space: nowrap; }
+  .barre-bas { position: absolute; left: 0; right: 0; bottom: 0; z-index: 3; display: flex; align-items: flex-end; justify-content: center; gap: 22px;
+    padding: 14px 16px calc(16px + env(safe-area-inset-bottom, 0px)); background: linear-gradient(180deg, transparent, rgba(2,10,14,.8) 45%); }
+  #sceau { width: 92px; height: 92px; border-radius: 50%; border: 3px solid var(--cyan); cursor: pointer;
+    background: radial-gradient(circle, rgba(79,243,255,.35), rgba(4,18,26,.9) 70%); box-shadow: 0 0 22px rgba(79,243,255,.6);
+    display: grid; place-items: center; }
+  #sceau svg { width: 62px; height: 62px; }
+  #sceau:disabled { opacity: .35; box-shadow: none; }
+  #sceau.pret { animation: appel 1s ease-in-out infinite; }
+  @keyframes appel { 50% { box-shadow: 0 0 34px var(--cyan), 0 0 6px #fff inset; } }
+  .rond { width: 58px; height: 58px; border-radius: 50%; border: 2px solid rgba(79,243,255,.5); background: rgba(2,10,14,.75);
+    color: var(--cyan); font-family: var(--deco); font-weight: 400; font-size: .85rem; letter-spacing: .05em; cursor: pointer; }
+  .legende { font-size: .8rem; color: var(--brume); text-align: center; margin-top: 4px; }
+  #sigil { position: fixed; left: 0; top: 0; width: 82vmin; height: 82vmin; margin: -41vmin 0 0 -41vmin; z-index: 8; pointer-events: none; }
+  #eclair { position: fixed; inset: 0; background: var(--brume); opacity: 0; pointer-events: none; z-index: 9; }
+  #eclair.flash { animation: flash .5s ease-out; }
+  @keyframes flash { 0% { opacity: .9; } 100% { opacity: 0; } }
+  #bandeau { position: absolute; left: 16px; right: 16px; top: 38%; z-index: 6; text-align: center; padding: 16px; border-radius: 18px;
+    background: rgba(2,10,14,.82); border: 2px solid var(--menthe); font-size: 1.25rem; line-height: 1.35; }
+
+  /* ---------- Sauvé ! ---------- */
+  .portrait { width: min(56vw, 260px); aspect-ratio: 1; object-fit: contain; filter: drop-shadow(0 0 22px rgba(79,243,255,.55)); }
+  .fiche { max-width: 34ch; text-align: left; display: flex; flex-direction: column; gap: 8px; }
+  .fiche .nom { font-family: var(--nom); text-transform: none; font-weight: 400; font-size: 1.6rem; letter-spacing: .05em; color: var(--citrouille); text-align: center; }
+  .fiche p { font-size: 1.12rem; }
+  .final { color: var(--citrouille); font-weight: 600; }
+
+  /* ---------- Grimoire ---------- */
+  #grimoire { z-index: 6; }
+  .compte { font-family: var(--deco); font-weight: 400; letter-spacing: .12em; color: var(--cyan); font-variant-numeric: tabular-nums; }
+  .grille { width: 100%; max-width: 560px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+  .carte { min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 10px 8px 12px;
+    border: 2px solid #2f6670; border-radius: 22px 10px 22px 10px; background: linear-gradient(180deg, rgba(16,42,51,.92), rgba(2,10,14,.92));
+    box-shadow: 0 4px 0 #01080b; }
+  .carte.prise { border-color: var(--cyan); box-shadow: 0 4px 0 #01080b, 0 0 16px rgba(79,243,255,.35); }
+  .carte.libre { border-color: var(--citrouille); }
+  .carte.gardien { grid-column: 1 / -1; border-color: var(--menthe); }
+  .carte img { width: 100%; aspect-ratio: 1; object-fit: contain; }
+  .carte.gardien img { width: 50%; }
+  .carte img.ombre { filter: brightness(0) drop-shadow(0 0 6px rgba(79,243,255,.7)); opacity: .75; }
+  .carte .nom { font-family: var(--nom); text-transform: none; font-weight: 400; font-size: 1.15rem; letter-spacing: .04em; color: var(--cyan); }
+  .carte .astuce { font-size: .98rem; line-height: 1.25; color: var(--brume); }
+  .carte .astuce b { color: var(--citrouille); font-weight: 600; }
+  .mini { margin-top: 4px; padding: 7px 14px 6px; border: 2px solid var(--citrouille); border-radius: 999px; background: rgba(0,255,204,.12);
+    color: var(--citrouille); font-family: var(--deco); font-weight: 400; font-size: .95rem; letter-spacing: .06em; cursor: pointer; }
+  .mini.cyan { border-color: var(--cyan); color: var(--cyan); background: rgba(79,243,255,.1); }
+  .mini:disabled { opacity: .35; cursor: default; }
+
+  /* ---------- Relâche et figurine ---------- */
+  .plein { position: fixed; inset: 0; z-index: 12; background: #000; display: flex; align-items: center; justify-content: center; }
+  #videoRelache { width: 100%; height: 100%; object-fit: contain; }
+  #envol { width: min(70vw, 340px); aspect-ratio: 1; object-fit: contain; }
+  #envol.part { animation: part 2.4s ease-in forwards; }
+  @keyframes part { 0% { transform: scale(1); opacity: 1; } 40% { transform: scale(1.08) translateY(-4vh); } 100% { transform: scale(.2) translateY(-60vh); opacity: 0; } }
+  .plein-bas { position: absolute; left: 0; right: 0; bottom: 0; display: flex; flex-direction: column; align-items: center; gap: 12px;
+    padding: 18px 16px calc(22px + env(safe-area-inset-bottom, 0px)); background: linear-gradient(180deg, transparent, rgba(0,0,0,.8) 40%); }
+  .plein-titre { font-family: var(--deco); font-weight: 400; font-size: 1.6rem; letter-spacing: .06em; color: var(--menthe); text-align: center; text-shadow: 0 0 12px rgba(79,243,255,.5); }
+  #figurine { background: radial-gradient(ellipse 70% 60% at 50% 45%, #1d5a66, #04121a 75%); }
+  #figCanvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: none; cursor: grab; }
+  .socle-haut { position: absolute; top: calc(14px + env(safe-area-inset-top, 0px)); left: 64px; right: 64px; text-align: center; pointer-events: none; }
+  .socle-haut .nom { font-family: var(--nom); text-transform: none; font-weight: 400; font-size: 1.6rem; line-height: 1.05; letter-spacing: .06em; color: var(--citrouille); text-shadow: 0 0 12px rgba(0,255,204,.5); }
+  .socle-haut .aide { font-size: 1rem; color: #9fc9cc; }
+  .compteur-choix { display: flex; align-items: center; gap: 22px; }
+  .rond.gros { width: 64px; height: 64px; font-size: 2.2rem; font-family: var(--texte); line-height: 1; }
+  .rond:disabled { opacity: .3; }
+  .grand-nombre { min-width: 2ch; font-family: var(--titre); font-size: 5.5rem; line-height: 1; color: var(--citrouille);
+    text-shadow: 0 0 22px rgba(0,255,204,.55); font-variant-numeric: tabular-nums; }
+  .liste-qr { margin: 0; padding-left: 20px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 14px; font-size: 1.05rem; }
+  .liste-qr b { color: var(--citrouille); font-weight: 600; }
+  .croix { position: absolute; z-index: 20; top: calc(10px + env(safe-area-inset-top, 0px)); right: 12px; width: 42px; height: 42px; border-radius: 50%;
+    border: 2px solid rgba(79,243,255,.5); background: rgba(2,10,14,.75); color: var(--cyan); font-size: 1.15rem; line-height: 1; cursor: pointer; }
+  .chat-menu { position: absolute; z-index: 1; left: 0; bottom: calc(4px + env(safe-area-inset-bottom, 0px)); width: min(40vw, 200px);
+    pointer-events: none; filter: drop-shadow(0 0 14px rgba(79,243,255,.3)); }
+  .onglets { display: flex; gap: 10px; }
+  .grille-choix { width: 100%; max-width: 520px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+  .choix-carte { position: relative; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 4px 8px;
+    border: 2px solid #2f6670; border-radius: 16px 8px 16px 8px; background: rgba(2,10,14,.85); color: var(--brume); font: inherit; cursor: pointer; }
+  .choix-carte img { width: 100%; aspect-ratio: 1; object-fit: contain; filter: brightness(0) drop-shadow(0 0 4px rgba(79,243,255,.6)); opacity: .55; }
+  .choix-carte span { font-size: .85rem; line-height: 1.1; }
+  .choix-carte::after { content: ""; position: absolute; top: 6px; right: 6px; width: 20px; height: 20px; border-radius: 6px; border: 2px solid #4a8a92; }
+  .choix-carte.coche { border-color: var(--citrouille); box-shadow: 0 0 12px rgba(0,255,204,.35); }
+  .choix-carte.coche img { opacity: 1; filter: brightness(0) drop-shadow(0 0 6px rgba(0,255,204,.9)); }
+  .choix-carte.coche::after { content: "✓"; display: grid; place-items: center; background: var(--citrouille); border-color: var(--citrouille); color: #04121a; font-weight: 700; font-size: .9rem; }
+  .carte-mode { cursor: pointer; transition: opacity .3s, transform .15s; }
+  .carte-mode.eteint { opacity: .35; filter: grayscale(.7); }
+  .carte-mode.actif::after { content: "✓ Choisi"; align-self: flex-end; font-family: var(--deco); font-weight: 400; letter-spacing: .08em; color: var(--citrouille); }
+  .chat-entree { width: min(60vw, 280px); filter: drop-shadow(0 0 18px rgba(79,243,255,.4)); }
+  .clignote { animation: pouls 1.6s ease-in-out infinite; font-size: 1.25rem; }
+  #entree { z-index: 40; cursor: pointer; }
+  .planche:disabled { opacity: .35; filter: grayscale(.6); }
+  /* retour visuel quand on touche un bouton */
+  .appuye { animation: appuye .45s ease-out; }
+  @keyframes appuye { 0% { transform: scale(.92); filter: brightness(1.8) drop-shadow(0 0 14px var(--cyan)); } 60% { transform: scale(1.03); } 100% { transform: scale(1); filter: none; } }
+  @media (prefers-reduced-motion: reduce) { .fleche, #eclair.flash, #viseur, #sceau.pret { animation: none; } }
+
+  /* ---------- V2 : carte du parc ---------- */
+  #carteParents { display: flex; flex-direction: column; }
+  #carteParents[hidden] { display: none; }
+  .entete-carte { position: relative; padding: calc(16px + env(safe-area-inset-top, 0px)) 70px 10px 74px; text-align: center; }
+  .entete-carte h2 { margin: 0; font-size: 1.6rem; }
+  .entete-carte .croix { top: calc(10px + env(safe-area-inset-top, 0px)); }
+  #carteP { flex: 1; min-height: 0; border-top: 2px solid rgba(79,243,255,.5); border-bottom: 2px solid rgba(79,243,255,.5); }
+  .panneau-carte { display: flex; flex-direction: column; gap: 8px; padding: 10px 12px calc(12px + env(safe-area-inset-bottom, 0px)); background: rgba(2,10,14,.94); }
+  .panneau-carte p { margin: 0; font-size: 1rem; text-align: center; color: #d8f6f8; min-height: 2.6em; }
+  .panneau-carte .boutons { justify-content: center; flex-wrap: wrap; gap: 8px; }
+  .bande-creatures { display: flex; gap: 8px; overflow-x: auto; padding: 2px 2px 6px; -webkit-overflow-scrolling: touch; }
+  .puce { flex: 0 0 auto; width: 74px; position: relative; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 4px 2px;
+    border: 2px solid rgba(79,243,255,.3); border-radius: 14px; background: rgba(4,18,26,.85); color: #cfeff3; font-size: .72rem; cursor: pointer; }
+  .puce img { width: 50px; height: 50px; object-fit: contain; }
+  .puce span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 68px; }
+  .puce.placee::after { content: "✓"; position: absolute; top: 1px; right: 6px; color: var(--citrouille); font-weight: 700; }
+  .puce.choisie { border-color: var(--citrouille); box-shadow: 0 0 12px rgba(0,255,204,.55); }
+  .marqueur { width: 46px; height: 46px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    background: rgba(2,10,14,.85); border: 2px solid var(--citrouille); box-shadow: 0 0 10px rgba(0,255,204,.6); transition: transform .2s; }
+  .marqueur img { width: 40px; height: 40px; object-fit: contain; }
+  .marqueur.choisi { border-color: var(--cyan); box-shadow: 0 0 14px var(--cyan); transform: scale(1.2); }
+  .marqueur.sauve { border-color: rgba(79,243,255,.6); opacity: .75; }
+  .moi { width: 18px; height: 18px; border-radius: 50%; background: #3aa0ff; border: 3px solid #fff; box-shadow: 0 0 12px #3aa0ff; }
+  .mystere { width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: var(--deco); font-weight: 400;
+    font-size: 1.4rem; color: var(--cyan); text-shadow: 0 0 8px var(--cyan); background: rgba(2,10,14,.8); border: 2px solid var(--cyan); animation: pouls 1.4s ease-in-out infinite; }
+  .leaflet-container { font-family: inherit; background: #0a1a20; }
+
+  /* V3 : textes de récit */
+  #texteIntro, .fiche p, #ficheTexte { font-family: var(--texte); font-size: 1.05rem; line-height: 1.55; }
+  /* noms des créatures en IM Fell, partout */
+  #nomMonstre, #figNom, #ficheNom, .choix-carte span, .puce span, #listeParc li, .liste-qr li { font-family: var(--nom); text-transform: none; font-weight: 400; letter-spacing: .05em; }
+  #nomMonstre { font-size: 1.45rem; }
+
+  /* V3 : picto du grimoire (livre ouvert) */
+  .picto-livre { width: 1.5em; height: 1.15em; vertical-align: -.22em; filter: drop-shadow(0 0 4px rgba(79,243,255,.6)); }
+  .avec-picto .picto-livre { margin-right: .45em; }
+  .rond.ouvrir-grimoire .picto-livre { width: 34px; height: 26px; vertical-align: middle; }
+  .titre-grimoire .picto-livre { width: .9em; height: .7em; margin-right: .25em; vertical-align: -.05em; }
+  /* V3 : volume général */
+  .panneau-son { position: fixed; z-index: 31; top: calc(62px + env(safe-area-inset-top, 0px)); left: 12px; display: flex; align-items: center; gap: 10px;
+    padding: 12px 16px; border-radius: 999px; border: 2px solid rgba(79,243,255,.5); background: rgba(2,10,14,.92); box-shadow: 0 0 16px rgba(79,243,255,.3); }
+  .panneau-son input { width: min(56vw, 220px); accent-color: var(--cyan); height: 28px; }
+  .petit-son { font-size: 1.1rem; }
+
+  /* ---------- V3 : carte pixel art ---------- */
+  #pixel { position: absolute; inset: 0; background: #1d2b1f; }
+  #pixelCanvas { position: absolute; inset: 0; width: 100%; height: 100%; image-rendering: pixelated; touch-action: none; }
+  .lanterne { position: absolute; inset: 0; pointer-events: none;
+    background: radial-gradient(circle at 50% 52%, rgba(0,0,0,0) 0, rgba(0,0,0,0) 30%, rgba(6,8,22,.45) 58%, rgba(6,8,22,.82) 100%); }
+  #pixelSprites { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+  .pix-creature { position: absolute; left: 0; top: 0; image-rendering: pixelated; pointer-events: auto; cursor: pointer;
+    filter: drop-shadow(0 0 6px rgba(157,255,200,.9)); will-change: transform; }
+  .pouf { position: absolute; left: 0; top: 0; width: 60px; height: 60px; margin: -30px 0 0 -30px; border-radius: 50%; pointer-events: none;
+    background: radial-gradient(circle, rgba(220,255,250,.95) 0 20%, rgba(157,255,200,.5) 40%, rgba(0,0,0,0) 70%); animation: pouf .5s ease-out forwards; }
+  @keyframes pouf { from { transform: scale(.3); opacity: 1; } to { transform: scale(2.2); opacity: 0; } }
+  #marcher { position: absolute; right: 14px; bottom: calc(196px + env(safe-area-inset-bottom, 0px)); font-size: 1.5rem; }
+  #marcher.actif { border-color: var(--citrouille); box-shadow: 0 0 14px rgba(0,255,204,.7); }
+  /* détecteur EMF */
+  #detecteur { position: absolute; z-index: 5; top: calc(66px + env(safe-area-inset-top, 0px)); left: 50%; transform: translateX(-50%);
+    display: flex; align-items: center; gap: 12px; padding: 9px 16px 10px 12px; border-radius: 18px 18px 26px 26px;
+    background: linear-gradient(180deg, #3a3f48, #1b1e24 60%, #121418); border: 2px solid #6a717d; box-shadow: 0 5px 0 #08090b, 0 0 20px rgba(0,0,0,.6); }
+  .emf-oeil { width: 34px; height: 34px; border-radius: 50%; background: #2a0d10; border: 3px solid #0d0e10; box-shadow: inset 0 3px 5px rgba(0,0,0,.7); transition: background .15s, box-shadow .15s; }
+  .emf-oeil.flash { box-shadow: 0 0 18px 6px var(--led), inset 0 0 6px rgba(255,255,255,.6); background: var(--led); }
+  .emf-titre { font-family: var(--deco); font-weight: 400; color: #cfd6df; font-size: .95rem; letter-spacing: .08em; margin-bottom: 4px; }
+  .emf-leds { display: flex; gap: 7px; }
+  .emf-leds i { width: 20px; height: 20px; border-radius: 50%; background: #1d1f24; border: 2px solid #0b0c0e; box-shadow: inset 0 2px 3px rgba(0,0,0,.7); transition: background .12s, box-shadow .12s; }
+  .emf-leds i:nth-child(1) { --led: #ff3b3b; } .emf-leds i:nth-child(2) { --led: #ff7a2e; } .emf-leds i:nth-child(3) { --led: #ffd23b; }
+  .emf-leds i:nth-child(4) { --led: #b8f03b; } .emf-leds i:nth-child(5) { --led: #3bff6e; }
+  .emf-leds i.on { background: var(--led); box-shadow: 0 0 10px var(--led), inset 0 -2px 3px rgba(0,0,0,.35); }
+  /* jauge de capture */
+  #jauge { position: absolute; z-index: 5; top: calc(66px + env(safe-area-inset-top, 0px)); left: 50%; transform: translateX(-50%); width: min(80vw, 320px); }
+  .jauge-titre { text-align: center; font-family: var(--deco); font-weight: 400; color: var(--cyan); letter-spacing: .08em; margin-bottom: 5px; text-shadow: 0 0 8px var(--abysse); }
+  #jaugeEtoiles { color: var(--citrouille); letter-spacing: .1em; }
+  .jauge-fond { height: 20px; border-radius: 999px; border: 2px solid var(--cyan); background: rgba(2,10,14,.85); overflow: hidden; box-shadow: 0 0 12px rgba(79,243,255,.4); }
+  #jaugeBarre { height: 100%; width: 0; background: linear-gradient(90deg, var(--citrouille), var(--cyan)); transition: width .1s; }
+</style>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"
+} }
+</script>
+</head>
+<body>
+<video id="camera" playsinline autoplay muted></video>
+<button id="son" class="son" type="button" aria-label="Volume">♪</button>
+<div id="panneauSon" class="panneau-son" hidden>
+  <span class="petit-son" aria-hidden="true">🔈</span>
+  <input id="volume" type="range" min="0" max="100" step="1" aria-label="Volume général">
+  <span class="petit-son" aria-hidden="true">🔊</span>
+</div>
+
+<!-- Décor réutilisé par les écrans -->
+<template id="tpl-decor">
+  <svg class="cadre" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+    <defs><linearGradient id="roche" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#5fa3a8"/><stop offset=".45" stop-color="#2f6a72"/><stop offset="1" stop-color="#123a42"/></linearGradient></defs>
+    <path fill="url(#roche)" fill-rule="evenodd" stroke="#03141a" stroke-width=".5"
+      d="M0 0H100V100H0Z M8 9 L17 6 L25 10 L38 7 L52 10 L66 6 L79 9 L92 7 L93 20 L90 33 L94 46 L91 59 L94 71 L91 83 L92 90 L79 92 L65 89 L51 92 L36 89 L22 92 L8 90 L6 78 L9 65 L5 52 L9 39 L6 25 Z"/>
+    <path fill="none" stroke="#9de8e6" stroke-opacity=".35" stroke-width=".35" d="M3 3 L22 2 L48 4 L75 2 L97 3 L98 30 L96 60 L98 97 L70 98 L40 96 L2 98 L3 70 L1 40 Z"/>
+  </svg>
+</template>
+
+<!-- Entrée : le premier toucher lance la musique -->
+<div id="entree" class="ecran">
+  <div class="contenu">
+    <h1>Cryptids</h1>
+    <img class="chat-entree" src="menu-catsith-2.webp" alt="">
+    <p class="clignote">Touche l'écran pour ouvrir le grimoire</p>
+  </div>
+</div>
+
+<!-- Accueil -->
+<div id="accueil" class="ecran" hidden>
+  <img class="chat-menu" src="menu-catsith-3.webp" alt="">
+  <div class="contenu">
+    <div class="colonne">
+      <h1>Cryptids</h1>
+      <div class="sous-titre">Le grimoire des créatures perdues</div>
+    </div>
+    <p id="intro-accueil">Des créatures se sont échappées du grimoire de Sporran. Aide-le à les retrouver !</p>
+    <div class="colonne">
+      <button id="commencer" class="planche principal" type="button">Commencer l'aventure</button>
+      <button class="planche petit ouvrir-grimoire avec-picto" type="button"><svg class="picto-livre" viewBox="0 0 48 36" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"><path d="M24 8C18 4 10 3 3 5v26c7-2 15-1 21 3 6-4 14-5 21-3V5c-7-2-15-1-21 3z"/><path d="M24 8v26"/><path d="M8 11c4-.6 8-.2 11.5 1.4M8 16c4-.6 8-.2 11.5 1.4M8 21c4-.6 8-.2 11.5 1.4M40 11c-4-.6-8-.2-11.5 1.4"/></g><path d="M34.5 16.5l1.3 2.8 3 .4-2.2 2 .6 3-2.7-1.5-2.7 1.5.6-3-2.2-2 3-.4z" fill="currentColor"/></svg>Mon grimoire</button>
+      <button id="defiAccueil" class="planche petit orange" type="button" hidden>Défi de Sporran</button>
+    <button id="ouvrirParents" class="planche petit orange" type="button">Préparer le sauvetage</button>
+    </div>
+    <p id="modeActuel" class="etat"></p>
+  </div>
+</div>
+
+<!-- Nouvelle aventure : combien de cryptides ? -->
+<div id="partie" class="ecran" hidden>
+  <button class="croix" type="button" data-ferme="partie" aria-label="Fermer">✕</button>
+  <img class="chat-menu" src="menu-catsith-2.webp" alt="">
+  <div class="contenu defile">
+    <h2>Nouvelle aventure</h2>
+    <div id="reprise" class="choix" hidden>
+      <h3>Reprendre</h3>
+      <p id="repriseTexte"></p>
+      <div class="boutons"><button id="reprendre" class="mini cyan" type="button">Continuer cette aventure</button></div>
+    </div>
+    <div id="blocParc" class="choix" hidden>
+      <h3>Cachés dans le parc</h3>
+      <ul id="listeParc" class="liste-qr"></ul>
+      <div class="boutons"><button id="modifierCarte" class="mini" type="button">Modifier la carte</button></div>
+    </div>
+    <div class="onglets">
+      <button id="ongletHasard" class="mini cyan" type="button">Au hasard</button>
+      <button id="ongletChoix" class="mini" type="button">Je choisis</button>
+    </div>
+    <div id="blocHasard" class="colonne">
+    <p>Combien de cryptides veux-tu sauver ?</p>
+    <div class="compteur-choix">
+      <button id="moins" class="rond gros" type="button" aria-label="Une créature de moins">−</button>
+      <div id="nombre" class="grand-nombre">6</div>
+      <button id="plus" class="rond gros" type="button" aria-label="Une créature de plus">+</button>
+    </div>
+    <div class="boutons"><button class="mini" data-n="2" type="button">2</button><button class="mini" data-n="4" type="button">4</button>
+      <button class="mini" data-n="6" type="button">6</button><button class="mini" data-n="8" type="button">8</button><button class="mini" data-n="12" type="button">12</button></div>
+    </div>
+    <div id="blocChoix" class="colonne" hidden>
+      <p>Coche les cryptides à sauver (au moins 2).</p>
+      <div id="grilleChoix" class="grille-choix"></div>
+      <div class="boutons"><button id="toutCocher" class="mini" type="button">Tout cocher</button><button id="toutDecocher" class="mini" type="button">Tout décocher</button></div>
+    </div>
+    <p id="duree" class="etat"></p>
+    <div id="aCacher" class="choix" hidden>
+      <h3>QR codes à cacher</h3>
+      <p>Pour les parents : cachez seulement ces QR codes de la planche.</p>
+      <ul id="listeQr" class="liste-qr"></ul>
+      <div class="boutons"><button id="retirer" class="mini" type="button">Tirer d'autres créatures</button></div>
+    </div>
+    <button id="cestParti" class="planche principal" type="button">C'est parti !</button>
+    <button id="fermerPartie" class="lien" type="button">Retour</button>
+  </div>
+</div>
+
+<!-- Préparer le sauvetage (parents) -->
+<div id="parents" class="ecran" hidden>
+  <button class="croix" type="button" data-ferme="parents" aria-label="Fermer">✕</button>
+  <img class="chat-menu" src="menu-catsith-3.webp" alt="">
+  <div class="contenu defile">
+    <h2>Préparer le sauvetage</h2>
+    <p>Pour les parents : choisissez comment les créatures seront cachées.</p>
+    <div class="choix carte-mode" data-mode="qr" role="button" tabindex="0">
+      <h3>QR codes à cacher</h3>
+      <p>Imprimez la planche, découpez les cartes et cachez-les où vous voulez. Les enfants les trouvent puis les visent avec l'œil magique.</p>
+      <div class="boutons"><a class="mini cyan" href="qr-codes-cryptids.pdf" target="_blank" rel="noopener">Planche à imprimer</a></div>
+    </div>
+    <div class="choix carte-mode" data-mode="interieur" role="button" tabindex="0">
+      <h3>Géolocalisation · intérieur</h3>
+      <p>Les créatures se cachent à moins de 10 m. L'enfant suit le détecteur sur une carte en pixel art. Dans une maison, le GPS est souvent imprécis : on peut alors avancer en touchant la carte (bouton 👣).</p>
+    </div>
+    <div class="choix carte-mode" data-mode="exterieur" role="button" tabindex="0">
+      <h3>Géolocalisation · extérieur</h3>
+      <p>Les créatures se cachent à moins de 20 m, sur une carte en pixel art de vos alentours (arbres, maisons, chemins, eau). Vous pouvez aussi les placer vous-même dans un parc.</p>
+      <div class="boutons"><button class="mini" type="button" data-placer="1">Placer moi-même les créatures</button></div>
+    </div>
+    <p id="modeParents" class="etat"></p>
+    <button id="fermerParents" class="planche petit" type="button">Retour</button>
+    <button id="raz" class="lien" type="button">Remettre toute l'aventure à zéro</button>
+  </div>
+</div>
+
+<!-- Carte du parc (parents) -->
+<div id="carteParents" class="ecran" hidden>
+  <div class="entete-carte"><h2>Cacher les créatures</h2><button class="croix" type="button" data-ferme="carteParents" aria-label="Fermer">✕</button></div>
+  <div id="carteP"></div>
+  <div class="panneau-carte">
+    <p id="aideCarte"></p>
+    <div id="puces" class="bande-creatures"></div>
+    <div class="boutons">
+      <button id="centrerMoi" class="mini cyan" type="button">Ma position</button>
+      <button id="retirerLieu" class="mini" type="button" hidden>Retirer</button>
+      <button id="effacerLieux" class="mini" type="button">Tout effacer</button>
+      <button id="finiCarte" class="mini cyan" type="button">Terminé</button>
+    </div>
+  </div>
+</div>
+
+<!-- Introduction : Sporran le Cat sìth -->
+<div id="intro" class="ecran" hidden>
+  <button class="croix" type="button" data-ferme="intro" aria-label="Fermer">✕</button>
+  <img id="guide" src="menu-catsith-1.webp" alt="Sporran, le Cat sìth">
+  <div class="bulle">
+    <div class="qui">Sporran, le Cat sìth</div>
+    <p id="texteIntro"></p>
+    <div class="boutons"><button id="passerIntro" class="lien" type="button">Passer</button><button id="suiteIntro" class="planche petit" type="button">Suite</button></div>
+  </div>
+</div>
+
+<!-- Œil magique -->
+<div id="scene" hidden>
+  <canvas id="vue"></canvas>
+  <!-- V3 : carte pixel art des alentours -->
+  <div id="pixel" hidden>
+    <canvas id="pixelCanvas"></canvas>
+    <div class="lanterne"></div>
+    <div id="pixelSprites"></div>
+    <button id="marcher" class="rond" type="button" aria-label="Avancer en touchant la carte">👣</button>
+  </div>
+  <div id="detecteur" hidden>
+    <div class="emf-oeil"></div>
+    <div><div class="emf-titre">Détecteur</div><div class="emf-leds"><i></i><i></i><i></i><i></i><i></i></div></div>
+  </div>
+  <div id="jauge" hidden><div class="jauge-titre">Capture <span id="jaugeEtoiles"></span></div><div class="jauge-fond"><div id="jaugeBarre"></div></div></div>
+  <button id="quitter" class="quitter" type="button" aria-label="Retour à l'accueil">✕</button>
+  <div id="viseur" hidden></div>
+  <div id="nomMonstre" class="planche hud-haut">Œil magique</div>
+  <div id="radar" hidden>
+    <svg id="radarFleche" viewBox="0 0 40 40" aria-hidden="true"><path d="M20 3 L31 33 L20 26 L9 33 Z" fill="#e58cff"/></svg>
+    <span id="radarTexte">…</span>
+  </div>
+  <div id="chargement" hidden>La créature approche…</div>
+  <div id="gauche" class="fleche" hidden>❮</div>
+  <div id="droite" class="fleche" hidden>❯</div>
+  <div id="bandeau" hidden></div>
+  <div id="consigne" class="consigne"></div>
+  <div class="barre-bas">
+    <div><button class="rond ouvrir-grimoire" type="button" aria-label="Grimoire"><svg class="picto-livre" viewBox="0 0 48 36" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"><path d="M24 8C18 4 10 3 3 5v26c7-2 15-1 21 3 6-4 14-5 21-3V5c-7-2-15-1-21 3z"/><path d="M24 8v26"/><path d="M8 11c4-.6 8-.2 11.5 1.4M8 16c4-.6 8-.2 11.5 1.4M8 21c4-.6 8-.2 11.5 1.4M40 11c-4-.6-8-.2-11.5 1.4"/></g><path d="M34.5 16.5l1.3 2.8 3 .4-2.2 2 .6 3-2.7-1.5-2.7 1.5.6-3-2.2-2 3-.4z" fill="currentColor"/></svg></button></div>
+    <div><button id="sceau" type="button" disabled aria-label="Sceau magique">
+      <svg viewBox="0 0 64 64" aria-hidden="true"><g fill="none" stroke="#bff9ff" stroke-width="2.4" stroke-linejoin="round">
+        <circle cx="32" cy="32" r="27"/><circle cx="32" cy="32" r="21" stroke-dasharray="3 4"/>
+        <path d="M32 12 L49 42 L15 42 Z"/><path d="M32 4v8M32 52v8M4 32h8M52 32h8"/><circle cx="32" cy="33" r="4" fill="#bff9ff"/></g></svg>
+    </button><div class="legende">Sceau magique</div></div>
+    <div style="width:58px"></div>
+  </div>
+</div>
+<img id="sigil" alt="" hidden>
+<div id="eclair"></div>
+
+<!-- Sauvé ! -->
+<div id="victoire" class="ecran voile" hidden>
+  <button class="croix" type="button" data-ferme="victoire" aria-label="Fermer">✕</button>
+  <div class="contenu defile">
+    <div id="titreVictoire" class="titre">Sauvé !</div>
+    <img id="portrait" class="portrait" alt="">
+    <div class="fiche"><div id="ficheNom" class="nom"></div><p id="ficheTexte"></p></div>
+    <p id="compteur"></p>
+    <p id="final" class="final" hidden>Aventure terminée, tous les cryptides sont sauvés ! Ouvre ton grimoire pour les relâcher et gagner leurs figurines, ou lance une nouvelle aventure.</p>
+    <div class="boutons">
+      <button id="continuer" class="planche petit" type="button">Continuer le sauvetage</button>
+      <button id="defi" class="planche petit orange" type="button" hidden>Relever le défi de Sporran</button>
+      <button id="rejouer" class="planche petit orange" type="button" hidden>Nouvelle aventure</button>
+      <button class="planche petit ouvrir-grimoire avec-picto" type="button"><svg class="picto-livre" viewBox="0 0 48 36" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"><path d="M24 8C18 4 10 3 3 5v26c7-2 15-1 21 3 6-4 14-5 21-3V5c-7-2-15-1-21 3z"/><path d="M24 8v26"/><path d="M8 11c4-.6 8-.2 11.5 1.4M8 16c4-.6 8-.2 11.5 1.4M8 21c4-.6 8-.2 11.5 1.4M40 11c-4-.6-8-.2-11.5 1.4"/></g><path d="M34.5 16.5l1.3 2.8 3 .4-2.2 2 .6 3-2.7-1.5-2.7 1.5.6-3-2.2-2 3-.4z" fill="currentColor"/></svg>Grimoire</button>
+    </div>
+  </div>
+</div>
+
+<!-- Grimoire -->
+<div id="grimoire" class="ecran" hidden>
+  <button class="croix" type="button" data-ferme="grimoire" aria-label="Fermer">✕</button>
+  <div class="contenu defile">
+    <h2 class="titre-grimoire"><svg class="picto-livre" viewBox="0 0 48 36" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"><path d="M24 8C18 4 10 3 3 5v26c7-2 15-1 21 3 6-4 14-5 21-3V5c-7-2-15-1-21 3z"/><path d="M24 8v26"/><path d="M8 11c4-.6 8-.2 11.5 1.4M8 16c4-.6 8-.2 11.5 1.4M8 21c4-.6 8-.2 11.5 1.4M40 11c-4-.6-8-.2-11.5 1.4"/></g><path d="M34.5 16.5l1.3 2.8 3 .4-2.2 2 .6 3-2.7-1.5-2.7 1.5.6-3-2.2-2 3-.4z" fill="currentColor"/></svg>Mon grimoire</h2>
+    <div class="compte" id="compteGrimoire"></div>
+    <div class="grille" id="grille"></div>
+    <button id="fermerGrimoire" class="planche petit" type="button">Fermer</button>
+  </div>
+</div>
+
+<!-- Relâcher -->
+<div id="relache" class="plein" hidden>
+  <button class="croix" type="button" data-ferme="relache" aria-label="Fermer">✕</button>
+  <video id="videoRelache" playsinline preload="auto" hidden></video>
+  <img id="envol" alt="" hidden>
+  <div class="plein-bas">
+    <div id="titreRelache" class="plein-titre"></div>
+    <div class="boutons">
+      <button id="voirFigurine" class="planche petit orange" type="button" hidden>Voir la figurine</button>
+      <button id="fermerRelache" class="planche petit" type="button">Retour au grimoire</button>
+    </div>
+  </div>
+</div>
+
+<!-- Figurine 360° -->
+<div id="figurine" class="plein" hidden>
+  <button class="croix" type="button" data-ferme="figurine" aria-label="Fermer">✕</button>
+  <canvas id="figCanvas"></canvas>
+  <div class="socle-haut"><div id="figNom" class="nom"></div><div class="aide">Fais-la tourner avec ton doigt</div></div>
+  <div id="figChargement" class="plein-titre" hidden>Chargement…</div>
+  <div class="plein-bas"><button id="fermerFigurine" class="planche petit" type="button">Retour au grimoire</button></div>
+</div>
+
+<script type="module">
+import * as THREE from "three";
+import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+
+/* ===================== À PERSONNALISER =====================
+   Une traque par QR code : l'adresse se termine par ?m=1 … ?m=12
+   membres : la ou les créatures de la traque (les lutins sont deux, capturés l'un après l'autre)
+     ar       : vidéo de la créature dans la caméra (couleur en haut, transparence en bas)
+     ratio    : largeur / hauteur de l'image
+     taille   : hauteur de l'image en mètres dans le parc
+     altitude : hauteur au-dessus du sol (mètres)
+   image : animation du grimoire ; ombre : silhouette ; relache : vidéo de relâche ; figurine : modèle 3D HIGH */
+const TRAQUES = {
+  "1":  { cle: "mothman", nom: "Michmuche, le Mothman", indice: "tourne autour des lampes et des lampadaires",
+          texte: "Un papillon de nuit géant aux grands yeux rouges. On ne sait pas d'où il vient, mais il apparaît pour prévenir d'un danger. Il est très timide et ne résiste jamais à une lampe allumée.",
+          membres: [{ ar: "ar-mothman.mp4", ratio: 1.237, taille: 1.57, pied: 0.199, altitude: 0.2 }] },
+  "2":  { cle: "nessie", nom: "Ness, le monstre du loch", indice: "se cache au bord de l'eau : mare, étang ou rivière",
+          texte: "Elle vit au fond d'un lac très profond et ne sort que son long cou pour dire bonjour. Elle adore faire des farces et personne n'arrive à la prendre en photo, car elle plonge toujours juste avant le clic !",
+          membres: [{ ar: "ar-nessie.mp4", ratio: 0.994, taille: 2.68, pied: 0.04, altitude: 0 }] },
+  "3":  { cle: "thunderbird", nom: "Huhuk, le Thunderbird", indice: "aime les grands espaces, pour voir le ciel", son: "cri-thunderbird.m4a",
+          texte: "Un oiseau immense qui vole au-dessus des nuages. Quand il bat des ailes, on entend le tonnerre, et quand il cligne des yeux, on voit des éclairs.",
+          membres: [{ ar: "ar-thunderbird.mp4", ratio: 0.979, taille: 2.12, pied: 0.103, altitude: 0.3 }] },
+  "4":  { cle: "barghest", nom: "Whitby, le Barghest", indice: "cherche un bâton sous les arbres",
+          texte: "Un gros chien fantôme, noir et tout ébouriffé, qui se promène la nuit sur les landes. Il a l'air impressionnant, mais il cherche surtout quelqu'un pour lui lancer un bâton.",
+          membres: [{ ar: "ar-barghest.mp4", ratio: 1.014, taille: 1.70, pied: 0.011, altitude: 0 }] },
+  "5":  { cle: "faery", nom: "Loupiote, la Faery", indice: "brille le long des chemins pour guider les promeneurs",
+          texte: "Une toute petite fée qui brille comme une veilleuse. Elle éclaire le chemin de ceux qui ont un peu peur du noir ou qui se sont perdus.",
+          membres: [{ ar: "ar-faery.mp4", ratio: 1.006, taille: 1.96, pied: 0.198, altitude: 0.5 }] },
+  "6":  { cle: "lutins", nom: "Kumquat & Kiwi, les lutins", indice: "préparent leurs farces cachés dans les buissons",
+          texte: "Deux lutins inséparables : l'un orange et farceur, l'autre vert et râleur. Kumquat invente des farces, Kiwi ronchonne, et ils finissent toujours par rire ensemble.",
+          membres: [{ nom: "Kiwi", ar: "ar-lutin_green.mp4", ratio: 1.011, taille: 1.22, pied: 0.036, altitude: 0 },
+                    { nom: "Kumquat", ar: "ar-lutin_orange.mp4", ratio: 1.01, taille: 1.31, pied: 0.043, altitude: 0 }] },
+  "7":  { cle: "jackalope", nom: "Bucky, le Jackalope", indice: "galope là où il y a de la place pour courir",
+          texte: "Un lapin malicieux qui porte de petits bois de cerf sur la tête. Il adore la musique et reprend les chansons des voyageurs. Mais il court si vite que personne n'a jamais réussi à le rattraper.",
+          membres: [{ ar: "ar-jackalope.mp4", ratio: 1.416, taille: 2.33, pied: 0.356, altitude: 0 }] },
+  "8":  { cle: "yeti", nom: "Migou, le Yeti", indice: "laisse d'énormes traces de pas sur les chemins",
+          texte: "Un géant tout blanc et tout doux qui vit dans les montagnes enneigées. Il laisse d'énormes traces de pas et fait les meilleurs câlins du monde.",
+          membres: [{ ar: "ar-yeti.mp4", ratio: 1.0, taille: 1.61, pied: 0.066, altitude: 0 }] },
+  "9":  { cle: "gargouille", nom: "Ardoise, la Gargouille", indice: "se perche sur les toits pour surveiller les maisons",
+          texte: "Perchée sur le toit, elle reste immobile comme une pierre toute la journée. La nuit, elle s'étire, bâille et surveille le quartier pour que tout le monde dorme tranquille. Mais attention, elle crache de l'eau sur ceux qui font trop de bruit !",
+          membres: [{ ar: "ar-gargouille.mp4", ratio: 1.119, taille: 1.32, pied: 0.048, altitude: 0.2 }] },
+  "10": { cle: "chupacabra", nom: "Moca, le Chupacabra", indice: "rôde près des maisons, à la recherche d'un goûter",
+          texte: "Une petite créature à piquants qui vient des pays chauds. On la dit farouche, mais elle est surtout très gourmande et raffole du lait de chèvre.",
+          membres: [{ ar: "ar-chupacabra.mp4", ratio: 1.421, taille: 2.62, pied: 0.32, altitude: 0 }] },
+  "11": { cle: "kraken", nom: "Bloop, le Kraken", indice: "cache ses trésors au bord de l'eau",
+          texte: "Une pieuvre géante qui habite tout au fond de l'océan. Elle collectionne les trésors des bateaux pirates qui ont coulé. Avec ses huit bras, elle peut chatouiller huit poissons à la fois.",
+          membres: [{ ar: "ar-kraken.mp4", ratio: 1.022, taille: 1.39, pied: 0.035, altitude: 0.1 }] },
+  "12": { cle: "swamp", nom: "Gadoo, le monstre des marais", indice: "patauge là où c'est mouillé : près de l'eau ou sous les arbres",
+          texte: "Un bonhomme tout vert, couvert d'algues et de mousse. Son jeu préféré est de sauter dans les flaques de boue, et il n'a jamais besoin de prendre de bain !",
+          membres: [{ ar: "ar-swamp.mp4", ratio: 1.067, taille: 1.43, pied: 0.034, altitude: 0 }] }
+};
+const GARDIEN = { cle: "catsith", nom: "Sporran, le Cat sìth",
+  texte: "Un grand chat noir d'Écosse avec une tache blanche en forme de cœur sur le poitrail. Certains disent que c'est en fait une sorcière transformée. Il adore se glisser sans bruit dans les collines et ronronne si fort qu'on le prend pour le vent." };
+const INTRO = [
+  "Chapristi !!!\nOn m'a volé mon précieux grimoire contenant l'ensemble des Cryptides. J'ai pu le retrouver, mais certains se sont égarés et perdus. Aide-moi à les sauver.",
+  "Quoi !! Tu ne sais pas ce qu'est un Cryptide ?\nUn Cryptide est une créature souvent craintive, qui vit cachée et qui est difficile à voir avec des yeux d'humains.",
+  "Tiens ! Prends cet œil magique et ce détecteur pour les trouver. Une fois localisés, capture-les avec le sceau magique en tapotant l'écran. Nous les relâcherons ensemble dans leur environnement.",
+  "Pour chaque sauvetage réussi, tu gagneras des figurines à collectionner.\n\nAllez vite, dépêche-toi !"
+];
+const YEUX = 1.2;   // hauteur du téléphone (mètres)
+/* =========================================================== */
+// les fichiers de chaque créature suivent son nom
+for (const t of Object.values(TRAQUES)) { t.membres.forEach(m => m.id = m.ar.replace("ar-", "").replace(".mp4", "")); t.image = "solo-" + t.cle + ".webp"; t.ombre = "ombre-" + t.cle + ".png"; t.relache = "relache-" + t.cle + ".mp4"; }
+GARDIEN.image = "grimoire-catsith.webp"; GARDIEN.ombre = "ombre-catsith.png"; GARDIEN.relache = "relache-catsith.mp4";
+const FIGURINES = { mothman: ["figurine-mothman.glb"], nessie: ["figurine-nessie.glb"], thunderbird: ["figurine-thunderbird.glb"], barghest: ["figurine-barghest.glb"],
+  faery: ["figurine-faery.glb"], lutins: ["figurine-lutin_green.glb", "figurine-lutin_orange.glb"], jackalope: ["figurine-jackalope.glb"], yeti: ["figurine-yeti.glb"],
+  gargouille: ["figurine-gargouille.glb"], chupacabra: ["figurine-chupacabra.glb"], kraken: ["figurine-kraken.glb"], swamp: ["figurine-swamp.glb"], catsith: ["figurine-catsith.glb"] };
+
+const $ = id => document.getElementById(id);
+const ids = Object.keys(TRAQUES);
+const DEG = Math.PI / 180;
+document.querySelectorAll(".ecran").forEach(e => { if (e.id !== "intro" && e.id !== "carteParents") e.prepend($("tpl-decor").content.cloneNode(true)); });
+const montrer = (id) => { ["entree", "accueil", "parents", "carteParents", "partie", "intro", "victoire", "grimoire"].forEach(k => $(k).hidden = k !== id); if (id && typeof changerAmbiance === "function") changerAmbiance("menu"); };
+
+/* ===================== Sauvegarde (sur ce téléphone) ===================== */
+const CLES = { merci: "cryptidsParc-merci", partie: "cryptidsParc-partie", pris: "cryptidsParc-pris", relache: "cryptidsParc-relaches", mode: "cryptidsParc-mode", membres: "cryptidsParc-membres", intro: "cryptidsParc-intro-vue", son: "cryptidsParc-son" };
+const lire = (k, def) => { try { const v = localStorage.getItem(k); return v == null ? def : JSON.parse(v); } catch (e) { return def; } };
+const ecrire = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+const pris = () => lire(CLES.pris, []).filter(k => TRAQUES[k]);
+const relaches = () => lire(CLES.relache, []);
+const ajouter = (cle, val) => { const l = lire(cle, []); if (!l.includes(val)) { l.push(val); ecrire(cle, l); } };
+const mode = () => lire(CLES.mode, "qr");
+// une partie = une sélection de créatures à sauver (la collection du grimoire, elle, se garde d'une partie à l'autre)
+const partie = () => lire(CLES.partie, null);
+const enCours = () => { const p = partie(); return p && p.pris.length < p.liste.length ? p : null; };
+function majPartie(f) { const p = partie(); if (!p) return; f(p); ecrire(CLES.partie, p); }
+try { ["monstresPris", "chasseMonstres-inventaire-v2", "chasseMonstres-relaches-v1"].forEach(k => localStorage.removeItem(k)); } catch (e) {}
+
+/* ===================== Sons : musique et bruitages fabriqués par code ===================== */
+let audio = null, maitre = null, musiqueOn = false;
+let volume = (v => v === true ? .8 : v === false ? 0 : Math.max(0, Math.min(1, +v || 0)))(lire(CLES.son, .8)), sonActif = volume > 0;
+const gainVolume = () => volume * volume;   // courbe plus naturelle à l'oreille
+const tampons = {};
+function initAudio() {
+  if (audio) { audio.resume(); return; }
+  try { audio = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { return; }
+  maitre = audio.createGain(); maitre.gain.value = gainVolume(); maitre.connect(audio.destination);
+  audio.resume();
+  charger("sigil", "sigil.m4a");
+  lancerMusique();
+}
+async function charger(nom, url) { try { const r = await fetch(url); tampons[nom] = await audio.decodeAudioData(await r.arrayBuffer()); } catch (e) {} }
+function jouerTampon(nom, vol = 1, pan = 0) { if (!audio || !sonActif || !tampons[nom]) return; const s = audio.createBufferSource(), g = audio.createGain(); g.gain.value = vol; s.buffer = tampons[nom];
+  let n = s.connect(g); if (audio.createStereoPanner) { const p = audio.createStereoPanner(); p.pan.value = Math.max(-1, Math.min(1, pan)); n = n.connect(p); } n.connect(maitre); s.start(); }
+function note(freq, debut, duree, { type = "sine", vol = .2, attaque = .01, sortie = maitre, filtre = 0 } = {}) {
+  if (!audio) return; const t = audio.currentTime + debut, o = audio.createOscillator(), g = audio.createGain();
+  o.type = type; o.frequency.setValueAtTime(freq, t);
+  g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vol, t + attaque); g.gain.exponentialRampToValueAtTime(.0008, t + duree);
+  let n = o; if (filtre) { const f = audio.createBiquadFilter(); f.type = "lowpass"; f.frequency.value = filtre; o.connect(f); n = f; }
+  n.connect(g).connect(sortie); o.start(t); o.stop(t + duree + .05);
+}
+function souffle(debut, duree, de, a, vol = .25) {
+  if (!audio) return; const t = audio.currentTime + debut, n = audio.sampleRate * duree, b = audio.createBuffer(1, n, audio.sampleRate), d = b.getChannelData(0);
+  for (let i = 0; i < n; i++) d[i] = Math.random() * 2 - 1;
+  const s = audio.createBufferSource(), f = audio.createBiquadFilter(), g = audio.createGain(); s.buffer = b; f.type = "bandpass"; f.Q.value = 2;
+  f.frequency.setValueAtTime(de, t); f.frequency.exponentialRampToValueAtTime(a, t + duree);
+  g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vol, t + duree * .3); g.gain.linearRampToValueAtTime(0, t + duree);
+  s.connect(f).connect(g).connect(maitre); s.start(t);
+}
+const hz = m => 440 * Math.pow(2, (m - 69) / 12);
+const SFX = {
+  clic: () => { note(hz(81), 0, .25, { vol: .16 }); note(hz(88), .05, .3, { vol: .1 }); note(hz(93), .1, .35, { vol: .05 }); },
+  valider: () => { [69, 74, 78, 81].forEach((m, i) => note(hz(m + 12), i * .06, .6, { vol: .12, type: "triangle" })); souffle(0, .35, 800, 4000, .08); },
+  sceau: () => { souffle(0, .8, 400, 6000, .22); [62, 69, 74, 81, 86].forEach((m, i) => note(hz(m), i * .05, 1, { vol: .1, type: "triangle" })); note(hz(38), 0, 1, { vol: .3 }); },
+  rate: () => { note(hz(50), 0, .3, { vol: .15, type: "square", filtre: 500 }); note(hz(49), .12, .35, { vol: .12, type: "square", filtre: 500 }); },
+  oeil: () => { souffle(0, .9, 300, 3000, .2); [62, 66, 69, 74].forEach((m, i) => note(hz(m), .15 + i * .09, 1, { vol: .08, type: "triangle" })); },
+  revele: () => { [74, 78, 81, 86, 90].forEach((m, i) => note(hz(m), i * .07, 1.4, { vol: .09 })); souffle(0, .6, 2000, 6000, .08); },
+  proche: () => note(hz(86), 0, .5, { vol: .05 }),
+  capture: () => { jouerTampon("sigil", .9); note(55, 0, 1.8, { vol: .35, type: "sine" }); },
+  victoire: () => [60, 64, 67, 72, 76, 79, 84].forEach((m, i) => note(hz(m), i * .11, .9, { vol: .12, type: "triangle" })),
+  relache: () => {
+    [38, 45, 50].forEach(m => note(hz(m), 0, 5.5, { type: "sawtooth", vol: .07, attaque: 2.2, filtre: 420 }));   // nappe grave
+    note(hz(61), .4, 5, { type: "triangle", vol: .04, attaque: 2.5 });                                          // note étrange (triton)
+    souffle(0, 3.2, 300, 5200, .14);                                                                             // souffle qui monte
+    [74, 77, 73, 70, 69].forEach((m, i) => { const d = 1.6 + i * .55;                                            // clochettes en mineur
+      note(hz(m), d, 2.4, { vol: .07 }); note(hz(m), d + .32, 2, { vol: .03 }); note(hz(m), d + .64, 1.6, { vol: .015 }); });
+  },
+  figurine: () => [72, 76, 79, 84, 88, 91].forEach((m, i) => note(hz(m), i * .06, 1.6, { vol: .08 })),
+  page: () => { souffle(0, .25, 1500, 600, .1); },
+  tape: () => { note(hz(84 + Math.floor(Math.random() * 5)), 0, .14, { vol: .09, type: "triangle" }); },
+  fuite: () => { souffle(0, .5, 3500, 500, .16); note(hz(79), 0, .2, { vol: .06, type: "square", filtre: 1800 }); note(hz(72), .1, .25, { vol: .06, type: "square", filtre: 1800 }); },
+  hop: () => { note(hz(76), 0, .08, { vol: .05, type: "square", filtre: 2500 }); note(hz(83), .05, .1, { vol: .05, type: "square", filtre: 2500 }); }
+};
+const sfx = nom => { if (audio && sonActif && SFX[nom]) SFX[nom](); };
+// musique d'ambiance : nappe mystérieuse et clochettes en ré mineur
+// Musique façon conte macabre : valse de célesta, chœur « aah », pizzicatos (menus) ; même couleur mais plus rythmée pour la traque
+let busMenu = null, busChasse = null, ambiance = "menu", tMenu = 0, tChasse = 0, nMenu = 0, nChasse = 0;
+function choeur(m, d, dur, vol, sortie, voyelle = "a") {   // voix « aaah » / « ouuh » : dents de scie filtrées en formants
+  const t = audio.currentTime + d, f = voyelle === "a" ? [730, 1090] : [320, 800];
+  const g = audio.createGain(); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vol, t + dur * .35); g.gain.linearRampToValueAtTime(0, t + dur);
+  g.connect(sortie);
+  [0, 7, -5].forEach(det => {
+    const o = audio.createOscillator(), lfo = audio.createOscillator(), lg = audio.createGain();
+    o.type = "sawtooth"; o.frequency.value = hz(m); o.detune.value = det; lfo.frequency.value = 4.8 + Math.random(); lg.gain.value = 9; lfo.connect(lg).connect(o.detune);
+    f.forEach(fc => { const bp = audio.createBiquadFilter(); bp.type = "bandpass"; bp.frequency.value = fc; bp.Q.value = 5; o.connect(bp); bp.connect(g); });
+    o.start(t); lfo.start(t); o.stop(t + dur + .05); lfo.stop(t + dur + .05);
+  });
+}
+function timbale(d, sortie, vol = .35) {
+  const t = audio.currentTime + d, o = audio.createOscillator(), g = audio.createGain();
+  o.frequency.setValueAtTime(110, t); o.frequency.exponentialRampToValueAtTime(48, t + .4);
+  g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(.001, t + .6); o.connect(g).connect(sortie); o.start(t); o.stop(t + .65);
+}
+function balai(d, sortie, vol = .05) {
+  const t = audio.currentTime + d, n = audio.sampleRate * .12, b = audio.createBuffer(1, n, audio.sampleRate), x = b.getChannelData(0);
+  for (let i = 0; i < n; i++) x[i] = (Math.random() * 2 - 1) * (1 - i / n);
+  const s = audio.createBufferSource(), h = audio.createBiquadFilter(), g = audio.createGain(); h.type = "highpass"; h.frequency.value = 3000; g.gain.value = vol;
+  s.buffer = b; s.connect(h).connect(g).connect(sortie); s.start(t);
+}
+const celesta = (m, d, l, sortie, vol = .07) => { note(hz(m), d, .6 + l * .35, { vol, sortie }); note(hz(m) * 2, d, .35, { vol: vol * .3, sortie }); note(hz(m) * 2.76, d, .2, { vol: vol * .12, sortie }); };
+const pizz = (m, d, sortie, vol = .2) => note(hz(m), d, .35, { type: "triangle", vol, sortie });
+const VALSE = {   // ré mineur, 3/4 — [note, temps]
+  chords: [[50,53,57],[50,53,57],[49,53,57],[48,53,57],[46,50,53],[43,46,50],[40,43,46],[45,49,52],
+           [50,53,57],[50,53,57],[43,46,50],[40,43,47],[46,50,53],[45,49,52],[50,53,57],[45,49,52]],
+  melodie: [[[69,2],[74,1]],[[77,1],[76,1],[74,1]],[[73,2],[74,1]],[[76,3]],[[77,2],[79,1]],[[82,1],[81,1],[79,1]],[[76,2],[77,1]],[[76,3]],
+            [[69,1],[74,1],[77,1]],[[81,1],[79,1],[77,1]],[[79,1],[82,1],[86,1]],[[85,3]],[[86,1],[82,1],[79,1]],[[76,1],[73,1],[69,1]],[[74,3]],[[0,1],[69,1],[73,1]]]
+};
+const MARCHE = {  // même tonalité, 4/4 plus vif — accords par mesure
+  chords: [[50,53,57],[46,50,53],[43,46,50],[45,49,52],[50,53,57],[46,50,53],[52,55,58],[45,49,52]],
+  motif: [81, 82, 81, 80, 81, 0, 77, 0]   // petit motif chromatique au célesta
+};
+function lancerMusique() {
+  if (musiqueOn || !audio) return; musiqueOn = true;
+  busMenu = audio.createGain(); busMenu.gain.value = .22; busMenu.connect(maitre);
+  busChasse = audio.createGain(); busChasse.gain.value = 0; busChasse.connect(maitre);
+  const echo = audio.createDelay(); echo.delayTime.value = .36; const retour = audio.createGain(); retour.gain.value = .3;
+  busMenu.connect(echo); busChasse.connect(echo); echo.connect(retour); retour.connect(echo); retour.connect(maitre);
+  tMenu = tChasse = audio.currentTime + .1; programmer();
+}
+function programmer() {
+  if (!musiqueOn) return;
+  const tv = .6;     // valse : 100 battements par minute
+  while (tMenu < audio.currentTime + 1.5) {
+    const i = nMenu % 16, d = tMenu - audio.currentTime, ch = VALSE.chords[i];
+    pizz(ch[0] - 12, d, busMenu, .24);
+    [1, 2].forEach(k => ch.forEach(m => pizz(m, d + k * tv, busMenu, .045)));
+    if (i % 4 === 0) choeur(ch[0] + 12, d, tv * 12, .05, busMenu, i % 8 ? "o" : "a");
+    let pos = 0; VALSE.melodie[i].forEach(([m, l]) => { if (m) celesta(m + 12, d + pos * tv, l, busMenu); pos += l; });
+    if (i === 7 || i === 15) fantome(d + tv, busMenu);
+    tMenu += tv * 3; nMenu++;
+  }
+  const tc = .47;    // traque : 128 battements par minute
+  while (tChasse < audio.currentTime + 1.5) {
+    const i = nChasse % 8, d = tChasse - audio.currentTime, ch = MARCHE.chords[i];
+    for (let k = 0; k < 8; k++) pizz((k % 2 ? ch[0] : ch[0] - 12) + (k % 4 === 3 ? 7 : 0), d + k * tc / 2, busChasse, k % 2 ? .1 : .16);   // ostinato en croches
+    timbale(d, busChasse, .3); timbale(d + tc * 2, busChasse, .15);
+    balai(d + tc, busChasse); balai(d + tc * 3, busChasse);
+    if (i % 2 === 0) choeur(ch[2] + 12, d, tc * 8, .04, busChasse, "o");
+    if (i >= 4) MARCHE.motif.forEach((m, k) => { if (m) celesta(m, d + k * tc / 2, .5, busChasse, .06); });
+    else ch.forEach((m, k) => celesta(m + 24, d + k * tc, .4, busChasse, .035));
+    tChasse += tc * 4; nChasse++;
+  }
+  setTimeout(programmer, 400);
+}
+function fantome(d, sortie) {   // glissando de « theremin »
+  const t = audio.currentTime + d, o = audio.createOscillator(), g = audio.createGain(), vib = audio.createOscillator(), vg = audio.createGain();
+  o.type = "sine"; o.frequency.setValueAtTime(hz(74), t); o.frequency.linearRampToValueAtTime(hz(81), t + .8); o.frequency.linearRampToValueAtTime(hz(69), t + 2.4);
+  vib.frequency.value = 5.5; vg.gain.value = 8; vib.connect(vg).connect(o.frequency);
+  g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.045, t + .5); g.gain.linearRampToValueAtTime(0, t + 2.5);
+  o.connect(g).connect(sortie); o.start(t); vib.start(t); o.stop(t + 2.6); vib.stop(t + 2.6);
+}
+function changerAmbiance(type) {   // "menu", "chasse" ou "silence" (pendant les vidéos)
+  ambiance = type; if (!busMenu) return; const t = audio.currentTime;
+  busMenu.gain.cancelScheduledValues(t); busChasse.gain.cancelScheduledValues(t);
+  busMenu.gain.setTargetAtTime(type === "menu" ? .22 : 0, t, .4); busChasse.gain.setTargetAtTime(type === "chasse" ? .16 : 0, t, .6);
+}
+function majBoutonSon() { $("son").classList.toggle("coupe", !sonActif); $("son").textContent = sonActif ? "♪" : "✕"; }
+$("son").addEventListener("click", e => { e.stopPropagation(); initAudio(); $("panneauSon").hidden = !$("panneauSon").hidden; });
+$("volume").value = Math.round(volume * 100);
+$("volume").addEventListener("input", () => {
+  volume = $("volume").value / 100; sonActif = volume > 0; ecrire(CLES.son, volume); initAudio();
+  if (maitre) maitre.gain.setTargetAtTime(gainVolume(), audio.currentTime, .03);
+  document.querySelectorAll("video").forEach(v => { if (v.id !== "camera") v.muted = !sonActif; });
+  majBoutonSon();
+});
+$("volume").addEventListener("change", () => sfx("clic"));
+document.addEventListener("pointerdown", e => { if (!$("panneauSon").hidden && !e.target.closest("#panneauSon, #son")) $("panneauSon").hidden = true; }, true);
+majBoutonSon();
+["pointerdown", "touchend"].forEach(ev => document.addEventListener(ev, () => initAudio(), { once: true, capture: true }));
+document.addEventListener("click", e => { const b = e.target.closest("button, a"); if (!b) return; initAudio();
+  if (!b.closest("#son, #sceau, #suiteIntro")) sfx(b.matches("#commencer, #cestParti, #reprendre, [data-mode], .principal, .mini, .orange") ? "valider" : "clic"); }, true);
+document.addEventListener("pointerdown", e => { const b = e.target.closest("button, a, .choix-carte"); if (!b) return;
+  b.classList.remove("appuye"); void b.offsetWidth; b.classList.add("appuye"); setTimeout(() => b.classList.remove("appuye"), 450); if (navigator.vibrate) navigator.vibrate(12); }, true);
+
+/* ===================== Accueil, parents ===================== */
+const LIBELLES = { qr: "Mode : QR codes cachés", interieur: "Mode : intérieur (10 m)", exterieur: "Mode : extérieur (20 m)" };
+function majModes() {
+  majAccueil(); $("modeParents").textContent = LIBELLES[mode()];
+  document.querySelectorAll(".carte-mode").forEach(c => { c.classList.toggle("actif", c.dataset.mode === mode()); c.classList.toggle("eteint", c.dataset.mode !== mode()); });
+}
+$("ouvrirParents").addEventListener("click", () => { majModes(); montrer("parents"); });
+$("fermerParents").addEventListener("click", () => { majModes(); montrer("accueil"); });
+document.querySelectorAll(".carte-mode").forEach(b => b.addEventListener("click", e => {
+  if (e.target.closest("a")) return;   // le lien de la planche reste un lien
+  ecrire(CLES.mode, b.dataset.mode); majModes(); sfx("valider");
+  if (e.target.closest("[data-placer]")) return setTimeout(ouvrirCarteParents, 300);
+  setTimeout(() => { majAccueil(); montrer("accueil"); }, 900);
+}));
+$("raz").addEventListener("click", () => {
+  const b = $("raz");
+  if (!b.dataset.ok) { b.dataset.ok = "1"; b.textContent = "Touchez encore pour tout effacer"; setTimeout(() => { delete b.dataset.ok; b.textContent = "Remettre toute l'aventure à zéro"; }, 4000); return; }
+  [CLES.pris, CLES.relache, CLES.membres, CLES.intro, CLES.partie].forEach(k => { try { localStorage.removeItem(k); } catch (e) {} });
+  delete b.dataset.ok; b.textContent = "Aventure remise à zéro";
+});
+majModes();
+$("entree").addEventListener("click", () => { initAudio(); changerAmbiance("menu"); sfx("valider"); majAccueil(); montrer("accueil"); });
+
+/* ===================== Introduction ===================== */
+let pageIntro = 0, ecrit = null, textesIntro = INTRO, finIntro = () => apresIntro();
+function taire() { try { speechSynthesis.cancel(); } catch (e) {} }
+function parler(texte) {
+  return;   // voix de synthèse retirée à la demande
+  if (!sonActif || !window.speechSynthesis) return;
+  try {
+    taire(); const u = new SpeechSynthesisUtterance(texte.replace(/\n/g, " "));
+    u.lang = "fr-FR"; u.pitch = 1.35; u.rate = .95; u.volume = 1;
+    const v = speechSynthesis.getVoices().find(x => /^fr/i.test(x.lang)); if (v) u.voice = v;
+    speechSynthesis.speak(u);
+  } catch (e) {}
+}
+function afficherIntro(i) {
+  const txt = textesIntro[i], p = $("texteIntro"); clearInterval(ecrit); p.textContent = ""; let n = 0;
+  parler(txt);
+  ecrit = setInterval(() => { n += 2; p.textContent = txt.slice(0, n); if (n >= txt.length) clearInterval(ecrit); }, 28);
+  $("suiteIntro").textContent = i === textesIntro.length - 1 ? (textesIntro === INTRO ? "À l'aventure !" : "Relever le défi !") : "Suite";
+  sfx("page");
+}
+function lancerAventure() { initAudio(); ouvrirOeil(); }
+$("commencer").addEventListener("click", () => { initAudio(); pageIntro = 0; textesIntro = INTRO; finIntro = apresIntro; montrer("intro"); afficherIntro(0); });
+function apresIntro() { clearInterval(ecrit); taire(); ecrire(CLES.intro, true); preparerChoix(); montrer("partie"); }
+
+/* ===================== Nouvelle partie : combien de cryptides ? ===================== */
+let nombre = Math.max(2, Math.min(12, lire("cryptidsParc-nombre", 6))), tirage = [];
+const melanger = l => { l = l.slice(); for (let i = l.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [l[i], l[j]] = [l[j], l[i]]; } return l; };
+function tirer() { tirage = melanger(ids).slice(0, nombre).sort((a, b) => a - b); }
+let choixLibre = false, coches = new Set(lire("cryptidsParc-coches", ids));
+function dessinerChoix() {
+  $("grilleChoix").innerHTML = ids.map(k => '<button type="button" class="choix-carte' + (coches.has(k) ? " coche" : "") + '" data-k="' + k + '"><img alt="" src="' + TRAQUES[k].ombre + '"><span>' + TRAQUES[k].nom.split(",")[0] + '</span></button>').join("");
+}
+function basculer(libre) {
+  if (mode() === "exterieur" && places().length) return majChoix();
+  choixLibre = libre; $("blocHasard").hidden = libre; $("blocChoix").hidden = !libre;
+  $("ongletHasard").classList.toggle("cyan", !libre); $("ongletChoix").classList.toggle("cyan", libre);
+  if (libre) dessinerChoix(); else tirer();
+  majChoix();
+}
+$("ongletHasard").addEventListener("click", () => basculer(false));
+$("ongletChoix").addEventListener("click", () => basculer(true));
+$("grilleChoix").addEventListener("click", e => { const b = e.target.closest(".choix-carte"); if (!b) return;
+  const k = b.dataset.k; coches.has(k) ? coches.delete(k) : coches.add(k); b.classList.toggle("coche", coches.has(k)); majChoix(); });
+$("toutCocher").addEventListener("click", () => { coches = new Set(ids); dessinerChoix(); majChoix(); });
+$("toutDecocher").addEventListener("click", () => { coches = new Set(); dessinerChoix(); majChoix(); });
+function majChoix() {
+  const parc = mode() === "exterieur" && places().length > 0;
+  document.querySelector("#partie .onglets").hidden = parc; $("blocParc").hidden = !parc;
+  if (parc) {
+    $("blocHasard").hidden = $("blocChoix").hidden = true; $("aCacher").hidden = true;
+    tirage = places(); nombre = tirage.length;
+    $("listeParc").innerHTML = tirage.map(k => "<li>" + TRAQUES[k].nom.split(",")[0] + "</li>").join("");
+    $("duree").textContent = tirage.length ? tirage.length + " cryptide" + (tirage.length > 1 ? "s" : "") + " caché" + (tirage.length > 1 ? "s" : "") + " dans le parc"
+      : "Aucune créature n'est cachée : un parent doit d'abord les placer sur la carte.";
+    $("cestParti").disabled = !tirage.length; return;
+  }
+  if (choixLibre) { tirage = ids.filter(k => coches.has(k)); nombre = tirage.length; ecrire("cryptidsParc-coches", tirage); }
+  $("cestParti").disabled = tirage.length < 2;
+  $("nombre").textContent = nombre; $("moins").disabled = nombre <= 2; $("plus").disabled = nombre >= 12;
+  $("duree").textContent = nombre < 2 ? "Choisis au moins 2 cryptides" : nombre + " cryptides à sauver";
+  document.querySelectorAll("[data-n]").forEach(b => b.classList.toggle("cyan", +b.dataset.n === nombre));
+  if (mode() === "qr") {
+    $("aCacher").hidden = false;
+    $("listeQr").innerHTML = tirage.map(k => "<li><b>n° " + k + "</b> " + TRAQUES[k].nom.split(",")[0] + "</li>").join("");
+  } else $("aCacher").hidden = true;
+}
+function preparerChoix() {
+  const p = enCours();
+  $("reprise").hidden = !p;
+  if (p) $("repriseTexte").textContent = "Partie en cours : " + p.pris.length + " / " + p.liste.length + " cryptides sauvés.";
+  basculer(choixLibre);
+}
+$("moins").addEventListener("click", () => { nombre = Math.max(2, nombre - 1); tirer(); majChoix(); });
+$("plus").addEventListener("click", () => { nombre = Math.min(12, nombre + 1); tirer(); majChoix(); });
+document.querySelectorAll("[data-n]").forEach(b => b.addEventListener("click", () => { nombre = +b.dataset.n; tirer(); majChoix(); }));
+$("retirer").addEventListener("click", () => { tirer(); majChoix(); });
+$("fermerPartie").addEventListener("click", () => { majAccueil(); montrer("accueil"); });
+$("reprendre").addEventListener("click", () => lancerAventure(false));
+$("cestParti").addEventListener("click", () => {
+  ecrire("cryptidsParc-nombre", nombre);
+  ecrire(CLES.partie, { liste: tirage, pris: [], membres: {}, debut: Date.now() });
+  history.replaceState(null, "", location.pathname); prochaineTraque.lu = true;
+  lancerAventure(true);
+});
+function majAccueil() {
+  const p = enCours();
+  $("defiAccueil").hidden = !bossDispo();
+  $("modeActuel").textContent = LIBELLES[mode()] + (p ? " · partie en cours " + p.pris.length + " / " + p.liste.length : "");
+}
+$("passerIntro").addEventListener("click", () => finIntro());
+$("suiteIntro").addEventListener("click", () => {
+  const p = $("texteIntro");
+  if (p.textContent.length < textesIntro[pageIntro].length) { clearInterval(ecrit); p.textContent = textesIntro[pageIntro]; return; }   // termine la phrase
+  if (pageIntro < textesIntro.length - 1) { afficherIntro(++pageIntro); return; }
+  finIntro();
+});
+
+/* ===================== Grimoire ===================== */
+const FEMININ = ["nessie", "faery", "gargouille", "chupacabra", "kraken"];   // d'après les textes (« elle »)
+const relachee = t => t.membres.length > 1 ? "Relâchés dans leur environnement" : "Relâché" + (FEMININ.includes(t.cle) ? "e" : "") + " dans son environnement";
+function carte(t, k) {
+  const p = pris().includes(k), r = relaches().includes(t.cle);
+  let actions = "";
+  if (p) actions = r ? '<button class="mini cyan" data-fig="' + t.cle + '">Figurine</button> <button class="mini" data-rel="' + k + '">Revoir</button>'
+                     : '<button class="mini" data-rel="' + k + '">Relâcher</button>';
+  return '<div class="carte' + (p ? " prise" : "") + (r ? " libre" : "") + '">' +
+    '<img alt="" loading="lazy" src="' + (p ? t.image : t.ombre) + '"' + (p ? "" : ' class="ombre"') + '>' +
+    '<div class="nom">' + (p ? t.nom : "???") + '</div>' +
+    '<div class="astuce">' + (p ? (r ? relachee(t) : "Sauvé !") : "<b>Indice :</b> " + t.indice) + '</div>' + actions + '</div>';
+}
+function dessinerGrimoire() {
+  const n = pris().length, tousLibres = ids.every(k => relaches().includes(TRAQUES[k].cle));
+  $("compteGrimoire").textContent = n + " / " + ids.length + " cryptides sauvés";
+  $("grille").innerHTML =
+    '<div class="carte gardien prise"><img alt="" src="' + GARDIEN.image + '"><div class="nom">' + GARDIEN.nom + '</div><div class="astuce">' + GARDIEN.texte + '</div>' +
+    (tousLibres ? '<button class="mini cyan" data-fig="catsith">Figurine de Sporran</button>' + (lire(CLES.merci, false) ? ' <button class="mini" data-merci="1">Revoir son message</button>' : '') : '<div class="astuce"><b>Relâche tous les cryptides pour gagner sa figurine.</b></div>') + '</div>' +
+    ids.map(k => carte(TRAQUES[k], k)).join("");
+}
+let retourGrimoire = "accueil";
+document.querySelectorAll(".ouvrir-grimoire").forEach(b => b.addEventListener("click", () => {
+  retourGrimoire = !$("scene").hidden ? "scene" : (!$("victoire").hidden ? "victoire" : "accueil");
+  dessinerGrimoire(); $("grimoire").hidden = false; sfx("page");
+}));
+$("fermerGrimoire").addEventListener("click", () => { $("grimoire").hidden = true; if (retourGrimoire === "accueil") montrer("accueil"); });
+$("grille").addEventListener("click", e => {
+  const r = e.target.closest("[data-rel]"), f = e.target.closest("[data-fig]");
+  if (r) relacher(r.dataset.rel); if (f) ouvrirFigurine(f.dataset.fig);
+});
+
+/* ===================== Relâcher ===================== */
+let figurineAMontrer = null;
+function relacher(k) {
+  changerAmbiance("silence");
+  const t = TRAQUES[k], v = $("videoRelache"), img = $("envol");
+  $("relache").hidden = false; $("voirFigurine").hidden = true; figurineAMontrer = t.cle;
+  $("titreRelache").textContent = t.nom.split(",")[0] + (t.membres.length > 1 ? " sont " : " est ") + relachee(t).toLowerCase() + "…";
+  sfx("relache");
+  let fini = false, envole = false;
+  const fin = () => {
+    if (fini) return; fini = true;
+    const nouveau = !relaches().includes(t.cle); ajouter(CLES.relache, t.cle);
+    $("titreRelache").textContent = nouveau ? "Figurine débloquée !" : t.nom.split(",")[0] + (t.membres.length > 1 ? " sont libres !" : " est libre !");
+    $("voirFigurine").hidden = false; if (nouveau) sfx("figurine"); dessinerGrimoire();
+    if (ids.every(k => relaches().includes(TRAQUES[k].cle)) && !lire(CLES.merci, false)) merciEnAttente = true;
+  };
+  const envol = () => { if (envole) return; envole = true; v.hidden = true; img.hidden = false; img.src = t.image; img.classList.remove("part"); void img.offsetWidth; img.classList.add("part"); setTimeout(fin, 2600); };
+  img.hidden = true; v.hidden = true;
+  v.src = t.relache; v.hidden = false; v.muted = !sonActif; v.currentTime = 0;
+  v.onended = fin; v.onerror = envol;
+  v.play().catch(() => { v.muted = true; v.play().catch(envol); });
+}
+// tous les cryptides sont libres : Sporran remercie le joueur dans son monde
+let merciEnAttente = false;
+function merci() {
+  changerAmbiance("silence");
+  const v = $("videoRelache"); ecrire(CLES.merci, true);
+  $("relache").hidden = false; $("envol").hidden = true; $("voirFigurine").hidden = true; figurineAMontrer = "catsith";
+  $("titreRelache").textContent = "Sporran te remercie !"; sfx("victoire");
+  let fini = false;
+  const fin = () => { if (fini) return; fini = true; $("titreRelache").textContent = "Merci d'avoir sauvé tous les cryptides ! Figurine de Sporran débloquée !"; $("voirFigurine").hidden = false; sfx("figurine"); dessinerGrimoire(); };
+  v.src = "merci-catsith.mp4"; v.hidden = false; v.muted = !sonActif; v.currentTime = 0; v.onended = fin; v.onerror = fin;
+  v.play().catch(() => { v.muted = true; v.play().catch(fin); });
+}
+function fermerVideo(versFigurine) {
+  if (merciEnAttente && !versFigurine) { merciEnAttente = false; const v = $("videoRelache"); v.pause(); return setTimeout(merci, 300); }
+  changerAmbiance("menu"); const v = $("videoRelache"); v.pause(); v.removeAttribute("src"); v.load(); $("relache").hidden = true; }
+$("fermerRelache").addEventListener("click", () => fermerVideo(false));
+$("grille").addEventListener("click", e => { if (e.target.closest("[data-merci]")) merci(); });
+document.querySelectorAll(".croix").forEach(b => b.addEventListener("click", () => {
+  const cible = b.dataset.ferme;
+  if (cible === "relache") return fermerVideo();
+  if (cible === "figurine") return $("fermerFigurine").click();
+  if (cible === "grimoire") return $("fermerGrimoire").click();
+  if (cible === "parents") return $("fermerParents").click();
+  if (cible === "partie") return $("fermerPartie").click();
+  if (cible === "carteParents") return $("finiCarte").click();
+  if (cible === "intro") { clearInterval(ecrit); taire(); return montrer("accueil"); }
+  if (cible === "victoire") { majAccueil(); return montrer("accueil"); }
+}));
+$("voirFigurine").addEventListener("click", () => { fermerVideo(true); ouvrirFigurine(figurineAMontrer); });
+
+/* ===================== Figurine 360° ===================== */
+let fig = null;
+const ECH_FIG = { thunderbird: 1.3 };   // Huhuk : ses grandes ailes le rendaient tout petit sur le socle
+function ouvrirFigurine(cle) {
+  const nom = cle === "catsith" ? GARDIEN.nom : Object.values(TRAQUES).find(t => t.cle === cle).nom;
+  $("figurine").hidden = false; $("figNom").textContent = nom; $("figChargement").hidden = false; sfx("figurine");
+  if (!fig) {
+    const toile = $("figCanvas"), rendu = new THREE.WebGLRenderer({ canvas: toile, alpha: true, antialias: true });
+    rendu.setPixelRatio(Math.min(devicePixelRatio, 2)); rendu.toneMapping = THREE.ACESFilmicToneMapping;
+    const scene = new THREE.Scene(), camera = new THREE.PerspectiveCamera(35, 1, .01, 50);
+    scene.add(new THREE.HemisphereLight(0xe8fbff, 0x20343a, 2.2));
+    const cle1 = new THREE.DirectionalLight(0xffffff, 2.4); cle1.position.set(2, 3, 3); scene.add(cle1);
+    const contre = new THREE.DirectionalLight(0x6fe8ff, 2.2); contre.position.set(-3, 2, -3); scene.add(contre);
+    const socle = new THREE.Mesh(new THREE.CylinderGeometry(.5, .56, .07, 48), new THREE.MeshStandardMaterial({ color: 0x173a42, roughness: .5, metalness: .3 }));
+    socle.position.y = -.04; scene.add(socle);
+    const plateau = new THREE.Group(); scene.add(plateau);
+    fig = { rendu, scene, camera, plateau, angle: 0, vitesse: .4, glisse: null, inclinaison: .15, actif: false };
+    const taille = () => { const w = toile.clientWidth, h = toile.clientHeight; rendu.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); };
+    addEventListener("resize", taille); fig.taille = taille;
+    toile.addEventListener("pointerdown", e => { fig.glisse = { x: e.clientX, y: e.clientY, a: fig.angle, i: fig.inclinaison, t: performance.now() }; toile.setPointerCapture(e.pointerId); fig.vitesse = 0; });
+    toile.addEventListener("pointermove", e => { if (!fig.glisse) return; const dx = e.clientX - fig.glisse.x, dy = e.clientY - fig.glisse.y;
+      const prec = fig.angle; fig.angle = fig.glisse.a + dx * .012; fig.inclinaison = Math.max(-.3, Math.min(.6, fig.glisse.i + dy * .004)); fig.elan = fig.angle - prec; });
+    toile.addEventListener("pointerup", () => { fig.glisse = null; fig.vitesse = Math.max(-6, Math.min(6, (fig.elan || 0) * 60)); });
+    let t0 = performance.now();
+    const boucleFig = () => {
+      if (!fig.actif) return;
+      const t = performance.now(), dt = (t - t0) / 1000; t0 = t;
+      if (!fig.glisse) { fig.vitesse += (.4 - fig.vitesse) * Math.min(1, dt * 1.5); fig.angle += fig.vitesse * dt; }
+      fig.plateau.rotation.y = fig.angle;
+      const d = 3.3 / Math.min(1, fig.camera.aspect * 1.5); fig.camera.position.set(0, .5 + Math.sin(fig.inclinaison) * d, Math.cos(fig.inclinaison) * d); fig.camera.lookAt(0, .5, 0);
+      fig.rendu.render(fig.scene, fig.camera); requestAnimationFrame(boucleFig);
+    };
+    fig.boucle = boucleFig;
+  }
+  fig.taille(); fig.plateau.clear(); fig.angle = 0; fig.vitesse = .4;
+  if (!fig.actif) { fig.actif = true; requestAnimationFrame(fig.boucle); }
+  const fichiers = FIGURINES[cle]; let restants = fichiers.length;
+  fichiers.forEach((f, i) => new GLTFLoader().load(f, g => {
+    const o = g.scene, b = new THREE.Box3().setFromObject(o), s = b.getSize(new THREE.Vector3()), c = b.getCenter(new THREE.Vector3());
+    const ech = 1.1 / Math.max(s.y, s.x * 1.1, s.z * 1.1) * (ECH_FIG[cle] || 1);
+    o.position.set(-c.x, -b.min.y, -c.z); const env = new THREE.Group(); env.add(o); env.scale.setScalar(ech * (fichiers.length > 1 ? .7 : 1));
+    if (fichiers.length > 1) env.position.x = (i ? 1 : -1) * .3;
+    fig.plateau.add(env);
+    if (--restants === 0) $("figChargement").hidden = true;
+  }, undefined, () => { $("figChargement").textContent = "La figurine n'a pas pu se charger."; }));
+}
+$("fermerFigurine").addEventListener("click", () => { $("figurine").hidden = true; fig.actif = false; fig.plateau.clear(); dessinerGrimoire();
+  if (merciEnAttente) { merciEnAttente = false; setTimeout(merci, 300); } });
+
+/* ===================== Sigil (préchargé) ===================== */
+let sigilBlob = null;
+fetch("sigil.webp").then(r => r.blob()).then(b => sigilBlob = b).catch(() => {});
+
+/* ===================== Moteur de l'œil magique ===================== */
+let moteur = null, traque = null, membreIdx = 0, gyroOK = false, gyro = false, positionGPS = null, cibleGPS = null, cap = null;
+const toile = $("vue");
+
+function initMoteur() {
+  if (moteur) return;
+  const rendu = new THREE.WebGLRenderer({ canvas: toile, alpha: true, antialias: true });
+  rendu.setPixelRatio(Math.min(devicePixelRatio, 2));
+  const scene = new THREE.Scene(), camera = new THREE.PerspectiveCamera(60, 1, .05, 100);
+  const etincelles = [];
+  const tex = (() => { const c = document.createElement("canvas"); c.width = c.height = 64; const g = c.getContext("2d");
+    const r = g.createRadialGradient(32, 32, 0, 32, 32, 32); r.addColorStop(0, "rgba(255,255,255,1)"); r.addColorStop(.4, "rgba(190,250,255,.6)"); r.addColorStop(1, "rgba(190,250,255,0)");
+    g.fillStyle = r; g.fillRect(0, 0, 64, 64); const t = new THREE.CanvasTexture(c); return t; })();
+  for (let i = 0; i < 40; i++) { const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
+    s.visible = false; scene.add(s); etincelles.push(s); }
+  moteur = { rendu, scene, camera, etincelles, creature: null, horloge: new THREE.Clock() };
+  const taille = () => { rendu.setSize(innerWidth, innerHeight, false); camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); };
+  addEventListener("resize", taille); taille(); moteur.taille = taille;
+  requestAnimationFrame(boucle);
+}
+
+// une créature = un plan qui joue sa vidéo (couleur en haut, transparence en bas)
+function creerCreature(m) {
+  const v = document.createElement("video");
+  v.src = m.ar; v.muted = true; v.loop = true; v.playsInline = true; v.setAttribute("playsinline", ""); v.crossOrigin = "anonymous"; v.preload = "auto";
+  // iPhone : la vidéo doit être dans la page pour être décodée
+  v.style.cssText = "position:fixed;left:0;top:0;width:2px;height:2px;opacity:0;pointer-events:none"; document.body.appendChild(v);
+  v.play().catch(() => {});
+  const couleur = new THREE.VideoTexture(v), alpha = new THREE.VideoTexture(v);
+  couleur.colorSpace = THREE.SRGBColorSpace;
+  couleur.repeat.set(1, .5); couleur.offset.set(0, .5); alpha.repeat.set(1, .5); alpha.offset.set(0, 0);
+  const mat = new THREE.MeshBasicMaterial({ map: couleur, alphaMap: alpha, transparent: true, depthWrite: false, side: THREE.DoubleSide, opacity: 0 });
+  const plan = new THREE.Mesh(new THREE.PlaneGeometry(m.taille * m.ratio, m.taille), mat);
+  plan.position.y = m.taille * (.5 - (m.pied || 0));   // pieds posés au sol
+  const pivot = new THREE.Group(), corps = new THREE.Group(); corps.add(plan); pivot.add(corps); moteur.scene.add(pivot);
+  return { m, v, plan, mat, pivot, corps, angle: null, trouve: false, tReveal: 0, tApparition: performance.now(), pris: false, tPris: 0, pret: false,
+           detruire() { v.pause(); v.removeAttribute("src"); v.load(); v.remove(); moteur.scene.remove(pivot); couleur.dispose(); alpha.dispose(); mat.dispose(); plan.geometry.dispose(); } };
+}
+
+const quatEcran = new THREE.Quaternion(), qRedresse = new THREE.Quaternion(-Math.sqrt(.5), 0, 0, Math.sqrt(.5)), eulerTel = new THREE.Euler(), axeZ = new THREE.Vector3(0, 0, 1);
+function orientation(e) {
+  if (e.alpha == null || e.beta == null || !moteur) return;
+  gyro = true;
+  if (typeof e.webkitCompassHeading === "number") cap = e.webkitCompassHeading; else if (e.absolute && e.alpha != null) cap = 360 - e.alpha;
+  const ecran = (screen.orientation && screen.orientation.angle) || window.orientation || 0;
+  eulerTel.set(e.beta * DEG, e.alpha * DEG, -e.gamma * DEG, "YXZ");
+  moteur.camera.quaternion.setFromEuler(eulerTel).multiply(qRedresse).multiply(quatEcran.setFromAxisAngle(axeZ, -ecran * DEG));
+}
+const lacetCamera = () => { const f = new THREE.Vector3(0, 0, -1).applyQuaternion(moteur.camera.quaternion); return Math.atan2(-f.x, -f.z); };
+
+// place la créature hors du champ : il faut se retourner pour la trouver
+function placer(c, angleImpose) {
+  c.distance = 3.2;   // même distance pour toutes : elles paraissent toutes de la même taille
+  // capteurs autorisés mais première mesure pas encore arrivée : on attend, sinon la créature se retrouverait collée devant l'objectif
+  if (angleImpose == null && !gyro && gyroOK && !c.attente) { c.angle = null; c.attente = performance.now(); return; }
+  c.angle = angleImpose != null ? angleImpose : lacetCamera() + (Math.random() < .5 ? -1 : 1) * (100 + Math.random() * 70) * DEG;
+}
+const centre = new THREE.Vector3(), dansCam = new THREE.Vector3(), proj = new THREE.Vector3();
+function situation(c) {
+  centre.copy(c.pivot.position); centre.y += c.m.taille * (.5 - (c.m.pied || 0));
+  dansCam.copy(centre).applyMatrix4(moteur.camera.matrixWorldInverse); proj.copy(centre).project(moteur.camera);
+  return { devant: dansCam.z < 0, x: proj.x, y: proj.y, gauche: dansCam.x < 0 };
+}
+
+let tDebutRecherche = 0, dernierPing = 0, lacetDoigt = 0, doigtX = null;
+const axeY = new THREE.Vector3(0, 1, 0);
+function aideDoigt() { $("consigne").textContent = "Fais glisser ton doigt sur l'écran pour regarder autour de toi, et écoute le tintement !"; }
+// la vidéo peut être bloquée (mode économie d'énergie de l'iPhone) : chaque toucher la relance
+addEventListener("pointerdown", () => { const c = moteur && moteur.creature; if (c && c.v.paused) c.v.play().catch(() => {}); }, true);
+toile.addEventListener("pointerdown", e => { doigtX = e.clientX; });
+addEventListener("pointermove", e => { if (doigtX == null || gyro) return; lacetDoigt += (e.clientX - doigtX) * .006; doigtX = e.clientX; });
+addEventListener("pointerup", () => { doigtX = null; }); addEventListener("pointercancel", () => { doigtX = null; });
+function boucle() {
+  requestAnimationFrame(boucle);
+  if ($("scene").hidden) return;
+  const dt = Math.min(moteur.horloge.getDelta(), .1), t = performance.now(), c = moteur.creature;
+  if (!gyro) moteur.camera.quaternion.setFromAxisAngle(axeY, lacetDoigt);   // sans capteur : on tourne la vue avec le doigt
+  if (c && c.angle == null && c.attente && (gyro || t - c.attente > 2500)) {
+    if (!gyro) { gyroOK = false; aideDoigt(); }
+    placer(c);
+  }
+  if (c && c.angle != null) {
+    const sol = -YEUX + (c.m.altitude || 0), a = c.angle + Math.sin(t / 4000) * .05;
+    c.pivot.position.set(-Math.sin(a) * c.distance, sol, -Math.cos(a) * c.distance);
+    c.pivot.lookAt(moteur.camera.position.x, c.pivot.position.y, moteur.camera.position.z);
+    const s = situation(c), visible = s.devant && Math.abs(s.x) < .75 && Math.abs(s.y) < 1.1;
+    // révélation : la créature n'apparaît que lorsqu'on la regarde
+    if (!c.trouve && visible && t - c.tApparition > 900 && c.v.readyState >= 2) {
+      c.trouve = true; c.tReveal = t; c.tCri = t; sfx("revele"); setTimeout(() => jouerTampon("cri-" + c.m.id, 1, s.x), 350);
+      $("consigne").textContent = "Le voilà ! Tapote-le vite pour remplir la jauge de capture !";
+      $("nomMonstre").textContent = c.m.nom || traque.nom.split(",")[0]; $("gauche").hidden = $("droite").hidden = true;
+      $("jauge").hidden = false; $("jaugeEtoiles").textContent = "★".repeat(c.diff) + "☆".repeat(Math.max(0, 4 - c.diff));
+      jaillir(c, 26);
+    }
+    if (!c.pris) c.mat.opacity = c.trouve ? Math.min(1, (t - c.tReveal) / 700) : 0;
+    if (c.trouve && !c.pris && visible && t - c.tCri > 7000) { c.tCri = t; jouerTampon("cri-" + c.m.id, .8, s.x); }
+    // indices : petit tintement de plus en plus fréquent quand on s'approche, flèches après un moment
+    if (!c.trouve) {
+      const ecart = Math.abs(Math.atan2(Math.sin(c.angle - lacetCamera()), Math.cos(c.angle - lacetCamera())));
+      const periode = 600 + ecart / Math.PI * 2400;
+      if (t - dernierPing > periode) { dernierPing = t; sfx("proche"); }
+      const aide = !visible;   // flèches bleues dès le début
+      $("gauche").hidden = !aide || !s.gauche; $("droite").hidden = !aide || s.gauche;
+    }
+    if (c.trouve && !c.pris) {   // la jauge se vide doucement quand on ne tapote pas
+      if (visible) c.jauge = Math.max(0, c.jauge - DRAIN[c.diff] * dt);
+      $("jaugeBarre").style.width = (c.jauge * 100) + "%";
+      $("gauche").hidden = visible || !s.gauche; $("droite").hidden = visible || s.gauche;
+    }
+    $("sceau").disabled = !c.trouve || c.pris;
+    $("sceau").classList.toggle("pret", c.trouve && !c.pris && visible && Math.abs(s.x) < .45);
+    if (c.pris) {
+      const k = Math.min(1, (t - c.tPris) / 1300);
+      c.corps.scale.setScalar(Math.max(.01, 1 - k)); c.corps.rotation.y += dt * 12 * k; c.corps.position.y = c.m.taille * .5 * k; c.mat.opacity = 1 - k;
+    }
+  }
+  // étincelles
+  moteur.etincelles.forEach(s => { if (!s.visible) return; s.vie -= dt; if (s.vie <= 0) { s.visible = false; return; }
+    s.position.addScaledVector(s.vit, dt); s.vit.y -= dt * .3; s.material.opacity = Math.min(1, s.vie * 2); });
+  moteur.rendu.render(moteur.scene, moteur.camera);
+}
+function jaillir(c, n) {
+  for (let i = 0; i < n; i++) { const s = moteur.etincelles.find(x => !x.visible); if (!s) break;
+    s.visible = true; s.vie = .8 + Math.random() * .8; s.scale.setScalar(.05 + Math.random() * .08);
+    s.position.copy(c.pivot.position).add(new THREE.Vector3((Math.random() - .5) * c.m.taille * .8, Math.random() * c.m.taille, (Math.random() - .5) * .4));
+    s.vit = new THREE.Vector3((Math.random() - .5) * .8, Math.random() * .9, (Math.random() - .5) * .8); }
+}
+
+/* ---------- Capture ---------- */
+const rayon = new THREE.Raycaster(), doigt = new THREE.Vector2();
+toile.addEventListener("pointerdown", e => {
+  const c = moteur && moteur.creature; if (!c || !c.trouve || c.pris) return;
+  doigt.set(e.clientX / innerWidth * 2 - 1, -(e.clientY / innerHeight) * 2 + 1);
+  rayon.setFromCamera(doigt, moteur.camera);
+  if (rayon.intersectObject(c.plan, false).length) frapper();
+});
+$("sceau").addEventListener("click", () => {
+  const c = moteur && moteur.creature; if (!c || !c.trouve || c.pris) return;
+  const s = situation(c);
+  if (s.devant && Math.abs(s.x) < .6 && Math.abs(s.y) < 1) frapper();
+  else { sfx("rate"); $("consigne").textContent = "Vise la créature avec l'œil pour utiliser le sceau !"; }
+});
+function capturer() {
+  const c = moteur.creature; c.pris = true; c.tPris = performance.now(); $("jaugeBarre").style.width = "100%";
+  $("gauche").hidden = $("droite").hidden = true;
+  if (navigator.vibrate) navigator.vibrate(120);
+  sfx("capture");
+  centre.copy(c.pivot.position); centre.y += c.m.taille / 2; centre.project(moteur.camera);
+  const s = $("sigil"); s.style.left = ((centre.x + 1) / 2 * innerWidth) + "px"; s.style.top = ((1 - centre.y) / 2 * innerHeight) + "px";
+  if (sigilBlob) { if (s.src) URL.revokeObjectURL(s.src); s.src = URL.createObjectURL(sigilBlob); s.hidden = false; }
+  setTimeout(() => $("eclair").classList.add("flash"), 2100);
+  setTimeout(() => { s.hidden = true; $("eclair").classList.remove("flash"); apresCapture(); }, 2900);
+}
+function apresCapture() {
+  moteur.creature.detruire(); moteur.creature = null; $("jauge").hidden = true;
+  if (traque.boss) return bossVaincu();
+  majPartie(p => { p.membres[traque.id] = membreIdx + 1; });
+  if (membreIdx + 1 < traque.membres.length) {          // les lutins : au tour du second
+    const fait = traque.membres[membreIdx].nom, suivant = traque.membres[membreIdx + 1].nom;
+    membreIdx++; bandeau(fait + " est sauvé ! Mais " + suivant + " se cache encore… Cherche-le !", 3200);
+    sfx("victoire"); setTimeout(lancerMembre, 1500); return;
+  }
+  ajouter(CLES.pris, traque.id); majPartie(p => { if (!p.pris.includes(traque.id)) p.pris.push(traque.id); }); sfx("victoire");
+  $("portrait").src = traque.image; $("ficheNom").textContent = traque.nom; $("ficheTexte").textContent = traque.texte;
+  const p = partie() || { liste: ids, pris: pris() }, n = p.pris.length, total = p.liste.length;
+  $("compteur").textContent = n >= total ? "" : n + " / " + total + " cryptides sauvés dans cette aventure.";
+  $("final").hidden = n < total; $("continuer").hidden = n >= total; $("rejouer").hidden = n < total;
+  $("titreVictoire").textContent = "Sauvé !"; $("defi").hidden = !(n >= total && bossDispo());
+  $("final").textContent = $("defi").hidden ? TEXTE_FINAL : "Tous les cryptides sont sauvés ! Mais Sporran a un dernier défi pour toi…";
+  $("scene").hidden = true; montrer("victoire");
+}
+function bandeau(texte, duree) { $("bandeau").textContent = texte; $("bandeau").hidden = false; setTimeout(() => $("bandeau").hidden = true, duree); }
+
+/* ---------- Ouverture de l'œil (caméra, mouvements) ---------- */
+function erreur(msg) { bandeau(msg, 6000); }
+async function ouvrirOeil() {
+  initAudio(); sfx("oeil"); taire(); changerAmbiance("chasse");
+  let attente = Promise.resolve("granted");
+  if (window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission === "function")
+    attente = DeviceOrientationEvent.requestPermission().catch(() => "denied");
+  montrer(null); $("scene").hidden = false; initMoteur();
+  if (!$("camera").srcObject) {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) erreur("La caméra n'est pas accessible : ouvre l'application dans Safari, à une adresse en https.");
+    else try {
+      const flux = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: "environment" } }, audio: false });
+      $("camera").srcObject = flux; await $("camera").play().catch(() => {});
+    } catch (e) { erreur("Caméra refusée. Autorise la caméra pour ce site dans les réglages de Safari, puis recharge la page."); }
+  }
+  gyroOK = (await attente) === "granted" && "DeviceOrientationEvent" in window;
+  if (!gyroOK) bandeau("Capteurs de mouvement non autorisés : fais glisser ton doigt pour regarder autour de toi. (Pour les réactiver : ferme Safari complètement et rouvre l'application.)", 7000);
+  if (gyroOK && !orientation.branche) { addEventListener("deviceorientation", orientation); orientation.branche = true; }
+  moteur.taille();
+  prochaineTraque();
+}
+function prochaineTraque() {
+  $("viseur").hidden = true; $("radar").hidden = true; $("gauche").hidden = $("droite").hidden = true; $("jauge").hidden = true;
+  if (enBoss) return mode() === "qr" ? demarrerBossAR() : ouvrirPixel();
+  const demande = new URLSearchParams(location.search).get("m");
+  const p = partie() || { liste: ids, pris: [] };
+  if (demande && p.liste.includes(demande) && !p.pris.includes(demande) && !prochaineTraque.lu) { prochaineTraque.lu = true; return demarrerTraque(demande); }
+  prochaineTraque.lu = true;
+  const restantes = p.liste.filter(k => !p.pris.includes(k));
+  if (!restantes.length) {
+    if (bossDispo()) return lancerDefi();
+    $("nomMonstre").textContent = "Œil magique"; $("consigne").textContent = "Aventure terminée ! Ouvre ton grimoire ou lance une nouvelle aventure."; return; }
+  if (mode() === "qr") return scanner();
+  ouvrirPixel();
+}
+function demarrerTraque(k, extra) {
+  traque = Object.assign({ id: k }, TRAQUES[k], extra || {});
+  membreIdx = Math.min(((partie() || {}).membres || {})[k] || 0, traque.membres.length - 1);
+  history.replaceState(null, "", "?m=" + k);
+  $("nomMonstre").textContent = "???";
+  lancerMembre();
+}
+function lancerMembre() {
+  const m = traque.membres[membreIdx];
+  if (audio && !tampons["cri-" + m.id]) charger("cri-" + m.id, "cri-" + m.id + ".m4a");
+  if (mode() === "exterieur" && !traque.gpsFait) return chercherGPS();
+  const c = creerCreature(m); c.diff = traque.boss ? 4 : (DIFF[traque.cle] || 2); c.jauge = 0; c.esquives = 0;
+  moteur.creature = c; placer(c, traque.angleGPS);
+  tDebutRecherche = performance.now();
+  $("nomMonstre").textContent = traque.boss ? "Sporran" : traque.membres.length > 1 ? m.nom + " (" + (membreIdx + 1) + "/2)" : "???";
+  if (gyro || gyroOK) $("consigne").textContent = "Une créature se cache tout près… Tourne sur toi-même et écoute le tintement !"; else aideDoigt();
+}
+
+/* ---------- Mode QR : lecture des codes ---------- */
+function scanner() {
+  $("viseur").hidden = false; $("nomMonstre").textContent = "Œil magique";
+  $("consigne").textContent = "Vise le QR code d'une créature cachée.";
+  const video = $("camera"), c = document.createElement("canvas"), g = c.getContext("2d", { willReadFrequently: true });
+  const lireQR = () => {
+    if ($("scene").hidden || $("viseur").hidden) return;
+    if (video.videoWidth && window.jsQR) {
+      const l = 480, h = Math.round(l * video.videoHeight / video.videoWidth);
+      c.width = l; c.height = h; g.drawImage(video, 0, 0, l, h);
+      const code = jsQR(g.getImageData(0, 0, l, h).data, l, h, { inversionAttempts: "dontInvert" });
+      if (code && code.data) {
+        let k = null; try { k = new URL(code.data, location.href).searchParams.get("m"); } catch (e) {}
+        if (k && TRAQUES[k]) {
+          if (navigator.vibrate) navigator.vibrate(80);
+          const p = partie() || { liste: ids, pris: [] };
+          if (!p.liste.includes(k)) $("consigne").textContent = "Cette créature ne fait pas partie de cette aventure. Cherche un autre QR code.";
+          else if (p.pris.includes(k)) $("consigne").textContent = TRAQUES[k].nom.split(",")[0] + " est déjà sauvé ! Cherche un autre QR code.";
+          else { $("viseur").hidden = true; sfx("oeil"); demarrerTraque(k); return; }
+        } else $("consigne").textContent = "Ce QR code n'appartient pas au grimoire.";
+      }
+    }
+    setTimeout(lireQR, 220);
+  };
+  lireQR();
+}
+
+/* ---------- Mode extérieur : points GPS dans un rayon de 10 m ---------- */
+const R = 6371000;
+function versPoint(o, dist, brg) { const d = dist / R, b = brg * DEG, la1 = o.lat * DEG, lo1 = o.lon * DEG;
+  const la2 = Math.asin(Math.sin(la1) * Math.cos(d) + Math.cos(la1) * Math.sin(d) * Math.cos(b));
+  const lo2 = lo1 + Math.atan2(Math.sin(b) * Math.sin(d) * Math.cos(la1), Math.cos(d) - Math.sin(la1) * Math.sin(la2));
+  return { lat: la2 / DEG, lon: lo2 / DEG }; }
+function distance(a, b) { const dla = (b.lat - a.lat) * DEG, dlo = (b.lon - a.lon) * DEG;
+  const h = Math.sin(dla / 2) ** 2 + Math.cos(a.lat * DEG) * Math.cos(b.lat * DEG) * Math.sin(dlo / 2) ** 2; return 2 * R * Math.asin(Math.sqrt(h)); }
+function relevement(a, b) { const y = Math.sin((b.lon - a.lon) * DEG) * Math.cos(b.lat * DEG);
+  const x = Math.cos(a.lat * DEG) * Math.sin(b.lat * DEG) - Math.sin(a.lat * DEG) * Math.cos(b.lat * DEG) * Math.cos((b.lon - a.lon) * DEG);
+  return (Math.atan2(y, x) / DEG + 360) % 360; }
+let origine = null, suiviGPS = null;
+function chercherGPS() {
+  if (!navigator.geolocation) { traque.gpsFait = true; bandeau("Pas de GPS sur ce téléphone : la créature se cache autour de toi.", 4000); return lancerMembre(); }
+  $("radar").hidden = false; $("radarTexte").textContent = "Recherche du GPS…";
+  $("consigne").textContent = "Suis la boussole : plus tu es chaud, plus la créature est proche.";
+  if (!suiviGPS) suiviGPS = navigator.geolocation.watchPosition(p => {
+    positionGPS = { lat: p.coords.latitude, lon: p.coords.longitude, precision: p.coords.accuracy };
+    if (!origine) origine = positionGPS;
+  }, () => { if (!positionGPS) { traque.gpsFait = true; $("radar").hidden = true; bandeau("Le GPS ne répond pas : la créature se cache autour de toi.", 4000); lancerMembre(); } },
+  { enableHighAccuracy: true, maximumAge: 1000, timeout: 20000 });
+  cibleGPS = null;
+}
+function majRadar() {
+  if (!positionGPS) return;
+  if (!cibleGPS) cibleGPS = versPoint(origine || positionGPS, 4 + Math.random() * 6, Math.random() * 360);
+  const d = distance(positionGPS, cibleGPS), brg = relevement(positionGPS, cibleGPS);
+  const seuil = Math.max(3.5, Math.min(8, positionGPS.precision * .7));
+  const mots = d < seuil ? "Brûlant !" : d < seuil + 3 ? "Chaud" : d < seuil + 6 ? "Tiède" : "Froid";
+  $("radarTexte").textContent = mots + " · " + Math.round(d) + " m";
+  const rel = cap != null ? brg - cap : brg;
+  $("radarFleche").style.transform = "rotate(" + rel + "deg)";
+  if (d < seuil && moteur) {
+    // la créature est dans cette direction : on la fait apparaître (cachée, à trouver du regard)
+    traque.gpsFait = true; $("radar").hidden = true;
+    traque.angleGPS = cap != null ? lacetCamera() - (brg - cap) * DEG : null;
+    lancerMembre();
+  }
+}
+
+/* ===================== V2 : carte du parc ===================== */
+const CLE_LIEUX = "cryptidsParc-lieux";
+const lieux = () => { const l = lire(CLE_LIEUX, {}); for (const k in l) if (!TRAQUES[k]) delete l[k]; return l; };
+const places = () => { const l = lieux(); return ids.filter(k => l[k]); };
+const nomCourt = k => TRAQUES[k].nom.split(",")[0];
+const tuiles = () => L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 20, maxNativeZoom: 19, attribution: "© OpenStreetMap" });
+const iconeCreature = (k, classe) => L.divIcon({ className: "", html: '<div class="marqueur ' + (classe || "") + '"><img alt="" src="' + TRAQUES[k].ombre + '"></div>', iconSize: [46, 46], iconAnchor: [23, 23] });
+const iconeMoi = () => L.divIcon({ className: "", html: '<div class="moi"></div>', iconSize: [24, 24], iconAnchor: [12, 12] });
+
+// --- parents : poser les créatures ---
+let carteP = null, marqueursP = {}, choisie = null, moiP = null, precP = null, suiviP = null, posParent = null;
+function ouvrirCarteParents() {
+  montrer("carteParents");
+  if (!window.L) { $("aideCarte").textContent = "La carte n'a pas pu se charger : vérifiez la connexion internet."; return; }
+  const l = lieux(), pts = Object.values(l);
+  if (!carteP) {
+    carteP = L.map("carteP", { zoomControl: false }).setView(pts[0] || [46.6, 2.4], pts.length ? 18 : 5);
+    tuiles().addTo(carteP);
+    carteP.on("click", e => poser(choisie, [e.latlng.lat, e.latlng.lng]));
+  }
+  setTimeout(() => { carteP.invalidateSize(); if (pts.length > 1) carteP.fitBounds(L.latLngBounds(pts).pad(.25), { maxZoom: 19 }); }, 60);
+  if (!choisie) choisie = ids.find(k => !l[k]) || ids[0];
+  dessinerPuces(); dessinerMarqueursP(); majAideCarte();
+  if (navigator.geolocation && suiviP == null) suiviP = navigator.geolocation.watchPosition(p => {
+    const ll = [p.coords.latitude, p.coords.longitude], premier = !posParent; posParent = ll;
+    if (!moiP) { precP = L.circle(ll, { radius: p.coords.accuracy, color: "#3aa0ff", weight: 1, fillOpacity: .08, interactive: false }).addTo(carteP);
+      moiP = L.marker(ll, { icon: iconeMoi(), interactive: false, zIndexOffset: -100 }).addTo(carteP); }
+    moiP.setLatLng(ll); precP.setLatLng(ll).setRadius(p.coords.accuracy);
+    if (premier && !Object.keys(lieux()).length) carteP.setView(ll, 18);
+  }, () => { if (!Object.keys(lieux()).length) majAideCarte("Position introuvable : déplacez la carte jusqu'au parc (deux doigts pour zoomer)."); },
+  { enableHighAccuracy: true, maximumAge: 2000 });
+}
+function dessinerPuces() {
+  const l = lieux();
+  $("puces").innerHTML = ids.map(k => '<button type="button" class="puce' + (l[k] ? " placee" : "") + (k === choisie ? " choisie" : "") + '" data-k="' + k + '"><img alt="" src="' + TRAQUES[k].ombre + '"><span>' + nomCourt(k) + '</span></button>').join("");
+  const b = $("puces").querySelector(".choisie"); if (b) b.scrollIntoView({ inline: "center", block: "nearest" });
+  $("retirerLieu").hidden = !l[choisie];
+}
+function dessinerMarqueursP() {
+  Object.values(marqueursP).forEach(m => m.remove()); marqueursP = {};
+  const l = lieux();
+  for (const k in l) {
+    const m = L.marker(l[k], { icon: iconeCreature(k, k === choisie ? "choisi" : ""), draggable: true, zIndexOffset: k === choisie ? 1000 : 0 }).addTo(carteP);
+    m.on("click", () => { choisie = k; dessinerPuces(); dessinerMarqueursP(); majAideCarte(); });
+    m.on("dragend", () => { const p = m.getLatLng(); poser(k, [p.lat, p.lng], true); });
+    marqueursP[k] = m;
+  }
+}
+function majAideCarte(msg) {
+  const l = lieux(), n = Object.keys(l).length, nom = nomCourt(choisie);
+  let t = msg || (l[choisie] ? nom + " est caché ici. Touchez la carte pour le déplacer, ou choisissez une autre créature."
+                             : "Touchez la carte là où " + nom + " doit se cacher.");
+  // deux créatures trop proches se déclencheraient ensemble
+  const ks = Object.keys(l);
+  for (let i = 0; i < ks.length; i++) for (let j = i + 1; j < ks.length; j++)
+    if (distance({ lat: l[ks[i]][0], lon: l[ks[i]][1] }, { lat: l[ks[j]][0], lon: l[ks[j]][1] }) < 15) { t = "⚠ " + nomCourt(ks[i]) + " et " + nomCourt(ks[j]) + " sont à moins de 15 m : éloignez-les un peu. " + t; i = ks.length; break; }
+  $("aideCarte").textContent = t + " (" + n + " / " + ids.length + " cachées)";
+}
+function poser(k, ll, glisse) {
+  if (!k) return;
+  const l = lieux(); l[k] = ll; ecrire(CLE_LIEUX, l); sfx("valider"); if (navigator.vibrate) navigator.vibrate(20);
+  if (!glisse) { const suivante = ids.slice(ids.indexOf(k) + 1).concat(ids).find(x => !l[x]); if (suivante) choisie = suivante; }
+  dessinerPuces(); dessinerMarqueursP(); majAideCarte();
+}
+$("puces").addEventListener("click", e => { const b = e.target.closest(".puce"); if (!b) return; choisie = b.dataset.k;
+  const l = lieux(); if (l[choisie] && carteP) carteP.panTo(l[choisie]); dessinerPuces(); dessinerMarqueursP(); majAideCarte(); });
+$("centrerMoi").addEventListener("click", () => { if (posParent && carteP) carteP.setView(posParent, 19); else majAideCarte("Position pas encore trouvée…"); });
+$("retirerLieu").addEventListener("click", () => { const l = lieux(); delete l[choisie]; ecrire(CLE_LIEUX, l); dessinerPuces(); dessinerMarqueursP(); majAideCarte(); });
+$("effacerLieux").addEventListener("click", () => {
+  const b = $("effacerLieux");
+  if (!b.dataset.ok) { b.dataset.ok = "1"; b.textContent = "Toucher encore pour tout effacer"; setTimeout(() => { delete b.dataset.ok; b.textContent = "Tout effacer"; }, 4000); return; }
+  delete b.dataset.ok; b.textContent = "Tout effacer"; ecrire(CLE_LIEUX, {}); choisie = ids[0]; dessinerPuces(); dessinerMarqueursP(); majAideCarte();
+});
+$("finiCarte").addEventListener("click", () => { if (suiviP != null) { navigator.geolocation.clearWatch(suiviP); suiviP = null; } majModes(); montrer("accueil"); });
+$("modifierCarte").addEventListener("click", ouvrirCarteParents);
+
+$("continuer").addEventListener("click", () => { montrer(null); $("scene").hidden = false; history.replaceState(null, "", location.pathname); prochaineTraque.lu = true; prochaineTraque(); });
+$("rejouer").addEventListener("click", () => { $("scene").hidden = true; preparerChoix(); montrer("partie"); });
+$("quitter").addEventListener("click", () => {
+  if (moteur && moteur.creature) { moteur.creature.detruire(); moteur.creature = null; }
+  $("scene").hidden = true; $("viseur").hidden = true; $("radar").hidden = true; fermerPixel(); arreterGPS(); $("jauge").hidden = true; enBoss = false;
+  majAccueil(); montrer("accueil");
+});
+
+// lien direct vers une traque (QR code scanné avec l'appareil photo) : l'aventure commence tout de suite
+const demandeInitiale = new URLSearchParams(location.search).get("m");
+if (demandeInitiale && TRAQUES[demandeInitiale]) {
+  const p = enCours();
+  $("intro-accueil").textContent = p && p.liste.includes(demandeInitiale) && !p.pris.includes(demandeInitiale)
+    ? "Une créature se cache tout près d'ici… Reprends ton aventure pour la sauver !"
+    : "Une créature se cache tout près d'ici… Commence l'aventure pour la sauver !";
+}
+
+/* ===================== V3 : chasse sur carte pixel art, détecteur, jauge, boss ===================== */
+const CLE_BOSS = "cryptidsParc-boss";
+const TEXTE_FINAL = $("final").textContent;
+// difficulté de capture (1 = facile … 4 = boss)
+const DIFF = { mothman: 2, nessie: 1, thunderbird: 3, barghest: 2, faery: 2, lutins: 1, jackalope: 3, yeti: 1, gargouille: 2, chupacabra: 3, kraken: 2, swamp: 1 };
+const GAIN = { 1: .2, 2: .14, 3: .11, 4: .08 };            // jauge gagnée par tapotement
+const DRAIN = { 1: .03, 2: .06, 3: .09, 4: .12 };          // jauge perdue par seconde
+const ESQUIVES = { 1: [], 2: [.5], 3: [.35, .7], 4: [.25, .5, .75] };   // la créature s'échappe à ces niveaux de jauge
+const SAUT = { 1: 1900, 2: 1500, 3: 1150, 4: 800 };       // sur la carte : temps entre deux sauts (ms)
+const BOSS_MEMBRE = { nom: "Sporran", id: "catsith", ar: "ar-catsith.mp4", ratio: 1.0706, taille: 1.85, pied: 0.046, altitude: 0 };
+const DEFI = [
+  "Bravo !!! Tu as sauvé tous les Cryptides de mon grimoire. Je n'en reviens pas…",
+  "Mais es-tu assez rapide pour attraper le plus malin de tous… MOI ?\nHé hé ! Je me cache tout près. Sors ton détecteur et attrape-moi si tu peux !"
+];
+let enBoss = false, bossPhase = 0;
+function bossDispo() { return pris().length >= ids.length && !lire("cryptidsParc-boss", false); }   // déclarée tôt : utilisée dès l'accueil
+const pixDe = k => k === "catsith" ? "pix-catsith.gif" : "pix-" + TRAQUES[k].cle + ".gif";
+const rayonJeu = () => mode() === "interieur" ? 10 : 20;
+const restantesJeu = () => { const p = partie(); return p ? p.liste.filter(k => !p.pris.includes(k)) : []; };
+
+// ---------- défi de Sporran ----------
+function lancerDefi() {
+  fermerPixel(); $("scene").hidden = true; $("jauge").hidden = true;
+  textesIntro = DEFI; finIntro = demarrerBoss; pageIntro = 0; montrer("intro"); afficherIntro(0);
+}
+function demarrerBoss() {
+  clearInterval(ecrit); enBoss = true; bossPhase = 0; textesIntro = INTRO; finIntro = apresIntro;
+  const p = partie(); if (p) { delete p.posBoss; ecrire(CLES.partie, p); }
+  if (!$("camera").srcObject) return ouvrirOeil();     // l'œil magique n'est pas encore ouvert
+  montrer(null); $("scene").hidden = false; changerAmbiance("chasse"); prochaineTraque();
+}
+function demarrerBossAR() {
+  fermerPixel();
+  traque = { id: "boss", boss: true, cle: "catsith", nom: GARDIEN.nom, texte: GARDIEN.texte, image: GARDIEN.image, membres: [BOSS_MEMBRE], gpsFait: true, angleGPS: null };
+  membreIdx = 0; lancerMembre();
+  $("consigne").textContent = "Sporran se cache autour de toi… Tourne sur toi-même !";
+}
+function bossVaincu() {
+  ecrire(CLE_BOSS, true); enBoss = false; sfx("victoire");
+  $("titreVictoire").textContent = "Défi relevé !";
+  $("portrait").src = GARDIEN.image; $("ficheNom").textContent = GARDIEN.nom;
+  $("ficheTexte").textContent = "Grrr… Tu m'as attrapé ! Tu as l'œil vif et les pattes rapides. Te voilà Gardien du grimoire, pour toujours !";
+  $("compteur").textContent = ""; $("final").hidden = true; $("continuer").hidden = true; $("rejouer").hidden = false; $("defi").hidden = true;
+  $("scene").hidden = true; montrer("victoire");
+}
+$("defi").addEventListener("click", lancerDefi);
+$("defiAccueil").addEventListener("click", () => { initAudio(); if (!partie()) ecrire(CLES.partie, { liste: [], pris: [], membres: {}, debut: Date.now() }); lancerDefi(); });
+
+// ---------- AR : tapoter pour remplir la jauge ----------
+function frapper() {
+  const c = moteur && moteur.creature; if (!c || !c.trouve || c.pris) return;
+  c.jauge = Math.min(1, c.jauge + GAIN[c.diff]); jaillir(c, 5); sfx("tape"); if (navigator.vibrate) navigator.vibrate(15);
+  $("jaugeBarre").style.width = (c.jauge * 100) + "%";
+  if (c.jauge >= 1) { sfx("sceau"); return capturer(); }
+  const seuils = ESQUIVES[c.diff];
+  if (c.esquives < seuils.length && c.jauge >= seuils[c.esquives]) { c.esquives++; esquiver(c); }
+}
+function esquiver(c) {
+  jaillir(c, 22); sfx("fuite");
+  c.angle += (Math.random() < .5 ? -1 : 1) * (55 + Math.random() * 55) * DEG;
+  c.tReveal = performance.now() + 250;   // réapparaît en fondu à sa nouvelle place
+  $("consigne").textContent = (traque.boss ? "Hé hé ! Raté !" : "Oh ! Il s'est échappé !") + " Retrouve-le et continue à tapoter !";
+  setTimeout(() => jouerTampon("cri-" + c.m.id, .8, 0), 400);
+}
+
+// ---------- carte pixel art ----------
+const PAL = {   // style « jeu d'aventure » : herbe vive, contours sombres, toits colorés (d'après les images de référence de Sam)
+  herbe: "#78b04a", herbe2: "#8cc455", herbe3: "#5f9a3c", parc: "#84bc4c", terrain: "#93c95a", bois: "#4c8a3c", quartier: "#6fa646",
+  cimetiere: "#7a9a5a", eau: "#3d9fb5", eau2: "#7fd6dc", ecume: "#c8f0ea", rive: "#3a3b4a",
+  route: "#3a3442", bordure: "#6e6470", marquage: "#efe3c4", trottoir: "#b8aa96", dalle: "#c9b48c", dalle2: "#a8946e",
+  chemin: "#dcbc7e", chemin2: "#b08f5c", parking: "#4b4552",
+  facade: "#6a5866", fenetre: "#f3d27a", toit: "#8a5a44", toitClair: "#a8775a", toitR: "#c4573f", toitRClair: "#e07a55",
+  toitB: "#3f6f9e", toitBClair: "#5f93c2", toitG: "#6f6b7a", toitGClair: "#908c9c",
+  arbre1: "#2a6e3c", arbre2: "#3f9a4c", arbre3: "#6cc25c", arbre4: "#a3dc6e", tronc: "#6b4630", ombre: "#4f8a34", contour: "#23202c",
+  mur: "#8c8478", cloture: "#8a6a44", lampe: "#ffe28a", fleurJ: "#f4e05a", fleurR: "#ef7d9b", fleurB: "#ffffff"
+};
+const TOITS = [["toit", "toitClair"], ["toitR", "toitRClair"], ["toitB", "toitBClair"], ["toitG", "toitGClair"]];
+const PAL_RGB = Object.values(PAL).map(h => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)]);
+const EAU_RGB = PAL_RGB[Object.keys(PAL).indexOf("eau")], CLES_PAL = Object.keys(PAL);
+let PXC = null, suiviPX = null, fixPX = null, tAttentePX = 0;
+const M_LAT = 110540;
+const versM = (lat, lon) => ({ x: (lon - PXC.origine[1]) * 111320 * Math.cos(PXC.origine[0] * DEG), y: -(lat - PXC.origine[0]) * M_LAT });
+const versGeo = (x, y) => [PXC.origine[0] - y / M_LAT, PXC.origine[1] + x / (111320 * Math.cos(PXC.origine[0] * DEG))];
+function hasard(graine) { let a = graine >>> 0; return () => { a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+
+function ouvrirPixel() {
+  traque = null; $("viseur").hidden = true; $("jauge").hidden = true; $("sceau").disabled = true; $("gauche").hidden = $("droite").hidden = true;
+  if (!enBoss && !restantesJeu().length) { fermerPixel(); return prochaineTraque(); }
+  $("pixel").hidden = false; $("detecteur").hidden = false; chargerAssets();
+  $("nomMonstre").textContent = enBoss ? "Sporran" : "Œil magique";
+  if (!PXC) PXC = { carte: null, origine: null, joueur: { x: 0, y: 0 }, manuel: false, vise: null, cibles: [], revele: null, signal: 0, dernierBip: 0, raf: 0, t: 0 };
+  PXC.revele = null; $("pixelSprites").innerHTML = "";
+  const p = partie();
+  if (p && p.origine) preparerCarte(p.origine, p.fictif);
+  else { $("consigne").textContent = "Recherche de ta position…"; tAttentePX = performance.now(); }
+  demarrerGPS();
+  if (!PXC.raf) PXC.raf = requestAnimationFrame(bouclePixel);
+}
+function fermerPixel() {
+  $("pixel").hidden = true; $("detecteur").hidden = true;
+  if (PXC) { if (PXC.raf) cancelAnimationFrame(PXC.raf); PXC.raf = 0; PXC.revele = null; }
+  $("pixelSprites").innerHTML = "";
+}
+function demarrerGPS() {
+  if (suiviPX != null) return;
+  if (!navigator.geolocation) return passerManuel("Pas de GPS sur cet appareil");
+  suiviPX = navigator.geolocation.watchPosition(pos => {
+    fixPX = { lat: pos.coords.latitude, lon: pos.coords.longitude, acc: pos.coords.accuracy || 50 };
+    const p = partie();
+    if (p && !p.origine && !$("pixel").hidden && (fixPX.acc < 40 || performance.now() - tAttentePX > 12000)) {
+      majPartie(q => { q.origine = [fixPX.lat, fixPX.lon]; q.fictif = false; }); preparerCarte([fixPX.lat, fixPX.lon], false);
+    }
+  }, err => {   // refus ou GPS absent : on passe en marche au doigt (une simple attente trop longue n'est pas une erreur)
+    if (PXC && !PXC.manuel && (err.code === 1 || !fixPX)) passerManuel(err.code === 1 ? "Localisation refusée" : "Le GPS ne répond pas");
+  }, { enableHighAccuracy: true, maximumAge: 1000 });
+  setTimeout(() => { if (!fixPX && PXC && !PXC.manuel && !$("pixel").hidden) passerManuel("Pas de signal GPS"); }, 15000);
+}
+function arreterGPS() { if (suiviPX != null) { navigator.geolocation.clearWatch(suiviPX); suiviPX = null; } }
+function passerManuel(msg) {
+  if (!PXC) return;
+  PXC.manuel = true; $("marcher").classList.add("actif");
+  if (msg) bandeau(msg + " : touche la carte pour te déplacer.", 5500);
+  const p = partie();
+  if (p && !p.origine) { majPartie(q => { q.origine = [45, 0]; q.fictif = true; }); preparerCarte([45, 0], true); }
+}
+$("marcher").addEventListener("click", () => {
+  if (!PXC) return;
+  if (PXC.manuel && fixPX && !(partie() || {}).fictif) { PXC.manuel = false; PXC.vise = null; $("marcher").classList.remove("actif"); bandeau("Le GPS te suit de nouveau.", 2500); }
+  else { PXC.manuel = true; $("marcher").classList.add("actif"); bandeau("Touche la carte pour te déplacer.", 2500); }
+});
+$("pixelCanvas").addEventListener("pointerdown", e => {
+  if (!PXC || !PXC.manuel || !PXC.ech) return;
+  const r = $("pixelCanvas").getBoundingClientRect(), d = PXC.dpr;
+  PXC.vise = { x: ((e.clientX - r.left) * d - PXC.ox) / PXC.ech - PXC.H, y: ((e.clientY - r.top) * d - PXC.oy) / PXC.ech - PXC.H };
+});
+
+function preparerCarte(orig, fictif) {
+  const meme = PXC.origine && PXC.origine[0] === orig[0] && PXC.origine[1] === orig[1] && PXC.carte;
+  if (!meme) {
+    PXC.origine = orig; PXC.fictif = !!fictif;
+    const ind = mode() === "interieur"; PXC.H = ind ? 40 : 70; PXC.ppm = ind ? 12 : 6; PXC.zoom = 1;   // 6 pixels par mètre (12 en intérieur) : la taille des assets ; même échelle à l'écran qu'avant
+    PXC.joueur = fixPX && !fictif ? versM(fixPX.lat, fixPX.lon) : { x: 0, y: 0 };
+    dessinerCarte(null);
+    if (!fictif) chargerOSM(orig).then(d => { if (PXC.origine === orig) { dessinerCarte(d); habiter(); } })
+      .catch(() => bandeau("La carte du quartier n'a pas pu se charger (réseau ?). Le détecteur marche quand même.", 5000));
+  }
+  placerCibles();
+  $("consigne").textContent = enBoss ? "Sporran se cache tout près… Suis le détecteur !" : "Marche et suis le détecteur : plus il s'allume, plus un cryptide est proche !";
+}
+function placerCibles() {
+  const p = partie(); if (!p) return;
+  p.pos = p.pos || {};
+  const R = rayonJeu(), ind = mode() === "interieur", ecart = ind ? 3 : 6, mini = ind ? 3 : 6, l = mode() === "exterieur" ? lieux() : {};
+  const pris = Object.values(p.pos).map(g => versM(g[0], g[1]));
+  const tirer = (rMin, rMax, cx, cy) => { let b = null;
+    for (let i = 0; i < 60; i++) { const a = Math.random() * 2 * Math.PI, r = rMin + Math.random() * (rMax - rMin), x = cx + Math.cos(a) * r, y = cy + Math.sin(a) * r;
+      b = { x, y }; if (pris.every(e => Math.hypot(e.x - x, e.y - y) >= ecart) && (ind || accessible(x, y))) break; }
+    pris.push(b); return b; };
+  const habitats = !ind && !PXC.fictif;   // en extérieur, la créature tirée au hasard ira dans son habitat dès que la carte du quartier sera chargée
+  p.auHasard = p.auHasard || [];
+  p.liste.forEach(k => { if (p.pos[k]) return; if (l[k]) { p.pos[k] = l[k]; return; } const b = tirer(mini, R, 0, 0); p.pos[k] = versGeo(b.x, b.y); if (habitats) p.auHasard.push(k); });
+  if (enBoss && !p.posBoss) { const b = caseSure(PXC.joueur.x, PXC.joueur.y, 8, 16) || tirer(ind ? 4 : 8, ind ? 9 : 16, PXC.joueur.x, PXC.joueur.y); p.posBoss = versGeo(b.x, b.y); }
+  ecrire(CLES.partie, p);
+  PXC.cibles = enBoss ? [Object.assign({ k: "catsith" }, versM(p.posBoss[0], p.posBoss[1]))]
+                      : restantesJeu().map(k => Object.assign({ k }, versM(p.pos[k][0], p.pos[k][1])));
+}
+
+// ---------- habitats : chaque créature se cache sur un terrain qui lui ressemble ----------
+// règles essayées dans l'ordre : [couleurs de la palette, distance maximale en mètres] ; "lampe" = lampadaire OSM
+const ARBRES = ["arbre1", "arbre2", "arbre3", "arbre4"];
+const HABITAT = {
+  mothman: [["lampe", 3], [["chemin", "chemin2", "dalle"], 1]],    // sous un lampadaire, sinon le long d'un chemin
+  nessie: [[["eau"], 3]],                                           // au bord de l'eau
+  thunderbird: [[["terrain"], 0], [["parc"], 0]],                   // les grands espaces
+  barghest: [[ARBRES, 1], [["bois"], 0]],                           // un bâton sous les arbres
+  faery: [[["chemin", "chemin2"], 1], [["dalle"], 1]],              // le long des chemins
+  lutins: [[ARBRES, 1], [["parc", "quartier"], 0]],                 // les buissons
+  jackalope: [[["terrain", "parc"], 0], [["chemin", "chemin2"], 1]],   // là où l'on peut courir
+  yeti: [[["chemin", "chemin2"], 1]],                               // ses traces sur les sentiers
+  gargouille: [[[...TOITS.flat(), "facade", "fenetre", "mur"], 2]],                    // au pied d'un bâtiment
+  chupacabra: [[["facade"], 3], [["quartier"], 0]],                // près des maisons
+  kraken: [[["eau"], 4]],                                           // ses trésors au bord de l'eau
+  swamp: [[["eau"], 4], [ARBRES, 1], [["bois"], 0]]                // là où c'est mouillé : près de l'eau ou sous les arbres
+};
+const INTERDIT = new Set(["eau", "eau2", "ecume", "rive", ...TOITS.flat(), "facade", "fenetre", "mur", "route", "bordure", "marquage", "parking"]);   // ni dans l'eau, ni dans un bâtiment, ni sur la route
+const terrain = (x, y) => { const g = PXC && PXC.grille, S = 2 * PXC.H, i = Math.floor(x + PXC.H), j = Math.floor(y + PXC.H); return g && i >= 0 && j >= 0 && i < S && j < S ? g[j * S + i] : null; };
+const accessible = (x, y) => !PXC || !PXC.grille || !INTERDIT.has(terrain(x, y));
+function pres(x, y, couleurs, dist) {   // distance 0 : la case est bien à l'intérieur de ce terrain (au moins 7 cases sur 9)
+  if (couleurs === "lampe") return PXC.lampes.some(q => Math.hypot(q.x - x, q.y - y) <= dist);
+  if (!dist) { if (!couleurs.includes(terrain(x, y))) return false; let n = 0;
+    for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) n += couleurs.includes(terrain(x + dx, y + dy));
+    return n >= 7; }
+  let n = 0;   // les bords des formes donnent des pixels de couleur intermédiaire : on demande au moins 3 cases, pas une seule isolée
+  for (let dy = -dist; dy <= dist; dy++) for (let dx = -dist; dx <= dist; dx++)
+    if (dx * dx + dy * dy <= dist * dist && couleurs.includes(terrain(x + dx, y + dy)) && ++n >= 3) return true;
+  return false;
+}
+// zone de jeu : les cases qu'on rejoint à pied depuis (cx, cy) sans traverser de rue, d'eau ni de bâtiment (pour que les enfants ne traversent pas la route)
+function zoneSure(cx, cy, R) {
+  if (!PXC.grille || mode() === "interieur") return null;
+  const S = 2 * PXC.H, H = PXC.H, libre = (i, j) => i >= 0 && j >= 0 && i < S && j < S && !INTERDIT.has(PXC.grille[j * S + i]) && Math.hypot(i + .5 - H - cx, j + .5 - H - cy) <= R + 1;
+  let i0 = Math.floor(cx + H), j0 = Math.floor(cy + H), d0 = 1e9;
+  if (!libre(i0, j0)) {   // le GPS place parfois le joueur sur la chaussée : on part de la case libre la plus proche
+    const ci = i0, cj = j0;
+    for (let dj = -4; dj <= 4; dj++) for (let di = -4; di <= 4; di++) if (libre(ci + di, cj + dj) && di * di + dj * dj < d0) { d0 = di * di + dj * dj; i0 = ci + di; j0 = cj + dj; }
+    if (d0 === 1e9) return new Set();
+  }
+  const vu = new Set([j0 * S + i0]), file = [[i0, j0]];
+  while (file.length) { const [i, j] = file.pop();
+    for (const [a, b] of [[i + 1, j], [i - 1, j], [i, j + 1], [i, j - 1]]) { const n = b * S + a; if (!vu.has(n) && libre(a, b)) { vu.add(n); file.push([a, b]); } } }
+  return vu;
+}
+const dansZone = (z, x, y) => !z || z.has(Math.floor(y + PXC.H) * 2 * PXC.H + Math.floor(x + PXC.H));
+function caseSure(cx, cy, rMin, rMax) {   // une case au hasard dans la zone sûre autour de (cx, cy), ou null sans carte
+  const z = zoneSure(cx, cy, rMax); if (!z) return null;
+  const S = 2 * PXC.H, l = [...z].map(n => ({ x: n % S - PXC.H + .5, y: Math.floor(n / S) - PXC.H + .5 }));
+  const ok = l.filter(c => Math.hypot(c.x - cx, c.y - cy) >= rMin), t = ok.length ? ok : l;
+  return t.length ? t[Math.floor(Math.random() * t.length)] : null;
+}
+function caseHabitat(k, rMin, rMax, autres, ecart, z) {
+  const regles = HABITAT[TRAQUES[k].cle] || [], cases = [];
+  for (let y = -rMax; y <= rMax; y++) for (let x = -rMax; x <= rMax; x++) {
+    const cx = x + .5, cy = y + .5, r = Math.hypot(cx, cy);
+    if (r >= rMin && r <= rMax && accessible(cx, cy) && dansZone(z, cx, cy) && autres.every(e => Math.hypot(e.x - cx, e.y - cy) >= ecart)) cases.push({ x: cx, y: cy });
+  }
+  for (const [couleurs, dist] of regles) { const ok = cases.filter(c => pres(c.x, c.y, couleurs, dist)); if (ok.length) return ok[Math.floor(Math.random() * ok.length)]; }
+  return cases.length ? cases[Math.floor(Math.random() * cases.length)] : null;
+}
+function habiter() {
+  const p = partie(); if (!p || !p.pos || !p.auHasard || !p.auHasard.length || !PXC.grille || enBoss) return;
+  const R = rayonJeu(), vu = PXC.revele && PXC.revele.c.k, z = zoneSure(0, 0, R);
+  const autres = Object.keys(p.pos).filter(k => !p.auHasard.includes(k)).map(k => versM(p.pos[k][0], p.pos[k][1]));
+  p.auHasard.slice().forEach(k => {
+    if (p.pris.includes(k) || k === vu) return;
+    const c = caseHabitat(k, 6, R, autres, 6, z) || caseHabitat(k, 3, R, autres, 3, z);   // petite zone : on rapproche les créatures
+    if (!c) return;
+    p.pos[k] = versGeo(c.x, c.y); autres.push(c); p.auHasard.splice(p.auHasard.indexOf(k), 1);
+  });
+  ecrire(CLES.partie, p); placerCibles();
+}
+
+async function chargerOSM(orig) {
+  const H = PXC.H, R = Math.round(H * 1.45), [la, lo] = orig.map(v => +v.toFixed(6));
+  const cle = "cryptidsParc-osm-" + la.toFixed(4) + "," + lo.toFixed(4) + "," + R;
+  try { const c = sessionStorage.getItem(cle); if (c) return JSON.parse(c); } catch (e) {}
+  const a = `(around:${R},${la},${lo})`;
+  const q = `[out:json][timeout:25];(way["building"]${a};way["highway"]${a};way["natural"~"water|wood|scrub|grassland|wetland|beach|sand"]${a};relation["natural"="water"]${a};` +
+    `way["waterway"]${a};way["landuse"~"grass|forest|meadow|recreation_ground|village_green|cemetery|allotments|residential|basin|reservoir"]${a};` +
+    `way["leisure"~"park|garden|pitch|playground|swimming_pool"]${a};way["amenity"="parking"]${a};node["natural"="tree"]${a};node["highway"~"^(street_lamp|bus_stop|traffic_signals|stop)$"]${a};node["amenity"~"^(bench|waste_basket|post_box|bicycle_parking|telephone|fountain)$"]${a};node["emergency"="fire_hydrant"]${a};node["historic"="memorial"]${a};node["tourism"="artwork"]${a};way["barrier"~"wall|fence|hedge"]${a};);out geom;`;
+  let dernier = null;
+  for (const url of ["https://overpass-api.de/api/interpreter", "https://overpass.kumi.systems/api/interpreter"]) {
+    try {
+      const ctl = new AbortController(), minuterie = setTimeout(() => ctl.abort(), 25000);
+      const r = await fetch(url, { method: "POST", body: "data=" + encodeURIComponent(q), headers: { "Content-Type": "application/x-www-form-urlencoded" }, signal: ctl.signal });
+      clearTimeout(minuterie); if (!r.ok) throw new Error("HTTP " + r.status);
+      const d = await r.json(); try { sessionStorage.setItem(cle, JSON.stringify(d)); } catch (e) {}
+      return d;
+    } catch (e) { dernier = e; }
+  }
+  throw dernier;
+}
+
+function dessinerCarte(d) {
+  if (d) PXC.osm = d;
+  dessinerCarteCode(d);
+  if (ASSETS.pret && d && d.elements) { PXC.carte = dessinerAvecAssets(d); PXC.eau = []; }   // l'eau des assets a déjà ses reflets
+}
+function dessinerCarteCode(d) {   // la carte dessinée par le code : sert à lire le terrain (habitats), et d'image si les assets ne sont pas chargés
+  const H = PXC.H, k = PXC.ppm, N = Math.round(2 * H * k);
+  const cv = document.createElement("canvas"); cv.width = cv.height = N; const g = cv.getContext("2d", { willReadFrequently: true });
+  const P = (lat, lon) => { const m = versM(lat, lon); return [(m.x + H) * k, (m.y + H) * k]; };
+  const rnd = hasard(Math.round((PXC.origine[0] + PXC.origine[1]) * 1e5));
+  g.fillStyle = PAL.herbe; g.fillRect(0, 0, N, N);
+  const arbres = [], lampes = [];
+  if (d && d.elements) {
+    const t = e => e.tags || {}, ways = d.elements.filter(e => e.type === "way" && e.geometry && e.geometry.length > 1);
+    const chemin = geom => { const p = new Path2D(); geom.forEach((pt, i) => { const [x, y] = P(pt.lat, pt.lon); i ? p.lineTo(x, y) : p.moveTo(x, y); }); return p; };
+    const surface = (geom, couleur) => { const p = chemin(geom); p.closePath(); g.fillStyle = couleur; g.fill(p); return p; };
+    const trait = (geom, largeur, couleur, pointilles) => { g.strokeStyle = couleur; g.lineWidth = Math.max(1, largeur * k); g.lineCap = g.lineJoin = "round"; g.setLineDash(pointilles || []); g.stroke(chemin(geom)); g.setLineDash([]); };
+    const semer = (geom, pas, densite) => { const p = chemin(geom); p.closePath();
+      for (let y = 0; y < N; y += pas * k) for (let x = 0; x < N; x += pas * k) { const jx = x + (rnd() - .5) * pas * k, jy = y + (rnd() - .5) * pas * k;
+        if (rnd() < densite && g.isPointInPath(p, jx, jy)) arbres.push([jx, jy]); } };
+    ways.filter(e => /^(residential|allotments)$/.test(t(e).landuse)).forEach(e => surface(e.geometry, PAL.quartier));
+    ways.filter(e => t(e).landuse === "cemetery").forEach(e => surface(e.geometry, PAL.cimetiere));
+    ways.filter(e => /^(grass|meadow|village_green|recreation_ground)$/.test(t(e).landuse) || /^(park|garden|playground)$/.test(t(e).leisure) || t(e).natural === "grassland").forEach(e => surface(e.geometry, PAL.parc));
+    ways.filter(e => t(e).leisure === "pitch").forEach(e => surface(e.geometry, PAL.terrain));
+    ways.filter(e => t(e).landuse === "forest" || /^(wood|scrub)$/.test(t(e).natural)).forEach(e => surface(e.geometry, PAL.bois));
+    // l'eau : une rive de rochers sombres, puis l'eau par-dessus
+    const eaux = ways.filter(e => t(e).natural === "water" || t(e).leisure === "swimming_pool" || /^(basin|reservoir)$/.test(t(e).landuse)).map(e => e.geometry);
+    d.elements.filter(e => e.type === "relation" && t(e).natural === "water").forEach(r => (r.members || []).filter(m => m.role === "outer" && m.geometry).forEach(m => eaux.push(m.geometry)));
+    const rivieres = ways.filter(e => t(e).waterway).map(e => [e.geometry, t(e).waterway === "river" ? 8 : 2.5]);
+    eaux.forEach(geo => trait(geo, 1.6, PAL.rive)); rivieres.forEach(([geo, l]) => trait(geo, l + 1.6, PAL.rive));
+    eaux.forEach(geo => surface(geo, PAL.eau)); rivieres.forEach(([geo, l]) => trait(geo, l, PAL.eau));
+    ways.filter(e => t(e).amenity === "parking").forEach(e => surface(e.geometry, PAL.parking));
+    // rues : trottoir, bordure, chaussée sombre, marquage en pointillés
+    const L = { motorway: 14, trunk: 12, primary: 10, secondary: 9, tertiary: 8, residential: 6, unclassified: 6, living_street: 5, service: 4, pedestrian: 4 };
+    const routes = ways.filter(e => L[t(e).highway]), voitures = routes.filter(e => t(e).highway !== "pedestrian");
+    voitures.forEach(e => trait(e.geometry, L[t(e).highway] + 3, PAL.trottoir));
+    voitures.forEach(e => trait(e.geometry, L[t(e).highway] + .8, PAL.bordure));
+    routes.forEach(e => trait(e.geometry, L[t(e).highway], t(e).highway === "pedestrian" ? PAL.dalle : PAL.route));
+    routes.filter(e => L[t(e).highway] >= 6 && t(e).highway !== "pedestrian").forEach(e => trait(e.geometry, .35, PAL.marquage, [2 * k, 2.5 * k]));
+    const sentiers = ways.filter(e => /^(footway|path|cycleway|track|bridleway|steps)$/.test(t(e).highway));
+    sentiers.forEach(e => trait(e.geometry, 2.3, PAL.chemin2)); sentiers.forEach(e => trait(e.geometry, 1.7, PAL.chemin));
+    ways.filter(e => t(e).barrier === "hedge").forEach(e => { trait(e.geometry, 1.7, PAL.contour); trait(e.geometry, 1.3, PAL.arbre1); trait(e.geometry, .6, PAL.arbre2); });
+    ways.filter(e => /^(wall|fence)$/.test(t(e).barrier)).forEach(e => trait(e.geometry, .5, t(e).barrier === "wall" ? PAL.mur : PAL.cloture));
+    // bâtiments vus de trois quarts : ombre, façade (fenêtres ajoutées plus bas), toit coloré cerné de sombre
+    const bat = ways.filter(e => t(e).building), hMur = Math.round(k * 2.2);
+    bat.forEach(e => { g.save(); g.translate(Math.round(k * .8), hMur + Math.round(k * .8)); surface(e.geometry, PAL.ombre); g.restore(); });
+    bat.forEach(e => { g.save(); g.translate(0, hMur); const p = surface(e.geometry, PAL.facade); g.strokeStyle = PAL.contour; g.lineWidth = 1; g.stroke(p); g.restore(); });
+    bat.forEach(e => { const [c, cc] = TOITS[e.id % TOITS.length], p = surface(e.geometry, PAL[c]);
+      g.save(); g.clip(p); g.strokeStyle = PAL[cc]; g.lineWidth = Math.max(2, k * .8); g.stroke(p); g.restore();
+      g.strokeStyle = PAL.contour; g.lineWidth = 1; g.stroke(p); });
+    ways.filter(e => t(e).landuse === "forest" || t(e).natural === "wood").forEach(e => semer(e.geometry, 5, .9));
+    ways.filter(e => t(e).leisure === "park" || t(e).leisure === "garden").forEach(e => semer(e.geometry, 9, .22));
+    d.elements.filter(e => e.type === "node" && t(e).natural === "tree").forEach(e => arbres.push(P(e.lat, e.lon)));
+    d.elements.filter(e => e.type === "node" && t(e).highway === "street_lamp").forEach(e => lampes.push(P(e.lat, e.lon)));
+  }
+  // pas d'arbre semé sur un toit, une route ou dans l'eau
+  const avant = g.getImageData(0, 0, N, N).data, sol = new Set(["herbe", "parc", "terrain", "bois", "quartier", "cimetiere"].map(c => PAL[c]));
+  const hex = n => "#" + [0, 1, 2].map(j => avant[n * 4 + j].toString(16).padStart(2, "0")).join("");
+  for (let i = arbres.length - 1; i >= 0; i--) { const [x, y] = arbres[i], X = Math.round(x), Y = Math.round(y);
+    if (X < 0 || Y < 0 || X >= N || Y >= N || !sol.has(hex(Y * N + X))) arbres.splice(i, 1); }
+  PXC.arbres = arbres.map(([x, y]) => [x / k - H, y / k - H]);   // en mètres : repris par le dessin avec les assets
+  // arbres et lampadaires, du haut vers le bas pour qu'ils se recouvrent comme il faut
+  [...arbres.map(a => [a[0], a[1], 0]), ...lampes.map(a => [a[0], a[1], 1])].sort((a, b) => a[1] - b[1])
+    .forEach(([x, y, l]) => l ? dessinerLampe(g, x, y, k) : dessinerArbre(g, x, y, k, rnd));
+  // palette réduite : bords nets, vrai rendu pixel art ; on garde la liste des pixels d'eau pour les reflets
+  const img = g.getImageData(0, 0, N, N), px = img.data, eau = [], idx = new Uint8Array(N * N);
+  for (let i = 0; i < px.length; i += 4) {
+    let m = 0, dm = 1e9; for (let c = 0; c < PAL_RGB.length; c++) { const q = PAL_RGB[c], dd = (px[i] - q[0]) ** 2 + (px[i + 1] - q[1]) ** 2 + (px[i + 2] - q[2]) ** 2; if (dd < dm) { dm = dd; m = c; } }
+    idx[i / 4] = m;
+  }
+  // finitions au pixel : fenêtres éclairées, dalles, touffes d'herbe et fleurs
+  const I = c => CLES_PAL.indexOf(c), iFac = I("facade"), iDal = I("dalle"), tuiles = new Map(TOITS.map(([a, b]) => [I(a), I(b)])), herbes = new Set(["herbe", "parc", "quartier", "terrain"].map(I));
+  const fleurs = ["fleurJ", "fleurR", "fleurB"].map(I), iT1 = I("herbe2"), iT2 = I("herbe3"), pas = Math.max(4, Math.round(k * 1.6));
+  for (let y = 1; y < N - 1; y++) for (let x = 0; x < N; x++) { const n = y * N + x, c = idx[n];
+    if (c === iFac) { if (x % pas >= 1 && x % pas <= Math.max(1, pas >> 1) && idx[n - N] === iFac && idx[n + N] === iFac && idx[n + 2 * N] === iFac) idx[n] = I("fenetre"); }
+    else if (tuiles.has(c)) { if (y % Math.max(3, k) === 0 && tuiles.has(idx[n - N])) idx[n] = tuiles.get(c); }   // rangées de tuiles
+    else if (c === iDal) { if (x % (2 * k) === 0 || y % (2 * k) === 0) idx[n] = I("dalle2"); }
+    else if (herbes.has(c) && y > 1) { const r = rnd();
+      if (r < .006) { idx[n] = iT1; if (herbes.has(idx[n - N])) idx[n - N] = iT1; if (herbes.has(idx[n + N])) idx[n + N] = iT2; }
+      else if (r < .0075 && c !== I("terrain")) idx[n] = fleurs[(rnd() * 3) | 0]; } }
+  for (let n = 0; n < N * N; n++) { const q = PAL_RGB[idx[n]], i = n * 4; px[i] = q[0]; px[i + 1] = q[1]; px[i + 2] = q[2]; px[i + 3] = 255;
+    if (q === EAU_RGB && eau.length < 3000 && rnd() < .2) eau.push(n); }
+  g.putImageData(img, 0, 0);
+  PXC.carte = cv; PXC.eau = eau; PXC.N = N;
+  // grille du terrain, une case par mètre (couleur de la palette au centre de la case) : sert à cacher les créatures dans leur habitat
+  const S = 2 * H; PXC.grille = null; PXC.lampes = [];
+  if (d && d.elements) {
+    PXC.grille = new Array(S * S);
+    for (let j = 0; j < S; j++) for (let i = 0; i < S; i++) PXC.grille[j * S + i] = CLES_PAL[idx[Math.floor((j + .5) * k) * N + Math.floor((i + .5) * k)]];
+    PXC.lampes = d.elements.filter(e => e.type === "node" && (e.tags || {}).highway === "street_lamp").map(e => versM(e.lat, e.lon));
+  }
+}
+// ---------- assets dessinés par Sam (dossier carte/) ----------
+const ASSETS = { pret: false, tex: {}, fac: [], spr: {} };
+const NOMS_TEX = ["herbe", "parc", "terrain", "bois", "eau", "trottoir", "dalle", "chemin", "gravier", "parking", "toitR", "toitM", "toitA", "toitB", "route"], NOMS_FAC = ["brique", "bois", "pierre", "planches"];
+const chargerImage = src => new Promise((ok, ko) => { const i = new Image(); i.onload = () => ok(i); i.onerror = ko; i.src = src; });
+let chargementAssets = null;
+function chargerAssets() {
+  return chargementAssets = chargementAssets || fetch("carte/sprites.json").then(r => r.json()).then(async liste => {
+    const noms = Object.keys(liste), [tex, fac, spr] = await Promise.all([NOMS_TEX.map(n => "carte/tex-" + n + ".png"), NOMS_FAC.map(n => "carte/fac-" + n + ".png"),
+      noms.map(n => "carte/spr-" + n + ".png")].map(l => Promise.all(l.map(chargerImage))));
+    NOMS_TEX.forEach((n, i) => ASSETS.tex[n] = tex[i]); ASSETS.fac = fac; noms.forEach((n, i) => ASSETS.spr[n] = spr[i]);
+    ASSETS.pret = true;
+    if (PXC && PXC.osm && PXC.origine) dessinerCarte(PXC.osm);   // la carte était déjà dessinée par le code : on la refait avec les assets
+  }).catch(() => {});   // sans les assets (réseau), la carte reste dessinée par le code
+}
+const MAISONS = ["maison1", "maison2", "maison3", "maison4", "maison5", "maison6", "maison7", "maison8", "maison9"];
+const FEUILLUS = ["arbre1", "arbre2", "arbre3", "arbre4", "arbre1", "arbre2", "marronnier", "fruitier"];
+const MOBILIER = { bench: "banc", waste_basket: "poubelle", post_box: "boite", bicycle_parking: "velos", telephone: "cabine", fountain: "fontaine",
+  street_lamp: "lampe", bus_stop: "arret", traffic_signals: "feu", stop: "stop", fire_hydrant: "hydrant", memorial: "statue", artwork: "statue" };
+function dessinerAvecAssets(d) {
+  const H = PXC.H, k = PXC.ppm, N = Math.round(2 * H * k), A = ASSETS;
+  const cv = document.createElement("canvas"); cv.width = cv.height = N; const g = cv.getContext("2d");
+  const P = (lat, lon) => { const m = versM(lat, lon); return [(m.x + H) * k, (m.y + H) * k]; };
+  const rnd = hasard(Math.round((PXC.origine[0] + PXC.origine[1]) * 1e5) + 7);
+  const motif = (img, ech, dy) => { const p = g.createPattern(img, "repeat"); p.setTransform(new DOMMatrix().translate(0, dy || 0).scale(ech)); return p; };
+  const M = {}; NOMS_TEX.forEach(n => M[n] = motif(A.tex[n], k / 6));   // les textures sont préparées à 6 pixels par mètre
+  const t = e => e.tags || {}, ways = d.elements.filter(e => e.type === "way" && e.geometry && e.geometry.length > 1);
+  const chemin = geom => { const p = new Path2D(); geom.forEach((pt, i) => { const [x, y] = P(pt.lat, pt.lon); i ? p.lineTo(x, y) : p.moveTo(x, y); }); return p; };
+  const surface = (geom, style) => { const p = chemin(geom); p.closePath(); g.fillStyle = style; g.fill(p); return p; };
+  const trait = (geom, largeur, style, pointilles) => { g.strokeStyle = style; g.lineWidth = Math.max(1, largeur * k); g.lineCap = g.lineJoin = "round"; g.setLineDash(pointilles || []); g.stroke(chemin(geom)); g.setLineDash([]); };
+  g.fillStyle = M.herbe; g.fillRect(0, 0, N, N);
+  ways.filter(e => t(e).landuse === "cemetery" || /^(grass|meadow|village_green|recreation_ground)$/.test(t(e).landuse) || /^(park|garden|playground)$/.test(t(e).leisure) || t(e).natural === "grassland").forEach(e => surface(e.geometry, M.parc));
+  ways.filter(e => t(e).leisure === "pitch").forEach(e => surface(e.geometry, M.terrain));
+  ways.filter(e => t(e).landuse === "forest" || /^(wood|scrub)$/.test(t(e).natural)).forEach(e => surface(e.geometry, M.bois));
+  const eaux = ways.filter(e => t(e).natural === "water" || t(e).leisure === "swimming_pool" || /^(basin|reservoir)$/.test(t(e).landuse)).map(e => e.geometry);
+  d.elements.filter(e => e.type === "relation" && t(e).natural === "water").forEach(r => (r.members || []).filter(m => m.role === "outer" && m.geometry).forEach(m => eaux.push(m.geometry)));
+  const rivieres = ways.filter(e => t(e).waterway).map(e => [e.geometry, t(e).waterway === "river" ? 8 : 2.5]);
+  eaux.forEach(geo => trait(geo, 1.1, "#3b463c")); rivieres.forEach(([geo, l]) => trait(geo, l + 1.1, "#3b463c"));   // rive de pierres moussues
+  const formesEau = eaux.map(geo => surface(geo, M.eau)); rivieres.forEach(([geo, l]) => trait(geo, l, M.eau));
+  ways.filter(e => t(e).amenity === "parking").forEach(e => surface(e.geometry, M.parking));
+  const L = { motorway: 14, trunk: 12, primary: 10, secondary: 9, tertiary: 8, residential: 6, unclassified: 6, living_street: 5, service: 4, pedestrian: 4 };
+  const routes = ways.filter(e => L[t(e).highway]), voitures = routes.filter(e => t(e).highway !== "pedestrian");
+  voitures.forEach(e => trait(e.geometry, L[t(e).highway] + 3, M.trottoir));
+  voitures.forEach(e => trait(e.geometry, L[t(e).highway] + .6, PAL.rive));
+  routes.forEach(e => trait(e.geometry, L[t(e).highway], t(e).highway === "pedestrian" ? M.dalle : M.route));
+  voitures.filter(e => L[t(e).highway] >= 6).forEach(e => trait(e.geometry, .3, PAL.marquage, [2 * k, 2.5 * k]));
+  const sentiers = ways.filter(e => /^(footway|path|cycleway|track|bridleway|steps)$/.test(t(e).highway));
+  sentiers.forEach(e => trait(e.geometry, 2.2, PAL.chemin2)); sentiers.forEach(e => trait(e.geometry, 1.7, /^(track|bridleway|cycleway)$/.test(t(e).highway) ? M.gravier : M.chemin));
+  ways.filter(e => t(e).barrier === "hedge").forEach(e => { trait(e.geometry, 1.7, PAL.contour); trait(e.geometry, 1.3, PAL.arbre1); trait(e.geometry, .6, PAL.arbre2); });
+  ways.filter(e => /^(wall|fence)$/.test(t(e).barrier)).forEach(e => trait(e.geometry, .5, t(e).barrier === "wall" ? PAL.mur : PAL.cloture));
+  // nénuphars et canards sur l'eau
+  formesEau.forEach((f, j) => { const q = eaux[j].map(v => P(v.lat, v.lon)), bx = Math.min(...q.map(v => v[0])), by = Math.min(...q.map(v => v[1])),
+    bw = Math.max(...q.map(v => v[0])) - bx, bh = Math.max(...q.map(v => v[1])) - by, n = Math.min(12, Math.round(bw * bh / (k * k * 25)));   // environ un tous les 25 m²
+    for (let i = 0; i < n * 4; i++) { const x = bx + rnd() * bw, y = by + rnd() * bh; if (rnd() < .25 && g.isPointInPath(f, x, y) && g.isPointInPath(f, x, y - 2 * k) && g.isPointInPath(f, x, y + 2 * k))
+    sprite(["nenuphars", "nenuphars", "lotus", "canard"][(rnd() * 4) | 0], x, y + k); } });
+  // objets posés, triés du haut vers le bas pour se recouvrir comme il faut : bâtiments, arbres, lampadaires, mobilier
+  const objets = [];
+  function sprite(nom, x, y, larg) {   // (x, y) : pied de l'objet ; les sprites sont préparés à 2 fois 6 pixels par mètre
+    const im = A.spr[nom]; if (!im) return; const w = larg || im.width * k / 12, h = w * im.height / im.width;
+    g.drawImage(im, Math.round(x - w / 2), Math.round(y - h), Math.round(w), Math.round(h));
+  }
+  const hMur = Math.round(k * 2.5);
+  ways.filter(e => t(e).building).forEach(e => {
+    const pts = e.geometry.map(q => P(q.lat, q.lon)), xs = pts.map(q => q[0]), ys = pts.map(q => q[1]);
+    const x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys), y1 = Math.max(...ys), w = (x1 - x0) / k, h = (y1 - y0) / k;
+    let aire = 0; pts.forEach((q, i) => { const r = pts[(i + 1) % pts.length]; aire += q[0] * r[1] - r[0] * q[1]; }); aire = Math.abs(aire) / 2 / k / k;
+    const b = t(e).building, rect = aire / Math.max(1, w * h), allonge = Math.max(w, h) / Math.max(1, Math.min(w, h));
+    let nom = null;
+    if (/^(church|chapel|cathedral)$/.test(b) || t(e).amenity === "place_of_worship") nom = "eglise";
+    else if (b === "school" || t(e).amenity === "school") nom = "ecole";
+    else if (/^(supermarket|retail)$/.test(b) || t(e).shop === "supermarket") nom = "supermarche";
+    else if (rect > .7 && allonge < 2.2 && Math.max(w, h) <= 20) nom = MAISONS[e.id % MAISONS.length];
+    else if (rect > .7 && allonge < 2.2 && Math.max(w, h) <= 40) nom = b === "commercial" || t(e).shop ? "commerce" : e.id % 2 ? "immeuble1" : "immeuble2";
+    if (nom && Math.max(w, h) > 60) nom = null;
+    objets.push([y1 + hMur, () => {
+      if (nom) {   // le sprite occupe l'emprise du bâtiment, sa façade posée sur le bas de l'emprise
+        sprite(nom, (x0 + x1) / 2, y1 + hMur * .7, (x1 - x0) * 1.15);
+        if (rnd() < .45) sprite(["citrouille", "lanterne-citrouille", "citrouilles"][(rnd() * 3) | 0], (x0 + x1) / 2 + (rnd() - .5) * (x1 - x0) * .6, y1 + hMur * .9);
+        return;
+      }
+      const geo = e.geometry, fac = A.fac[e.id % A.fac.length];   // grand bâtiment de forme quelconque : façade et toit en textures
+      g.save(); g.translate(Math.round(k * .8), hMur + Math.round(k * .8)); surface(geo, "rgba(20,24,20,.3)"); g.restore();
+      g.save(); g.translate(0, hMur); const pm = surface(geo, motif(fac, hMur / fac.height, y1 - hMur)); g.strokeStyle = PAL.contour; g.lineWidth = 1; g.stroke(pm); g.restore();
+      const pt = surface(geo, [M.toitR, M.toitM, M.toitA, M.toitB][e.id % 4]); g.strokeStyle = PAL.contour; g.lineWidth = 1; g.stroke(pt);
+    }]);
+  });
+  const enBois = ways.filter(e => t(e).landuse === "forest" || /^(wood|scrub)$/.test(t(e).natural)).map(e => { const p = chemin(e.geometry); p.closePath(); return p; });
+  (PXC.arbres || []).forEach(([mx, my]) => { const x = (mx + H) * k, y = (my + H) * k, bois = enBois.some(p => g.isPointInPath(p, x, y)), r = rnd();
+    const nom = r < .02 ? "arbre-mort" : r < .05 ? "automne" : bois && r < .45 ? (r < .25 ? "sapin1" : "sapin2") : FEUILLUS[(rnd() * FEUILLUS.length) | 0];
+    objets.push([y, () => { sprite(nom, x, y + k * .6); if (bois && rnd() < .08) sprite("champignons", x + k * 2, y + k * 1.5); }]); });
+  d.elements.filter(e => e.type === "node").forEach(e => { const n = MOBILIER[t(e).highway] || MOBILIER[t(e).amenity] || MOBILIER[t(e).emergency] || MOBILIER[t(e).historic] || MOBILIER[t(e).tourism];
+    if (!n) return; const [x, y] = P(e.lat, e.lon); objets.push([y, () => sprite(n, x, y, n === "lampe" ? 1.8 * k : 0)]); });
+  objets.sort((a, b) => a[0] - b[0]).forEach(o => o[1]());
+  return cv;
+}
+function dessinerArbre(g, x, y, k, rnd) {   // grosse touffe ronde et bosselée, cernée de sombre, éclairée en haut à gauche
+  const r = Math.max(3, 2.1 * k), cy = y - r * .8, n = 6, bosses = [[0, 0, r]];
+  for (let i = 0; i < n; i++) { const a = i / n * 2 * Math.PI + rnd() * .6; bosses.push([Math.cos(a) * r * .62, Math.sin(a) * r * .55, r * (.42 + rnd() * .12)]); }
+  const peindre = (c, dx, dy, ech, plus) => { g.fillStyle = c; g.beginPath(); bosses.forEach(([bx, by, br]) => { g.moveTo(x + bx * ech + dx + br * ech + plus, cy + by * ech + dy); g.arc(x + bx * ech + dx, cy + by * ech + dy, br * ech + plus, 0, 7); }); g.fill(); };
+  g.fillStyle = PAL.ombre; g.beginPath(); g.ellipse(x + r * .25, y + r * .1, r * 1.1, r * .5, 0, 0, 7); g.fill();
+  g.fillStyle = PAL.contour; g.fillRect(Math.round(x - k * .45) - 1, Math.round(y - r * .5), Math.max(1, Math.round(k * .9)) + 2, Math.round(r * .75) + 1);
+  g.fillStyle = PAL.tronc; g.fillRect(Math.round(x - k * .45), Math.round(y - r * .5), Math.max(1, Math.round(k * .9)), Math.round(r * .75));
+  peindre(PAL.contour, 0, 0, 1, 1); peindre(PAL.arbre1, 0, 0, 1, 0); peindre(PAL.arbre2, -r * .1, -r * .14, .78, 0); peindre(PAL.arbre3, -r * .24, -r * .3, .5, 0);
+  g.fillStyle = PAL.arbre4; for (let i = 0; i < 3; i++) g.fillRect(Math.round(x - r * (.2 + rnd() * .4)), Math.round(cy - r * (.3 + rnd() * .4)), Math.max(1, k >> 1), Math.max(1, k >> 1));
+}
+function dessinerLampe(g, x, y, k) {   // lampadaire : poteau sombre et lanterne jaune
+  const h = Math.round(k * 2.6), l = Math.max(1, Math.round(k * .35)), X = Math.round(x), Y = Math.round(y);
+  g.fillStyle = PAL.ombre; g.fillRect(X, Y, Math.round(k * 1.4), Math.max(1, k >> 1));
+  g.fillStyle = PAL.contour; g.fillRect(X - (l >> 1), Y - h, l, h); g.fillRect(X - l - 1, Y - h - l * 2 - 1, l * 2 + 2 + (l & 1), l * 2 + 2);
+  g.fillStyle = PAL.lampe; g.fillRect(X - l, Y - h - l * 2, l * 2 + (l & 1), l * 2);
+}
+// le joueur : un petit enfant encapuchonné avec une lanterne
+const SPRITE = ["....hhhh....", "...hppppph..", "..hpffffph..", "..hfeffefh..", "..hpffffph..", "...hppppph..", "..pppppppp.l",
+                ".pppppppppLL", ".pp.pppp.pLL", "....pppp..l.", "....p..p....", "...bb..bb..."];
+const SPRITE_C = { h: "#3d2366", p: "#7a4bb3", f: "#f2c9a0", e: "#1a1020", l: "#2b2b2b", L: "#ffd75e", b: "#2a1a12" };
+function dessinerJoueur(g, cx, cy, z, t) {
+  const s = Math.max(2, Math.round(z * .75)), w = SPRITE[0].length * s, h = SPRITE.length * s, x0 = Math.round(cx - w / 2), y0 = Math.round(cy - h + s);
+  const lueur = g.createRadialGradient(cx + w * .4, cy - h * .35, 0, cx + w * .4, cy - h * .35, w * 1.6);
+  lueur.addColorStop(0, "rgba(255,215,94," + (.35 + .08 * Math.sin(t / 180)) + ")"); lueur.addColorStop(1, "rgba(255,215,94,0)");
+  g.fillStyle = lueur; g.fillRect(cx - w * 2, cy - h * 2, w * 4, h * 4);
+  g.fillStyle = "rgba(0,0,0,.35)"; g.fillRect(x0 + s, y0 + h - s, w - 2 * s, s);
+  SPRITE.forEach((ligne, j) => [...ligne].forEach((ch, i) => { if (ch === ".") return; g.fillStyle = SPRITE_C[ch]; g.fillRect(x0 + i * s, y0 + j * s, s, s); }));
+  if (cap != null && !PXC.manuel) {   // petite flèche : la direction du regard (boussole)
+    const a = cap * DEG, rr = h * .95; g.save(); g.translate(cx, cy - h / 2); g.rotate(a); g.fillStyle = "#4ff3ff";
+    g.beginPath(); g.moveTo(0, -rr - s * 2); g.lineTo(s * 1.6, -rr); g.lineTo(-s * 1.6, -rr); g.closePath(); g.fill(); g.restore();
+  }
+}
+
+function bouclePixel(t) {
+  PXC.raf = 0;
+  if ($("pixel").hidden || $("scene").hidden) return;
+  PXC.raf = requestAnimationFrame(bouclePixel);
+  const cv = $("pixelCanvas"), dpr = Math.min(devicePixelRatio || 1, 2), W = cv.clientWidth, Hc = cv.clientHeight;
+  if (cv.width !== Math.round(W * dpr) || cv.height !== Math.round(Hc * dpr)) { cv.width = Math.round(W * dpr); cv.height = Math.round(Hc * dpr); }
+  const g = cv.getContext("2d"); g.imageSmoothingEnabled = false;
+  const dt = Math.min(.1, (t - (PXC.t || t)) / 1000); PXC.t = t;
+  if (PXC.origine) {
+    if (PXC.manuel) {
+      if (PXC.vise) { const dx = PXC.vise.x - PXC.joueur.x, dy = PXC.vise.y - PXC.joueur.y, dd = Math.hypot(dx, dy), v = 1.8 * dt;
+        if (dd <= v) { PXC.joueur.x = PXC.vise.x; PXC.joueur.y = PXC.vise.y; PXC.vise = null; } else { PXC.joueur.x += dx / dd * v; PXC.joueur.y += dy / dd * v; } }
+    } else if (fixPX && !PXC.fictif) {
+      const m = versM(fixPX.lat, fixPX.lon), f = Math.min(1, dt * 2.5); PXC.joueur.x += (m.x - PXC.joueur.x) * f; PXC.joueur.y += (m.y - PXC.joueur.y) * f;
+    }
+  }
+  const z = (PXC.zoom || 3) * dpr, k = PXC.ppm || 2, ech = k * z, H = PXC.H || 70;
+  const cx = cv.width / 2, cy = cv.height * .54;
+  const ox = Math.round(cx - (PXC.joueur.x + H) * ech), oy = Math.round(cy - (PXC.joueur.y + H) * ech);
+  Object.assign(PXC, { ox, oy, ech, dpr, H });
+  g.fillStyle = PAL.herbe; g.fillRect(0, 0, cv.width, cv.height);
+  if (PXC.carte) {
+    g.drawImage(PXC.carte, ox, oy, PXC.N * z, PXC.N * z);
+    // reflets sur l'eau
+    g.fillStyle = PAL.ecume;
+    for (let i = 0; i < PXC.eau.length; i += 7) { const n = PXC.eau[i], ph = (t / 600 + i * 1.7) % 6; if (ph > 1) continue;
+      g.fillRect(ox + (n % PXC.N) * z, oy + Math.floor(n / PXC.N) * z, z * 2, z); }
+  }
+  dessinerJoueur(g, cx, cy, ech / (mode() === "interieur" ? 3 : 2), t);   // même taille qu'avant le passage à 4 pixels par mètre
+  majApparition(t);
+  if (t - (PXC.tDet || 0) > 180) { PXC.tDet = t; majDetecteur(t); }
+}
+const versEcran = (x, y) => [(PXC.ox + (x + PXC.H) * PXC.ech) / PXC.dpr, (PXC.oy + (y + PXC.H) * PXC.ech) / PXC.dpr];
+function seuilApparition() {
+  const ind = mode() === "interieur";
+  if (PXC.manuel || !fixPX) return ind ? 2.5 : 4;
+  return ind ? Math.max(3, Math.min(6, fixPX.acc * .5)) : Math.max(5, Math.min(10, fixPX.acc * .7));
+}
+function majDetecteur(t) {
+  if (!PXC.origine) { allumer(0); return; }
+  let c = null, dmin = 1e9;
+  PXC.cibles.forEach(q => { const d = Math.hypot(q.x - PXC.joueur.x, q.y - PXC.joueur.y); if (d < dmin) { dmin = d; c = q; } });
+  if (!c) { allumer(0); return; }
+  const s0 = seuilApparition(), R = rayonJeu(), Dmax = 1.6 * R, e = dmin - s0;
+  const s = Math.max(0, Math.min(1, 1 - e / (Dmax - s0)));
+  PXC.signal += (s - PXC.signal) * .4;
+  PXC.ecart = PXC.ecart == null ? e : PXC.ecart + (e - PXC.ecart) * .4;   // lissé : le GPS tremble
+  // LED : rouge = loin, jaune = on approche, vert = tout près
+  const n = PXC.revele ? 5 : PXC.ecart < .15 * R ? 5 : PXC.ecart < .35 * R ? 4 : PXC.ecart < .6 * R ? 3 : PXC.ecart < R ? 2 : 1;
+  allumer(n);
+  const periode = PXC.revele ? 260 : 1500 - 1200 * PXC.signal;
+  if (t - PXC.dernierBip > periode) {
+    PXC.dernierBip = t; if (audio && sonActif) note(480 + 900 * (PXC.revele ? 1 : PXC.signal), 0, .07, { type: "square", vol: .045, filtre: 2600 });
+    const oeil = document.querySelector(".emf-oeil"), led = document.querySelector(".emf-leds i:nth-child(" + Math.max(1, n) + ")");
+    oeil.style.setProperty("--led", getComputedStyle(led).getPropertyValue("--led")); oeil.classList.add("flash"); setTimeout(() => oeil.classList.remove("flash"), 90);
+  }
+  if (!PXC.revele) {
+    if (dmin < s0) return reveler(c);
+    $("consigne").textContent = ["", "Rien par ici… Marche un peu !", "Un faible signal…", "Ça chauffe !", "Tu brûles !!", "Tout près !!!"][n];
+  }
+}
+function allumer(n) { document.querySelectorAll(".emf-leds i").forEach((l, i) => l.classList.toggle("on", i < n)); }
+
+function reveler(c) {
+  const el = new Image(); el.className = "pix-creature"; el.alt = ""; el.draggable = false;
+  el.onload = () => { el.style.width = Math.round(el.naturalWidth * .225) + "px"; };   // moitié de la taille précédente
+  el.src = pixDe(c.k);
+  $("pixelSprites").appendChild(el);
+  const d = enBoss ? 4 : (DIFF[TRAQUES[c.k] ? TRAQUES[c.k].cle : ""] || 2);
+  PXC.revele = { c, el, dx: 0, dy: 0, prochain: performance.now() + SAUT[d] + 600, d };
+  el.addEventListener("pointerdown", e => { e.stopPropagation(); attraper(); });
+  sfx("revele"); if (navigator.vibrate) navigator.vibrate([60, 40, 60]);
+  $("consigne").textContent = enBoss ? "Le voilà ! Touche Sporran avant qu'il ne file !" : "Un cryptide ! Touche-le vite avant qu'il ne bondisse !";
+}
+function majApparition(t) {
+  const r = PXC.revele; if (!r) return;
+  const dj = Math.hypot(r.c.x - PXC.joueur.x, r.c.y - PXC.joueur.y);
+  if (dj > seuilApparition() + 8) {   // on s'est trop éloigné : il se cache de nouveau
+    r.el.remove(); PXC.revele = null; $("consigne").textContent = "Il s'est caché de nouveau… Reviens vers lui !"; return; }
+  if (t > r.prochain) {
+    const rr = mode() === "interieur" ? 1.8 : 3.5, a = Math.random() * 2 * Math.PI;
+    r.vx = Math.cos(a) * rr * Math.random(); r.vy = Math.sin(a) * rr * Math.random(); r.prochain = t + SAUT[r.d]; r.tSaut = t; sfx("hop");
+  }
+  // petit bond en 3 images (style pixel art) vers la nouvelle place
+  if (r.tSaut != null) { const q = Math.min(1, Math.floor((t - r.tSaut) / 50) / 3); r.dx += ((r.vx || 0) - r.dx) * q; r.dy += ((r.vy || 0) - r.dy) * q; if (q >= 1) r.tSaut = null; }
+  const bond = r.tSaut != null ? -Math.sin(Math.min(1, (t - r.tSaut) / 150) * Math.PI) * 14 : 0;
+  const [x, y] = versEcran(r.c.x + r.dx, r.c.y + r.dy), w = r.el.offsetWidth || 120, h = r.el.offsetHeight || 120;
+  const W = $("pixel").clientWidth, Hh = $("pixel").clientHeight;
+  const ex = Math.max(4, Math.min(W - w - 4, x - w / 2)), ey = Math.max(150, Math.min(Hh - h - 210, y - h * .85));
+  r.el.style.transform = "translate(" + Math.round(ex) + "px," + Math.round(ey + bond) + "px)";
+}
+function attraper() {
+  const r = PXC.revele; if (!r) return;
+  const box = r.el.getBoundingClientRect(), pouf = document.createElement("div"); pouf.className = "pouf";
+  pouf.style.left = (box.left + box.width / 2) + "px"; pouf.style.top = (box.top + box.height / 2) + "px"; $("pixelSprites").appendChild(pouf); setTimeout(() => pouf.remove(), 600);
+  r.el.remove(); PXC.revele = null; if (navigator.vibrate) navigator.vibrate(40);
+  if (enBoss && bossPhase < 2) {   // Sporran file ailleurs deux fois avant de se laisser attraper
+    bossPhase++; sfx("fuite");
+    const p = partie(), ind = mode() === "interieur", a = Math.random() * 2 * Math.PI, d = ind ? 4 + Math.random() * 4 : 8 + Math.random() * 7;
+    const sur = caseSure(PXC.joueur.x, PXC.joueur.y, 8, 15);
+    p.posBoss = sur ? versGeo(sur.x, sur.y) : versGeo(PXC.joueur.x + Math.cos(a) * d, PXC.joueur.y + Math.sin(a) * d); ecrire(CLES.partie, p); placerCibles();
+    bandeau(bossPhase === 1 ? "Hé hé ! Trop lent ! Attrape-moi si tu peux !" : "Encore raté ! Dernière chance, petit humain !", 3200);
+    $("consigne").textContent = "Sporran s'est enfui ! Suis le détecteur !"; return;
+  }
+  sfx("sceau"); bandeau(enBoss ? "Tu as débusqué Sporran ! Ouvre l'œil magique…" : "Débusqué ! Ouvre l'œil magique et cherche-le autour de toi…", 2400);
+  const k = r.c.k;
+  setTimeout(() => { fermerPixel(); sfx("oeil"); if (enBoss) demarrerBossAR(); else demarrerTraque(k, { gpsFait: true, angleGPS: null }); }, 900);
+}
+
+// pour les tests sur ordinateur
+window.__test = { ouvrir: () => { montrer(null); $("scene").hidden = false; initMoteur(); prochaineTraque(); }, capturer: () => capturer(),
+  regarder: () => { const c = moteur.creature; if (c) c.angle = lacetCamera(); },
+  dbg: () => { const m = versM(fixPX.lat, fixPX.lon); return { m, manuel: PXC.manuel, fictif: PXC.fictif, org: PXC.origine, jo: PXC.joueur }; },
+  pixel: () => PXC && { t: PXC.t, raf: PXC.raf, fix: fixPX, fictif: PXC.fictif, origine: PXC.origine, joueur: PXC.joueur, cibles: PXC.cibles, revele: PXC.revele && PXC.revele.c.k, manuel: PXC.manuel, carte: !!PXC.carte, N: PXC.N, signal: PXC.signal },
+  zone: () => { const z = zoneSure(0, 0, rayonJeu()); return z && z.size; },
+  aller: (x, y) => { PXC.manuel = true; PXC.vise = { x, y }; }, terrain: (x, y) => terrain(x, y), carte: () => PXC.carte && { url: PXC.carte.toDataURL(), H: PXC.H, ppm: PXC.ppm }, attraper: () => attraper(), frapper: () => frapper(),
+  jauge: () => moteur && moteur.creature && moteur.creature.jauge, figurine: c => ouvrirFigurine(c),
+  etat: () => { const c = moteur && moteur.creature; return { angle: c && c.angle, lacet: moteur && lacetCamera(), gyro, gyroOK, trouve: c && c.trouve, consigne: $("consigne").textContent }; } };
+</script>
+</body>
+</html>
