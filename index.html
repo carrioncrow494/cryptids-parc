@@ -1780,7 +1780,7 @@ function dessinerCarteCode(d) {   // la carte dessinée par le code : sert à li
 }
 // ---------- assets dessinés par Sam (dossier carte/) ----------
 const ASSETS = { pret: false, tex: {}, fac: [], spr: {} };
-const NOMS_TEX = ["herbe", "parc", "terrain", "bois", "eau", "trottoir", "dalle", "chemin", "parking", "toitR", "toitM", "route"], NOMS_FAC = ["brique", "bois", "pierre", "planches"];
+const NOMS_TEX = ["herbe", "parc", "terrain", "bois", "eau", "trottoir", "dalle", "chemin", "gravier", "parking", "toitR", "toitM", "toitA", "toitB", "route"], NOMS_FAC = ["brique", "bois", "pierre", "planches"];
 const chargerImage = src => new Promise((ok, ko) => { const i = new Image(); i.onload = () => ok(i); i.onerror = ko; i.src = src; });
 let chargementAssets = null;
 function chargerAssets() {
@@ -1824,7 +1824,7 @@ function dessinerAvecAssets(d) {
   routes.forEach(e => trait(e.geometry, L[t(e).highway], t(e).highway === "pedestrian" ? M.dalle : M.route));
   voitures.filter(e => L[t(e).highway] >= 6).forEach(e => trait(e.geometry, .3, PAL.marquage, [2 * k, 2.5 * k]));
   const sentiers = ways.filter(e => /^(footway|path|cycleway|track|bridleway|steps)$/.test(t(e).highway));
-  sentiers.forEach(e => trait(e.geometry, 2.2, PAL.chemin2)); sentiers.forEach(e => trait(e.geometry, 1.7, M.chemin));
+  sentiers.forEach(e => trait(e.geometry, 2.2, PAL.chemin2)); sentiers.forEach(e => trait(e.geometry, 1.7, /^(track|bridleway|cycleway)$/.test(t(e).highway) ? M.gravier : M.chemin));
   ways.filter(e => t(e).barrier === "hedge").forEach(e => { trait(e.geometry, 1.7, PAL.contour); trait(e.geometry, 1.3, PAL.arbre1); trait(e.geometry, .6, PAL.arbre2); });
   ways.filter(e => /^(wall|fence)$/.test(t(e).barrier)).forEach(e => trait(e.geometry, .5, t(e).barrier === "wall" ? PAL.mur : PAL.cloture));
   // nénuphars et canards sur l'eau
@@ -1860,7 +1860,7 @@ function dessinerAvecAssets(d) {
       const geo = e.geometry, fac = A.fac[e.id % A.fac.length];   // grand bâtiment de forme quelconque : façade et toit en textures
       g.save(); g.translate(Math.round(k * .8), hMur + Math.round(k * .8)); surface(geo, "rgba(20,24,20,.3)"); g.restore();
       g.save(); g.translate(0, hMur); const pm = surface(geo, motif(fac, hMur / fac.height, y1 - hMur)); g.strokeStyle = PAL.contour; g.lineWidth = 1; g.stroke(pm); g.restore();
-      const pt = surface(geo, e.id % 2 ? M.toitR : M.toitM); g.strokeStyle = PAL.contour; g.lineWidth = 1; g.stroke(pt);
+      const pt = surface(geo, [M.toitR, M.toitM, M.toitA, M.toitB][e.id % 4]); g.strokeStyle = PAL.contour; g.lineWidth = 1; g.stroke(pt);
     }]);
   });
   const enBois = ways.filter(e => t(e).landuse === "forest" || /^(wood|scrub)$/.test(t(e).natural)).map(e => { const p = chemin(e.geometry); p.closePath(); return p; });

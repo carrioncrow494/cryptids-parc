@@ -21,15 +21,12 @@ def motif_regulier(im):   # tuiles : on coupe un nombre entier de rangées et de
     return im.crop((20,20,20+nx*px,20+ny*py))
 TEX={ # nom : (image, mètres couverts par la texture, régulière ?)
  'herbe':('436f5e70',24,0),'parc':('95f51221',24,0),'terrain':('79e6de9d',20,0),'bois':('8b78cf2c',16,0),
- 'eau':('c9bd57a0',16,0),'trottoir':('aeb34498',8,0),'dalle':('b30d45d3',10,0),'chemin':('1fa04291',8,0),
- 'parking':('cb0dcaa2',13,0),'toitR':('6e2ddb4e',7,1),'toitM':('1da0c8f2',7,1)}
+ 'eau':('c9bd57a0',16,0),'trottoir':('aeb34498',8,0),'dalle':('b30d45d3',10,0),'chemin':('6720cb03',8,0),'gravier':('5db7025d',8,0),'route':('755d4bb7',10,0),
+ 'parking':('cb0dcaa2',13,0),'toitR':('6e2ddb4e',7,1),'toitM':('1da0c8f2',7,1),'toitA':('3829fa78',7,1),'toitB':('8f9520ae',6,1)}
 for n,(i,m,reg) in TEX.items():
     im=src(i); im=motif_regulier(im) if reg else sans_couture(im)
     w=round(m*K); h=round(w*im.height/im.width)
     im.resize((w,h),Image.LANCZOS).save(O+'tex-'+n+'.png',optimize=True)
-# asphalte : centre d'une tuile de route unie (planche des routes, ligne 3 colonne 3), rendue sans couture
-r=src('98265e97'); W,H=r.size; c=r.crop((int(W*.58),int(H*.58),int(W*.67),int(H*.67)))
-sans_couture(c).resize((8*K,round(8*K*c.height/c.width)),Image.LANCZOS).save(O+'tex-route.png',optimize=True)
 # façades : bande vue de face, hauteur d'un étage (3 m)
 for n,i in [('brique','109fe13a'),('bois','f7edfdaa'),('pierre','a155935b'),('planches','5a945472')]:
     im=src(i); h=3*K*2; im.resize((round(h*im.width/im.height),h),Image.LANCZOS).save(O+'fac-'+n+'.png',optimize=True)
