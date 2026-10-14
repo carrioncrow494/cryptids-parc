@@ -362,6 +362,8 @@ $("suiteIntro").addEventListener("click", () => {
 });
 
 /* ===================== Grimoire ===================== */
+const FEMININ = ["nessie", "faery", "gargouille", "chupacabra", "kraken"];   // d'après les textes (« elle »)
+const relachee = t => t.membres.length > 1 ? "Relâchés dans leur environnement" : "Relâché" + (FEMININ.includes(t.cle) ? "e" : "") + " dans son environnement";
 function carte(t, k) {
   const p = pris().includes(k), r = relaches().includes(t.cle);
   let actions = "";
@@ -370,7 +372,7 @@ function carte(t, k) {
   return '<div class="carte' + (p ? " prise" : "") + (r ? " libre" : "") + '">' +
     '<img alt="" loading="lazy" src="' + (p ? t.image : t.ombre) + '"' + (p ? "" : ' class="ombre"') + '>' +
     '<div class="nom">' + (p ? t.nom : "???") + '</div>' +
-    '<div class="astuce">' + (p ? (r ? "Relâché dans son monde" : "Sauvé !") : "<b>Indice :</b> " + t.indice) + '</div>' + actions + '</div>';
+    '<div class="astuce">' + (p ? (r ? relachee(t) : "Sauvé !") : "<b>Indice :</b> " + t.indice) + '</div>' + actions + '</div>';
 }
 function dessinerGrimoire() {
   const n = pris().length, tousLibres = ids.every(k => relaches().includes(TRAQUES[k].cle));
@@ -397,7 +399,7 @@ function relacher(k) {
   changerAmbiance("silence");
   const t = TRAQUES[k], v = $("videoRelache"), img = $("envol");
   $("relache").hidden = false; $("voirFigurine").hidden = true; figurineAMontrer = t.cle;
-  $("titreRelache").textContent = t.nom.split(",")[0] + (t.membres.length > 1 ? " retournent dans leur monde…" : " retourne dans son monde…");
+  $("titreRelache").textContent = t.nom.split(",")[0] + (t.membres.length > 1 ? " sont " : " est ") + relachee(t).toLowerCase() + "…";
   sfx("relache");
   let fini = false, envole = false;
   const fin = () => {
