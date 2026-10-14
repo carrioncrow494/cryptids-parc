@@ -950,14 +950,19 @@ function esquiver(c) {
 }
 
 // ---------- carte pixel art ----------
-const PAL = {
-  herbe: "#2e4a2c", herbe2: "#35552f", herbe3: "#284126", parc: "#3b6b34", terrain: "#45803c", bois: "#1f3a24", quartier: "#36443a",
-  cimetiere: "#33463a", eau: "#1d4e7a", eau2: "#2f74a8", route: "#4b4b55", bordure: "#2a2a30", marquage: "#c9b26a", dalle: "#6a6670",
-  chemin: "#a6875a", chemin2: "#7a623e", parking: "#43434b", facade: "#3d2a3a", toit: "#6e4a63", toitClair: "#8a6280",
-  arbre1: "#173a20", arbre2: "#24572c", arbre3: "#3a7a3a", tronc: "#4a3020", ombre: "#1a2a1c", mur: "#77727a", cloture: "#6b5236"
+const PAL = {   // style « jeu d'aventure » : herbe vive, contours sombres, toits colorés (d'après les images de référence de Sam)
+  herbe: "#78b04a", herbe2: "#8cc455", herbe3: "#5f9a3c", parc: "#84bc4c", terrain: "#93c95a", bois: "#4c8a3c", quartier: "#6fa646",
+  cimetiere: "#7a9a5a", eau: "#3d9fb5", eau2: "#7fd6dc", ecume: "#c8f0ea", rive: "#3a3b4a",
+  route: "#3a3442", bordure: "#6e6470", marquage: "#efe3c4", trottoir: "#b8aa96", dalle: "#c9b48c", dalle2: "#a8946e",
+  chemin: "#dcbc7e", chemin2: "#b08f5c", parking: "#4b4552",
+  facade: "#6a5866", fenetre: "#f3d27a", toit: "#8a5a44", toitClair: "#a8775a", toitR: "#c4573f", toitRClair: "#e07a55",
+  toitB: "#3f6f9e", toitBClair: "#5f93c2", toitG: "#6f6b7a", toitGClair: "#908c9c",
+  arbre1: "#2a6e3c", arbre2: "#3f9a4c", arbre3: "#6cc25c", arbre4: "#a3dc6e", tronc: "#6b4630", ombre: "#4f8a34", contour: "#23202c",
+  mur: "#8c8478", cloture: "#8a6a44", lampe: "#ffe28a", fleurJ: "#f4e05a", fleurR: "#ef7d9b", fleurB: "#ffffff"
 };
+const TOITS = [["toit", "toitClair"], ["toitR", "toitRClair"], ["toitB", "toitBClair"], ["toitG", "toitGClair"]];
 const PAL_RGB = Object.values(PAL).map(h => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)]);
-const EAU_RGB = PAL_RGB[Object.keys(PAL).indexOf("eau")];
+const EAU_RGB = PAL_RGB[Object.keys(PAL).indexOf("eau")], CLES_PAL = Object.keys(PAL);
 let PXC = null, suiviPX = null, fixPX = null, tAttentePX = 0;
 const M_LAT = 110540;
 const versM = (lat, lon) => ({ x: (lon - PXC.origine[1]) * 111320 * Math.cos(PXC.origine[0] * DEG), y: -(lat - PXC.origine[0]) * M_LAT });
@@ -1019,7 +1024,7 @@ function preparerCarte(orig, fictif) {
   const meme = PXC.origine && PXC.origine[0] === orig[0] && PXC.origine[1] === orig[1] && PXC.carte;
   if (!meme) {
     PXC.origine = orig; PXC.fictif = !!fictif;
-    const ind = mode() === "interieur"; PXC.H = ind ? 40 : 70; PXC.ppm = ind ? 3 : 2; PXC.zoom = ind ? 4 : 3;
+    const ind = mode() === "interieur"; PXC.H = ind ? 40 : 70; PXC.ppm = ind ? 6 : 4; PXC.zoom = ind ? 2 : 1.5;   // plus de pixels par mètre pour les détails, même échelle à l'écran
     PXC.joueur = fixPX && !fictif ? versM(fixPX.lat, fixPX.lon) : { x: 0, y: 0 };
     dessinerCarte(null);
     if (!fictif) chargerOSM(orig).then(d => { if (PXC.origine === orig) { dessinerCarte(d); habiter(); } })
@@ -1048,7 +1053,7 @@ function placerCibles() {
 
 // ---------- habitats : chaque créature se cache sur un terrain qui lui ressemble ----------
 // règles essayées dans l'ordre : [couleurs de la palette, distance maximale en mètres] ; "lampe" = lampadaire OSM
-const ARBRES = ["arbre1", "arbre2", "arbre3"];
+const ARBRES = ["arbre1", "arbre2", "arbre3", "arbre4"];
 const HABITAT = {
   mothman: [["lampe", 3], [["chemin", "chemin2", "dalle"], 1]],    // sous un lampadaire, sinon le long d'un chemin
   nessie: [[["eau"], 3]],                                           // au bord de l'eau
@@ -1058,12 +1063,12 @@ const HABITAT = {
   lutins: [[ARBRES, 1], [["parc", "quartier"], 0]],                 // les buissons
   jackalope: [[["terrain", "parc"], 0], [["chemin", "chemin2"], 1]],   // là où l'on peut courir
   yeti: [[["chemin", "chemin2"], 1]],                               // ses traces sur les sentiers
-  gargouille: [[["toit", "facade", "mur"], 2]],                     // au pied d'un bâtiment
+  gargouille: [[[...TOITS.flat(), "facade", "fenetre", "mur"], 2]],                    // au pied d'un bâtiment
   chupacabra: [[["facade"], 3], [["quartier"], 0]],                // près des maisons
   kraken: [[["eau"], 4]],                                           // ses trésors au bord de l'eau
   swamp: [[["eau"], 4], [ARBRES, 1], [["bois"], 0]]                // là où c'est mouillé : près de l'eau ou sous les arbres
 };
-const INTERDIT = new Set(["eau", "eau2", "toit", "toitClair", "facade", "mur", "route", "bordure", "marquage", "parking"]);   // ni dans l'eau, ni dans un bâtiment, ni sur la route
+const INTERDIT = new Set(["eau", "eau2", "ecume", "rive", ...TOITS.flat(), "facade", "fenetre", "mur", "route", "bordure", "marquage", "parking"]);   // ni dans l'eau, ni dans un bâtiment, ni sur la route
 const terrain = (x, y) => { const g = PXC && PXC.grille, S = 2 * PXC.H, i = Math.floor(x + PXC.H), j = Math.floor(y + PXC.H); return g && i >= 0 && j >= 0 && i < S && j < S ? g[j * S + i] : null; };
 const accessible = (x, y) => !PXC || !PXC.grille || !INTERDIT.has(terrain(x, y));
 function pres(x, y, couleurs, dist) {   // distance 0 : la case est bien à l'intérieur de ce terrain (au moins 7 cases sur 9)
@@ -1147,8 +1152,7 @@ function dessinerCarte(d) {
   const P = (lat, lon) => { const m = versM(lat, lon); return [(m.x + H) * k, (m.y + H) * k]; };
   const rnd = hasard(Math.round((PXC.origine[0] + PXC.origine[1]) * 1e5));
   g.fillStyle = PAL.herbe; g.fillRect(0, 0, N, N);
-  for (let i = 0; i < N * N * .14; i++) { g.fillStyle = rnd() < .5 ? PAL.herbe2 : PAL.herbe3; g.fillRect((rnd() * N) | 0, (rnd() * N) | 0, 1, 1); }
-  const arbres = [];
+  const arbres = [], lampes = [];
   if (d && d.elements) {
     const t = e => e.tags || {}, ways = d.elements.filter(e => e.type === "way" && e.geometry && e.geometry.length > 1);
     const chemin = geom => { const p = new Path2D(); geom.forEach((pt, i) => { const [x, y] = P(pt.lat, pt.lon); i ? p.lineTo(x, y) : p.moveTo(x, y); }); return p; };
@@ -1162,51 +1166,87 @@ function dessinerCarte(d) {
     ways.filter(e => /^(grass|meadow|village_green|recreation_ground)$/.test(t(e).landuse) || /^(park|garden|playground)$/.test(t(e).leisure) || t(e).natural === "grassland").forEach(e => surface(e.geometry, PAL.parc));
     ways.filter(e => t(e).leisure === "pitch").forEach(e => surface(e.geometry, PAL.terrain));
     ways.filter(e => t(e).landuse === "forest" || /^(wood|scrub)$/.test(t(e).natural)).forEach(e => surface(e.geometry, PAL.bois));
-    ways.filter(e => t(e).natural === "water" || t(e).leisure === "swimming_pool" || /^(basin|reservoir)$/.test(t(e).landuse)).forEach(e => surface(e.geometry, PAL.eau));
-    d.elements.filter(e => e.type === "relation" && t(e).natural === "water").forEach(r => (r.members || []).filter(m => m.role === "outer" && m.geometry).forEach(m => surface(m.geometry, PAL.eau)));
-    ways.filter(e => t(e).waterway).forEach(e => trait(e.geometry, t(e).waterway === "river" ? 8 : 2.5, PAL.eau));
+    // l'eau : une rive de rochers sombres, puis l'eau par-dessus
+    const eaux = ways.filter(e => t(e).natural === "water" || t(e).leisure === "swimming_pool" || /^(basin|reservoir)$/.test(t(e).landuse)).map(e => e.geometry);
+    d.elements.filter(e => e.type === "relation" && t(e).natural === "water").forEach(r => (r.members || []).filter(m => m.role === "outer" && m.geometry).forEach(m => eaux.push(m.geometry)));
+    const rivieres = ways.filter(e => t(e).waterway).map(e => [e.geometry, t(e).waterway === "river" ? 8 : 2.5]);
+    eaux.forEach(geo => trait(geo, 1.6, PAL.rive)); rivieres.forEach(([geo, l]) => trait(geo, l + 1.6, PAL.rive));
+    eaux.forEach(geo => surface(geo, PAL.eau)); rivieres.forEach(([geo, l]) => trait(geo, l, PAL.eau));
     ways.filter(e => t(e).amenity === "parking").forEach(e => surface(e.geometry, PAL.parking));
+    // rues : trottoir, bordure, chaussée sombre, marquage en pointillés
     const L = { motorway: 14, trunk: 12, primary: 10, secondary: 9, tertiary: 8, residential: 6, unclassified: 6, living_street: 5, service: 4, pedestrian: 4 };
-    const routes = ways.filter(e => L[t(e).highway]);
-    routes.forEach(e => trait(e.geometry, L[t(e).highway] + 1.2, PAL.bordure));
+    const routes = ways.filter(e => L[t(e).highway]), voitures = routes.filter(e => t(e).highway !== "pedestrian");
+    voitures.forEach(e => trait(e.geometry, L[t(e).highway] + 3, PAL.trottoir));
+    voitures.forEach(e => trait(e.geometry, L[t(e).highway] + .8, PAL.bordure));
     routes.forEach(e => trait(e.geometry, L[t(e).highway], t(e).highway === "pedestrian" ? PAL.dalle : PAL.route));
-    routes.filter(e => L[t(e).highway] >= 8).forEach(e => trait(e.geometry, .4, PAL.marquage, [3 * k, 3 * k]));
+    routes.filter(e => L[t(e).highway] >= 6 && t(e).highway !== "pedestrian").forEach(e => trait(e.geometry, .35, PAL.marquage, [2 * k, 2.5 * k]));
     const sentiers = ways.filter(e => /^(footway|path|cycleway|track|bridleway|steps)$/.test(t(e).highway));
-    sentiers.forEach(e => trait(e.geometry, 2.4, PAL.chemin2)); sentiers.forEach(e => trait(e.geometry, 1.7, PAL.chemin));
-    ways.filter(e => t(e).barrier === "hedge").forEach(e => trait(e.geometry, 1.3, PAL.arbre2));
+    sentiers.forEach(e => trait(e.geometry, 2.3, PAL.chemin2)); sentiers.forEach(e => trait(e.geometry, 1.7, PAL.chemin));
+    ways.filter(e => t(e).barrier === "hedge").forEach(e => { trait(e.geometry, 1.7, PAL.contour); trait(e.geometry, 1.3, PAL.arbre1); trait(e.geometry, .6, PAL.arbre2); });
     ways.filter(e => /^(wall|fence)$/.test(t(e).barrier)).forEach(e => trait(e.geometry, .5, t(e).barrier === "wall" ? PAL.mur : PAL.cloture));
-    const bat = ways.filter(e => t(e).building);
-    bat.forEach(e => { g.save(); g.translate(0, Math.max(2, Math.round(k * 1.3))); surface(e.geometry, PAL.facade); g.restore(); });
-    bat.forEach(e => { const p = surface(e.geometry, PAL.toit); g.strokeStyle = PAL.toitClair; g.lineWidth = 1; g.stroke(p); });
+    // bâtiments vus de trois quarts : ombre, façade (fenêtres ajoutées plus bas), toit coloré cerné de sombre
+    const bat = ways.filter(e => t(e).building), hMur = Math.round(k * 2.2);
+    bat.forEach(e => { g.save(); g.translate(Math.round(k * .8), hMur + Math.round(k * .8)); surface(e.geometry, PAL.ombre); g.restore(); });
+    bat.forEach(e => { g.save(); g.translate(0, hMur); const p = surface(e.geometry, PAL.facade); g.strokeStyle = PAL.contour; g.lineWidth = 1; g.stroke(p); g.restore(); });
+    bat.forEach(e => { const [c, cc] = TOITS[e.id % TOITS.length], p = surface(e.geometry, PAL[c]);
+      g.save(); g.clip(p); g.strokeStyle = PAL[cc]; g.lineWidth = Math.max(2, k * .8); g.stroke(p); g.restore();
+      g.strokeStyle = PAL.contour; g.lineWidth = 1; g.stroke(p); });
     ways.filter(e => t(e).landuse === "forest" || t(e).natural === "wood").forEach(e => semer(e.geometry, 5, .9));
     ways.filter(e => t(e).leisure === "park" || t(e).leisure === "garden").forEach(e => semer(e.geometry, 9, .22));
     d.elements.filter(e => e.type === "node" && t(e).natural === "tree").forEach(e => arbres.push(P(e.lat, e.lon)));
+    d.elements.filter(e => e.type === "node" && t(e).highway === "street_lamp").forEach(e => lampes.push(P(e.lat, e.lon)));
   }
-  arbres.sort((a, b) => a[1] - b[1]).forEach(([x, y]) => dessinerArbre(g, x, y, k));
+  // pas d'arbre semé sur un toit, une route ou dans l'eau
+  const avant = g.getImageData(0, 0, N, N).data, sol = new Set(["herbe", "parc", "terrain", "bois", "quartier", "cimetiere"].map(c => PAL[c]));
+  const hex = n => "#" + [0, 1, 2].map(j => avant[n * 4 + j].toString(16).padStart(2, "0")).join("");
+  for (let i = arbres.length - 1; i >= 0; i--) { const [x, y] = arbres[i], X = Math.round(x), Y = Math.round(y);
+    if (X < 0 || Y < 0 || X >= N || Y >= N || !sol.has(hex(Y * N + X))) arbres.splice(i, 1); }
+  // arbres et lampadaires, du haut vers le bas pour qu'ils se recouvrent comme il faut
+  [...arbres.map(a => [a[0], a[1], 0]), ...lampes.map(a => [a[0], a[1], 1])].sort((a, b) => a[1] - b[1])
+    .forEach(([x, y, l]) => l ? dessinerLampe(g, x, y, k) : dessinerArbre(g, x, y, k, rnd));
   // palette réduite : bords nets, vrai rendu pixel art ; on garde la liste des pixels d'eau pour les reflets
-  const img = g.getImageData(0, 0, N, N), px = img.data, eau = [];
+  const img = g.getImageData(0, 0, N, N), px = img.data, eau = [], idx = new Uint8Array(N * N);
   for (let i = 0; i < px.length; i += 4) {
     let m = 0, dm = 1e9; for (let c = 0; c < PAL_RGB.length; c++) { const q = PAL_RGB[c], dd = (px[i] - q[0]) ** 2 + (px[i + 1] - q[1]) ** 2 + (px[i + 2] - q[2]) ** 2; if (dd < dm) { dm = dd; m = c; } }
-    const q = PAL_RGB[m]; px[i] = q[0]; px[i + 1] = q[1]; px[i + 2] = q[2]; px[i + 3] = 255;
-    if (q === EAU_RGB && eau.length < 3000 && rnd() < .2) eau.push(i / 4);
+    idx[i / 4] = m;
   }
+  // finitions au pixel : fenêtres éclairées, dalles, touffes d'herbe et fleurs
+  const I = c => CLES_PAL.indexOf(c), iFac = I("facade"), iDal = I("dalle"), tuiles = new Map(TOITS.map(([a, b]) => [I(a), I(b)])), herbes = new Set(["herbe", "parc", "quartier", "terrain"].map(I));
+  const fleurs = ["fleurJ", "fleurR", "fleurB"].map(I), iT1 = I("herbe2"), iT2 = I("herbe3"), pas = Math.max(4, Math.round(k * 1.6));
+  for (let y = 1; y < N - 1; y++) for (let x = 0; x < N; x++) { const n = y * N + x, c = idx[n];
+    if (c === iFac) { if (x % pas >= 1 && x % pas <= Math.max(1, pas >> 1) && idx[n - N] === iFac && idx[n + N] === iFac && idx[n + 2 * N] === iFac) idx[n] = I("fenetre"); }
+    else if (tuiles.has(c)) { if (y % Math.max(3, k) === 0 && tuiles.has(idx[n - N])) idx[n] = tuiles.get(c); }   // rangées de tuiles
+    else if (c === iDal) { if (x % (2 * k) === 0 || y % (2 * k) === 0) idx[n] = I("dalle2"); }
+    else if (herbes.has(c) && y > 1) { const r = rnd();
+      if (r < .006) { idx[n] = iT1; if (herbes.has(idx[n - N])) idx[n - N] = iT1; if (herbes.has(idx[n + N])) idx[n + N] = iT2; }
+      else if (r < .0075 && c !== I("terrain")) idx[n] = fleurs[(rnd() * 3) | 0]; } }
+  for (let n = 0; n < N * N; n++) { const q = PAL_RGB[idx[n]], i = n * 4; px[i] = q[0]; px[i + 1] = q[1]; px[i + 2] = q[2]; px[i + 3] = 255;
+    if (q === EAU_RGB && eau.length < 3000 && rnd() < .2) eau.push(n); }
   g.putImageData(img, 0, 0);
   PXC.carte = cv; PXC.eau = eau; PXC.N = N;
   // grille du terrain, une case par mètre (couleur de la palette au centre de la case) : sert à cacher les créatures dans leur habitat
-  const S = 2 * H, cles = Object.keys(PAL); PXC.grille = null; PXC.lampes = [];
+  const S = 2 * H; PXC.grille = null; PXC.lampes = [];
   if (d && d.elements) {
     PXC.grille = new Array(S * S);
-    for (let j = 0; j < S; j++) for (let i = 0; i < S; i++) { const n = Math.floor((j + .5) * k) * N + Math.floor((i + .5) * k); PXC.grille[j * S + i] = cles[PAL_RGB.findIndex(q => q[0] === px[n * 4] && q[1] === px[n * 4 + 1] && q[2] === px[n * 4 + 2])]; }
+    for (let j = 0; j < S; j++) for (let i = 0; i < S; i++) PXC.grille[j * S + i] = CLES_PAL[idx[Math.floor((j + .5) * k) * N + Math.floor((i + .5) * k)]];
     PXC.lampes = d.elements.filter(e => e.type === "node" && (e.tags || {}).highway === "street_lamp").map(e => versM(e.lat, e.lon));
   }
 }
-function dessinerArbre(g, x, y, k) {
-  const r = Math.max(3, 2.1 * k);
-  g.fillStyle = PAL.ombre; g.beginPath(); g.ellipse(x + r * .35, y + r * .75, r, r * .45, 0, 0, 7); g.fill();
-  g.fillStyle = PAL.tronc; g.fillRect(Math.round(x - k * .3), Math.round(y - r * .2), Math.max(1, Math.round(k * .6)), Math.max(2, Math.round(r * .7)));
-  g.fillStyle = PAL.arbre1; g.beginPath(); g.arc(x, y - r * .45, r, 0, 7); g.fill();
-  g.fillStyle = PAL.arbre2; g.beginPath(); g.arc(x - r * .18, y - r * .62, r * .72, 0, 7); g.fill();
-  g.fillStyle = PAL.arbre3; g.beginPath(); g.arc(x - r * .38, y - r * .85, r * .32, 0, 7); g.fill();
+function dessinerArbre(g, x, y, k, rnd) {   // grosse touffe ronde et bosselée, cernée de sombre, éclairée en haut à gauche
+  const r = Math.max(3, 2.1 * k), cy = y - r * .8, n = 6, bosses = [[0, 0, r]];
+  for (let i = 0; i < n; i++) { const a = i / n * 2 * Math.PI + rnd() * .6; bosses.push([Math.cos(a) * r * .62, Math.sin(a) * r * .55, r * (.42 + rnd() * .12)]); }
+  const peindre = (c, dx, dy, ech, plus) => { g.fillStyle = c; g.beginPath(); bosses.forEach(([bx, by, br]) => { g.moveTo(x + bx * ech + dx + br * ech + plus, cy + by * ech + dy); g.arc(x + bx * ech + dx, cy + by * ech + dy, br * ech + plus, 0, 7); }); g.fill(); };
+  g.fillStyle = PAL.ombre; g.beginPath(); g.ellipse(x + r * .25, y + r * .1, r * 1.1, r * .5, 0, 0, 7); g.fill();
+  g.fillStyle = PAL.contour; g.fillRect(Math.round(x - k * .45) - 1, Math.round(y - r * .5), Math.max(1, Math.round(k * .9)) + 2, Math.round(r * .75) + 1);
+  g.fillStyle = PAL.tronc; g.fillRect(Math.round(x - k * .45), Math.round(y - r * .5), Math.max(1, Math.round(k * .9)), Math.round(r * .75));
+  peindre(PAL.contour, 0, 0, 1, 1); peindre(PAL.arbre1, 0, 0, 1, 0); peindre(PAL.arbre2, -r * .1, -r * .14, .78, 0); peindre(PAL.arbre3, -r * .24, -r * .3, .5, 0);
+  g.fillStyle = PAL.arbre4; for (let i = 0; i < 3; i++) g.fillRect(Math.round(x - r * (.2 + rnd() * .4)), Math.round(cy - r * (.3 + rnd() * .4)), Math.max(1, k >> 1), Math.max(1, k >> 1));
+}
+function dessinerLampe(g, x, y, k) {   // lampadaire : poteau sombre et lanterne jaune
+  const h = Math.round(k * 2.6), l = Math.max(1, Math.round(k * .35)), X = Math.round(x), Y = Math.round(y);
+  g.fillStyle = PAL.ombre; g.fillRect(X, Y, Math.round(k * 1.4), Math.max(1, k >> 1));
+  g.fillStyle = PAL.contour; g.fillRect(X - (l >> 1), Y - h, l, h); g.fillRect(X - l - 1, Y - h - l * 2 - 1, l * 2 + 2 + (l & 1), l * 2 + 2);
+  g.fillStyle = PAL.lampe; g.fillRect(X - l, Y - h - l * 2, l * 2 + (l & 1), l * 2);
 }
 // le joueur : un petit enfant encapuchonné avec une lanterne
 const SPRITE = ["....hhhh....", "...hppppph..", "..hpffffph..", "..hfeffefh..", "..hpffffph..", "...hppppph..", "..pppppppp.l",
@@ -1249,11 +1289,11 @@ function bouclePixel(t) {
   if (PXC.carte) {
     g.drawImage(PXC.carte, ox, oy, PXC.N * z, PXC.N * z);
     // reflets sur l'eau
-    g.fillStyle = "#7fc8ff";
+    g.fillStyle = PAL.ecume;
     for (let i = 0; i < PXC.eau.length; i += 7) { const n = PXC.eau[i], ph = (t / 600 + i * 1.7) % 6; if (ph > 1) continue;
       g.fillRect(ox + (n % PXC.N) * z, oy + Math.floor(n / PXC.N) * z, z * 2, z); }
   }
-  dessinerJoueur(g, cx, cy, z, t);
+  dessinerJoueur(g, cx, cy, ech / (mode() === "interieur" ? 3 : 2), t);   // même taille qu'avant le passage à 4 pixels par mètre
   majApparition(t);
   if (t - (PXC.tDet || 0) > 180) { PXC.tDet = t; majDetecteur(t); }
 }
