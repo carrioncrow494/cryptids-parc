@@ -54,6 +54,13 @@ La version 1 est dans le dépôt `carrioncrow494/chasse-monstres` et n'est pas m
   - Lutins du grimoire refaits sans halo.
   - Nouvelles figurines du Thunderbird, du Barghest et du Jackalope ; Huhuk agrandi (`ECH_FIG`).
 
+## Habitats des créatures (mode extérieur)
+
+- Une fois la carte OSM chargée, chaque créature tirée au hasard est déplacée dans un habitat qui lui va (table `HABITAT`, fonction `habiter`) : Ness et Bloop au bord de l'eau, Michmuche sous un lampadaire (`highway=street_lamp`), Gadoo près de l'eau ou dans les bois, Whitby dans les bois, Ardoise au pied d'un bâtiment, Migou et Bucky sur les sentiers, Huhuk en terrain découvert, la Faery et les lutins sous les arbres, Moca dans les quartiers.
+- Le terrain est lu dans une grille d'une case par mètre (`PXC.grille`), prise sur la carte pixel art déjà dessinée. Une créature n'est jamais posée dans l'eau, dans un bâtiment, sur une route ou un parking (`INTERDIT`).
+- Si aucune case ne correspond, la créature va sur n'importe quelle case accessible. Sans carte OSM (réseau, Overpass), on garde le tirage au hasard.
+- Les créatures posées par un parent ne bougent pas. Le mode intérieur n'est pas concerné.
+
 ## Tout le reste vient de la V1 (état au 12/10/2026)
 
 - **Contenu** : 12 traques et 13 créatures. Kumquat et Kiwi, les lutins, forment une seule traque. Sporran le Cat sìth est le guide.

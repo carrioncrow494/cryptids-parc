@@ -1560,7 +1560,7 @@ function preparerCarte(orig, fictif) {
     const ind = mode() === "interieur"; PXC.H = ind ? 40 : 70; PXC.ppm = ind ? 3 : 2; PXC.zoom = ind ? 4 : 3;
     PXC.joueur = fixPX && !fictif ? versM(fixPX.lat, fixPX.lon) : { x: 0, y: 0 };
     dessinerCarte(null);
-    if (!fictif) chargerOSM(orig).then(d => { if (PXC.origine === orig) dessinerCarte(d); })
+    if (!fictif) chargerOSM(orig).then(d => { if (PXC.origine === orig) { dessinerCarte(d); habiter(); } })
       .catch(() => bandeau("La carte du quartier n'a pas pu se charger (réseau ?). Le détecteur marche quand même.", 5000));
   }
   placerCibles();
@@ -1573,13 +1573,66 @@ function placerCibles() {
   const pris = Object.values(p.pos).map(g => versM(g[0], g[1]));
   const tirer = (rMin, rMax, cx, cy) => { let b = null;
     for (let i = 0; i < 60; i++) { const a = Math.random() * 2 * Math.PI, r = rMin + Math.random() * (rMax - rMin), x = cx + Math.cos(a) * r, y = cy + Math.sin(a) * r;
-      b = { x, y }; if (pris.every(e => Math.hypot(e.x - x, e.y - y) >= ecart)) break; }
+      b = { x, y }; if (pris.every(e => Math.hypot(e.x - x, e.y - y) >= ecart) && (ind || accessible(x, y))) break; }
     pris.push(b); return b; };
-  p.liste.forEach(k => { if (p.pos[k]) return; if (l[k]) { p.pos[k] = l[k]; return; } const b = tirer(mini, R, 0, 0); p.pos[k] = versGeo(b.x, b.y); });
+  const habitats = !ind && !PXC.fictif;   // en extérieur, la créature tirée au hasard ira dans son habitat dès que la carte du quartier sera chargée
+  p.auHasard = p.auHasard || [];
+  p.liste.forEach(k => { if (p.pos[k]) return; if (l[k]) { p.pos[k] = l[k]; return; } const b = tirer(mini, R, 0, 0); p.pos[k] = versGeo(b.x, b.y); if (habitats) p.auHasard.push(k); });
   if (enBoss && !p.posBoss) { const b = tirer(ind ? 4 : 8, ind ? 9 : 16, PXC.joueur.x, PXC.joueur.y); p.posBoss = versGeo(b.x, b.y); }
   ecrire(CLES.partie, p);
   PXC.cibles = enBoss ? [Object.assign({ k: "catsith" }, versM(p.posBoss[0], p.posBoss[1]))]
                       : restantesJeu().map(k => Object.assign({ k }, versM(p.pos[k][0], p.pos[k][1])));
+}
+
+// ---------- habitats : chaque créature se cache sur un terrain qui lui ressemble ----------
+// règles essayées dans l'ordre : [couleurs de la palette, distance maximale en mètres] ; "lampe" = lampadaire OSM
+const ARBRES = ["arbre1", "arbre2", "arbre3"];
+const HABITAT = {
+  mothman: [["lampe", 3], [["chemin", "chemin2", "dalle"], 1]],    // aime la lumière : sous un lampadaire, sinon le long d'un chemin
+  nessie: [[["eau"], 3]],                                           // au bord de l'eau
+  thunderbird: [[["terrain"], 0], [["parc"], 0]],                   // en terrain découvert
+  barghest: [[["bois"], 0], [["cimetiere"], 0], [ARBRES, 1]],      // dans les endroits sombres
+  faery: [[ARBRES, 2], [["parc"], 0]],
+  lutins: [[ARBRES, 1], [["parc", "quartier"], 0]],                 // les jardins, les marronniers
+  jackalope: [[["chemin", "chemin2"], 0], [["terrain", "parc"], 0]],   // là où l'on peut courir
+  yeti: [[["chemin", "chemin2"], 0]],                               // ses traces sur les sentiers
+  gargouille: [[["toit", "facade", "mur"], 2]],                     // au pied d'un bâtiment
+  chupacabra: [[["quartier"], 0], [["facade"], 3]],
+  kraken: [[["eau"], 4]],
+  swamp: [[["eau"], 4], [["bois"], 0]]                              // la boue : près de l'eau ou dans les bois
+};
+const INTERDIT = new Set(["eau", "eau2", "toit", "toitClair", "facade", "mur", "route", "bordure", "marquage", "parking"]);   // ni dans l'eau, ni dans un bâtiment, ni sur la route
+const terrain = (x, y) => { const g = PXC && PXC.grille, S = 2 * PXC.H, i = Math.floor(x + PXC.H), j = Math.floor(y + PXC.H); return g && i >= 0 && j >= 0 && i < S && j < S ? g[j * S + i] : null; };
+const accessible = (x, y) => !PXC || !PXC.grille || !INTERDIT.has(terrain(x, y));
+function pres(x, y, couleurs, dist) {   // distance 0 : la case est bien à l'intérieur de ce terrain (au moins 7 cases sur 9)
+  if (couleurs === "lampe") return PXC.lampes.some(q => Math.hypot(q.x - x, q.y - y) <= dist);
+  if (!dist) { if (!couleurs.includes(terrain(x, y))) return false; let n = 0;
+    for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) n += couleurs.includes(terrain(x + dx, y + dy));
+    return n >= 7; }
+  let n = 0;   // les bords des formes donnent des pixels de couleur intermédiaire : on demande au moins 3 cases, pas une seule isolée
+  for (let dy = -dist; dy <= dist; dy++) for (let dx = -dist; dx <= dist; dx++)
+    if (dx * dx + dy * dy <= dist * dist && couleurs.includes(terrain(x + dx, y + dy)) && ++n >= 3) return true;
+  return false;
+}
+function caseHabitat(k, rMin, rMax, autres, ecart) {
+  const regles = HABITAT[TRAQUES[k].cle] || [], cases = [];
+  for (let y = -rMax; y <= rMax; y++) for (let x = -rMax; x <= rMax; x++) {
+    const cx = x + .5, cy = y + .5, r = Math.hypot(cx, cy);
+    if (r >= rMin && r <= rMax && accessible(cx, cy) && autres.every(e => Math.hypot(e.x - cx, e.y - cy) >= ecart)) cases.push({ x: cx, y: cy });
+  }
+  for (const [couleurs, dist] of regles) { const ok = cases.filter(c => pres(c.x, c.y, couleurs, dist)); if (ok.length) return ok[Math.floor(Math.random() * ok.length)]; }
+  return cases.length ? cases[Math.floor(Math.random() * cases.length)] : null;
+}
+function habiter() {
+  const p = partie(); if (!p || !p.pos || !p.auHasard || !p.auHasard.length || !PXC.grille || enBoss) return;
+  const R = rayonJeu(), vu = PXC.revele && PXC.revele.c.k;
+  const autres = Object.keys(p.pos).filter(k => !p.auHasard.includes(k)).map(k => versM(p.pos[k][0], p.pos[k][1]));
+  p.auHasard.slice().forEach(k => {
+    if (p.pris.includes(k) || k === vu) return;
+    const c = caseHabitat(k, 6, R, autres, 6); if (!c) return;
+    p.pos[k] = versGeo(c.x, c.y); autres.push(c); p.auHasard.splice(p.auHasard.indexOf(k), 1);
+  });
+  ecrire(CLES.partie, p); placerCibles();
 }
 
 async function chargerOSM(orig) {
@@ -1589,7 +1642,7 @@ async function chargerOSM(orig) {
   const a = `(around:${R},${la},${lo})`;
   const q = `[out:json][timeout:25];(way["building"]${a};way["highway"]${a};way["natural"~"water|wood|scrub|grassland|wetland|beach|sand"]${a};relation["natural"="water"]${a};` +
     `way["waterway"]${a};way["landuse"~"grass|forest|meadow|recreation_ground|village_green|cemetery|allotments|residential|basin|reservoir"]${a};` +
-    `way["leisure"~"park|garden|pitch|playground|swimming_pool"]${a};way["amenity"="parking"]${a};node["natural"="tree"]${a};way["barrier"~"wall|fence|hedge"]${a};);out geom;`;
+    `way["leisure"~"park|garden|pitch|playground|swimming_pool"]${a};way["amenity"="parking"]${a};node["natural"="tree"]${a};node["highway"="street_lamp"]${a};way["barrier"~"wall|fence|hedge"]${a};);out geom;`;
   let dernier = null;
   for (const url of ["https://overpass-api.de/api/interpreter", "https://overpass.kumi.systems/api/interpreter"]) {
     try {
@@ -1654,6 +1707,13 @@ function dessinerCarte(d) {
   }
   g.putImageData(img, 0, 0);
   PXC.carte = cv; PXC.eau = eau; PXC.N = N;
+  // grille du terrain, une case par mètre (couleur de la palette au centre de la case) : sert à cacher les créatures dans leur habitat
+  const S = 2 * H, cles = Object.keys(PAL); PXC.grille = null; PXC.lampes = [];
+  if (d && d.elements) {
+    PXC.grille = new Array(S * S);
+    for (let j = 0; j < S; j++) for (let i = 0; i < S; i++) { const n = Math.floor((j + .5) * k) * N + Math.floor((i + .5) * k); PXC.grille[j * S + i] = cles[PAL_RGB.findIndex(q => q[0] === px[n * 4] && q[1] === px[n * 4 + 1] && q[2] === px[n * 4 + 2])]; }
+    PXC.lampes = d.elements.filter(e => e.type === "node" && (e.tags || {}).highway === "street_lamp").map(e => versM(e.lat, e.lon));
+  }
 }
 function dessinerArbre(g, x, y, k) {
   const r = Math.max(3, 2.1 * k);
@@ -1793,7 +1853,7 @@ window.__test = { ouvrir: () => { montrer(null); $("scene").hidden = false; init
   regarder: () => { const c = moteur.creature; if (c) c.angle = lacetCamera(); },
   dbg: () => { const m = versM(fixPX.lat, fixPX.lon); return { m, manuel: PXC.manuel, fictif: PXC.fictif, org: PXC.origine, jo: PXC.joueur }; },
   pixel: () => PXC && { t: PXC.t, raf: PXC.raf, fix: fixPX, fictif: PXC.fictif, origine: PXC.origine, joueur: PXC.joueur, cibles: PXC.cibles, revele: PXC.revele && PXC.revele.c.k, manuel: PXC.manuel, carte: !!PXC.carte, N: PXC.N, signal: PXC.signal },
-  aller: (x, y) => { PXC.manuel = true; PXC.vise = { x, y }; }, attraper: () => attraper(), frapper: () => frapper(),
+  aller: (x, y) => { PXC.manuel = true; PXC.vise = { x, y }; }, terrain: (x, y) => terrain(x, y), carte: () => PXC.carte && { url: PXC.carte.toDataURL(), H: PXC.H, ppm: PXC.ppm }, attraper: () => attraper(), frapper: () => frapper(),
   jauge: () => moteur && moteur.creature && moteur.creature.jauge, figurine: c => ouvrirFigurine(c),
   etat: () => { const c = moteur && moteur.creature; return { angle: c && c.angle, lacet: moteur && lacetCamera(), gyro, gyroOK, trouve: c && c.trouve, consigne: $("consigne").textContent }; } };
 </script>
