@@ -1563,7 +1563,7 @@ $("pixelCanvas").addEventListener("pointerdown", e => {
 function preparerCarte(orig, fictif) {
   const meme = PXC.origine && PXC.origine[0] === orig[0] && PXC.origine[1] === orig[1] && PXC.carte;
   if (!meme) {
-    PXC.origine = orig; PXC.fictif = !!fictif;
+    PXC.origine = orig; PXC.fictif = !!fictif; PXC.osm = null;
     const ind = mode() === "interieur"; PXC.H = ind ? 40 : 70; PXC.ppm = ind ? 12 : 6; PXC.zoom = 1;   // 6 pixels par mètre (12 en intérieur) : la taille des assets ; même échelle à l'écran qu'avant
     PXC.joueur = fixPX && !fictif ? versM(fixPX.lat, fixPX.lon) : { x: 0, y: 0 };
     dessinerCarte(null);
@@ -1689,7 +1689,7 @@ async function chargerOSM(orig) {
 function dessinerCarte(d) {
   if (d) PXC.osm = d;
   dessinerCarteCode(d);
-  if (ASSETS.pret && d && d.elements) { PXC.carte = dessinerAvecAssets(d); PXC.eau = []; }   // l'eau des assets a déjà ses reflets
+  if (ASSETS.pret) { PXC.carte = dessinerAvecAssets(d && d.elements ? d : { elements: [] }); PXC.eau = []; }   // sans OSM (réseau, pas de GPS) : l'herbe de Sam ; l'eau des assets a déjà ses reflets
 }
 function dessinerCarteCode(d) {   // la carte dessinée par le code : sert à lire le terrain (habitats), et d'image si les assets ne sont pas chargés
   const H = PXC.H, k = PXC.ppm, N = Math.round(2 * H * k);
@@ -1789,7 +1789,7 @@ function chargerAssets() {
       noms.map(n => "carte/spr-" + n + ".png")].map(l => Promise.all(l.map(chargerImage))));
     NOMS_TEX.forEach((n, i) => ASSETS.tex[n] = tex[i]); ASSETS.fac = fac; noms.forEach((n, i) => ASSETS.spr[n] = spr[i]);
     ASSETS.pret = true;
-    if (PXC && PXC.osm && PXC.origine) dessinerCarte(PXC.osm);   // la carte était déjà dessinée par le code : on la refait avec les assets
+    if (PXC && PXC.origine) dessinerCarte(PXC.osm);   // la carte était déjà dessinée par le code : on la refait avec les assets
   }).catch(() => {});   // sans les assets (réseau), la carte reste dessinée par le code
 }
 const MAISONS = ["maison1", "maison2", "maison3", "maison4", "maison5", "maison6", "maison7", "maison8", "maison9"];
