@@ -10,41 +10,41 @@ import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
      altitude : hauteur au-dessus du sol (mètres)
    image : animation du grimoire ; ombre : silhouette ; relache : vidéo de relâche ; figurine : modèle 3D HIGH */
 const TRAQUES = {
-  "1":  { cle: "mothman", nom: "Michmuche, le Mothman", indice: "aime la lumière",
+  "1":  { cle: "mothman", nom: "Michmuche, le Mothman", indice: "tourne autour des lampes et des lampadaires",
           texte: "Un papillon de nuit géant aux grands yeux rouges. On ne sait pas d'où il vient, mais il apparaît pour prévenir d'un danger. Il est très timide et ne résiste jamais à une lampe allumée.",
           membres: [{ ar: "ar-mothman.mp4", ratio: 1.237, taille: 1.57, pied: 0.199, altitude: 0.2 }] },
-  "2":  { cle: "nessie", nom: "Ness, le monstre du loch", indice: "vit dans l'eau",
+  "2":  { cle: "nessie", nom: "Ness, le monstre du loch", indice: "se cache au bord de l'eau : mare, étang ou rivière",
           texte: "Elle vit au fond d'un lac très profond et ne sort que son long cou pour dire bonjour. Elle adore faire des farces et personne n'arrive à la prendre en photo, car elle plonge toujours juste avant le clic !",
           membres: [{ ar: "ar-nessie.mp4", ratio: 0.994, taille: 2.68, pied: 0.04, altitude: 0 }] },
-  "3":  { cle: "thunderbird", nom: "Huhuk, le Thunderbird", indice: "crée de l'électricité", son: "cri-thunderbird.m4a",
+  "3":  { cle: "thunderbird", nom: "Huhuk, le Thunderbird", indice: "aime les grands espaces, pour voir le ciel", son: "cri-thunderbird.m4a",
           texte: "Un oiseau immense qui vole au-dessus des nuages. Quand il bat des ailes, on entend le tonnerre, et quand il cligne des yeux, on voit des éclairs.",
           membres: [{ ar: "ar-thunderbird.mp4", ratio: 0.979, taille: 2.12, pied: 0.103, altitude: 0.3 }] },
-  "4":  { cle: "barghest", nom: "Whitby, le Barghest", indice: "vit dans les endroits sombres",
+  "4":  { cle: "barghest", nom: "Whitby, le Barghest", indice: "cherche un bâton sous les arbres",
           texte: "Un gros chien fantôme, noir et tout ébouriffé, qui se promène la nuit sur les landes. Il a l'air impressionnant, mais il cherche surtout quelqu'un pour lui lancer un bâton.",
           membres: [{ ar: "ar-barghest.mp4", ratio: 1.014, taille: 1.70, pied: 0.011, altitude: 0 }] },
-  "5":  { cle: "faery", nom: "Loupiote, la Faery", indice: "adore la musique",
+  "5":  { cle: "faery", nom: "Loupiote, la Faery", indice: "brille le long des chemins pour guider les promeneurs",
           texte: "Une toute petite fée qui brille comme une veilleuse. Elle éclaire le chemin de ceux qui ont un peu peur du noir ou qui se sont perdus.",
           membres: [{ ar: "ar-faery.mp4", ratio: 1.006, taille: 1.96, pied: 0.198, altitude: 0.5 }] },
-  "6":  { cle: "lutins", nom: "Kumquat & Kiwi, les lutins", indice: "se cachent dans les jardins et adorent les marrons",
+  "6":  { cle: "lutins", nom: "Kumquat & Kiwi, les lutins", indice: "préparent leurs farces cachés dans les buissons",
           texte: "Deux lutins inséparables : l'un orange et farceur, l'autre vert et râleur. Kumquat invente des farces, Kiwi ronchonne, et ils finissent toujours par rire ensemble.",
           membres: [{ nom: "Kiwi", ar: "ar-lutin_green.mp4", ratio: 1.011, taille: 1.22, pied: 0.036, altitude: 0 },
                     { nom: "Kumquat", ar: "ar-lutin_orange.mp4", ratio: 1.01, taille: 1.31, pied: 0.043, altitude: 0 }] },
-  "7":  { cle: "jackalope", nom: "Bucky, le Jackalope", indice: "court plus vite que le vent",
+  "7":  { cle: "jackalope", nom: "Bucky, le Jackalope", indice: "galope là où il y a de la place pour courir",
           texte: "Un lapin malicieux qui porte de petits bois de cerf sur la tête. Il adore la musique et reprend les chansons des voyageurs. Mais il court si vite que personne n'a jamais réussi à le rattraper.",
           membres: [{ ar: "ar-jackalope.mp4", ratio: 1.416, taille: 2.33, pied: 0.356, altitude: 0 }] },
-  "8":  { cle: "yeti", nom: "Migou, le Yeti", indice: "laisse d'énormes traces de pas",
+  "8":  { cle: "yeti", nom: "Migou, le Yeti", indice: "laisse d'énormes traces de pas sur les chemins",
           texte: "Un géant tout blanc et tout doux qui vit dans les montagnes enneigées. Il laisse d'énormes traces de pas et fait les meilleurs câlins du monde.",
           membres: [{ ar: "ar-yeti.mp4", ratio: 1.0, taille: 1.61, pied: 0.066, altitude: 0 }] },
-  "9":  { cle: "gargouille", nom: "Ardoise, la Gargouille", indice: "aime se percher tout en haut",
+  "9":  { cle: "gargouille", nom: "Ardoise, la Gargouille", indice: "se perche sur les toits pour surveiller les maisons",
           texte: "Perchée sur le toit, elle reste immobile comme une pierre toute la journée. La nuit, elle s'étire, bâille et surveille le quartier pour que tout le monde dorme tranquille. Mais attention, elle crache de l'eau sur ceux qui font trop de bruit !",
           membres: [{ ar: "ar-gargouille.mp4", ratio: 1.119, taille: 1.32, pied: 0.048, altitude: 0.2 }] },
-  "10": { cle: "chupacabra", nom: "Moca, le Chupacabra", indice: "a toujours un petit creux",
+  "10": { cle: "chupacabra", nom: "Moca, le Chupacabra", indice: "rôde près des maisons, à la recherche d'un goûter",
           texte: "Une petite créature à piquants qui vient des pays chauds. On la dit farouche, mais elle est surtout très gourmande et raffole du lait de chèvre.",
           membres: [{ ar: "ar-chupacabra.mp4", ratio: 1.421, taille: 2.62, pied: 0.32, altitude: 0 }] },
-  "11": { cle: "kraken", nom: "Bloop, le Kraken", indice: "collectionne les trésors",
+  "11": { cle: "kraken", nom: "Bloop, le Kraken", indice: "cache ses trésors au bord de l'eau",
           texte: "Une pieuvre géante qui habite tout au fond de l'océan. Elle collectionne les trésors des bateaux pirates qui ont coulé. Avec ses huit bras, elle peut chatouiller huit poissons à la fois.",
           membres: [{ ar: "ar-kraken.mp4", ratio: 1.022, taille: 1.39, pied: 0.035, altitude: 0.1 }] },
-  "12": { cle: "swamp", nom: "Gadoo, le monstre des marais", indice: "adore les flaques de boue",
+  "12": { cle: "swamp", nom: "Gadoo, le monstre des marais", indice: "patauge là où c'est mouillé : près de l'eau ou sous les arbres",
           texte: "Un bonhomme tout vert, couvert d'algues et de mousse. Son jeu préféré est de sauter dans les flaques de boue, et il n'a jamais besoin de prendre de bain !",
           membres: [{ ar: "ar-swamp.mp4", ratio: 1.067, taille: 1.43, pied: 0.034, altitude: 0 }] }
 };
@@ -1048,18 +1048,18 @@ function placerCibles() {
 // règles essayées dans l'ordre : [couleurs de la palette, distance maximale en mètres] ; "lampe" = lampadaire OSM
 const ARBRES = ["arbre1", "arbre2", "arbre3"];
 const HABITAT = {
-  mothman: [["lampe", 3], [["chemin", "chemin2", "dalle"], 1]],    // aime la lumière : sous un lampadaire, sinon le long d'un chemin
+  mothman: [["lampe", 3], [["chemin", "chemin2", "dalle"], 1]],    // sous un lampadaire, sinon le long d'un chemin
   nessie: [[["eau"], 3]],                                           // au bord de l'eau
-  thunderbird: [[["terrain"], 0], [["parc"], 0]],                   // en terrain découvert
-  barghest: [[["bois"], 0], [["cimetiere"], 0], [ARBRES, 1]],      // dans les endroits sombres
-  faery: [[ARBRES, 2], [["parc"], 0]],
-  lutins: [[ARBRES, 1], [["parc", "quartier"], 0]],                 // les jardins, les marronniers
-  jackalope: [[["chemin", "chemin2"], 0], [["terrain", "parc"], 0]],   // là où l'on peut courir
-  yeti: [[["chemin", "chemin2"], 0]],                               // ses traces sur les sentiers
+  thunderbird: [[["terrain"], 0], [["parc"], 0]],                   // les grands espaces
+  barghest: [[ARBRES, 1], [["bois"], 0]],                           // un bâton sous les arbres
+  faery: [[["chemin", "chemin2"], 1], [["dalle"], 1]],              // le long des chemins
+  lutins: [[ARBRES, 1], [["parc", "quartier"], 0]],                 // les buissons
+  jackalope: [[["terrain", "parc"], 0], [["chemin", "chemin2"], 1]],   // là où l'on peut courir
+  yeti: [[["chemin", "chemin2"], 1]],                               // ses traces sur les sentiers
   gargouille: [[["toit", "facade", "mur"], 2]],                     // au pied d'un bâtiment
-  chupacabra: [[["quartier"], 0], [["facade"], 3]],
-  kraken: [[["eau"], 4]],
-  swamp: [[["eau"], 4], [["bois"], 0]]                              // la boue : près de l'eau ou dans les bois
+  chupacabra: [[["facade"], 3], [["quartier"], 0]],                // près des maisons
+  kraken: [[["eau"], 4]],                                           // ses trésors au bord de l'eau
+  swamp: [[["eau"], 4], [ARBRES, 1], [["bois"], 0]]                // là où c'est mouillé : près de l'eau ou sous les arbres
 };
 const INTERDIT = new Set(["eau", "eau2", "toit", "toitClair", "facade", "mur", "route", "bordure", "marquage", "parking"]);   // ni dans l'eau, ni dans un bâtiment, ni sur la route
 const terrain = (x, y) => { const g = PXC && PXC.grille, S = 2 * PXC.H, i = Math.floor(x + PXC.H), j = Math.floor(y + PXC.H); return g && i >= 0 && j >= 0 && i < S && j < S ? g[j * S + i] : null; };
