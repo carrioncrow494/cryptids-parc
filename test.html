@@ -306,13 +306,13 @@
   .jeu-dialogue { position: absolute; left: 10px; right: 10px; bottom: 10px; z-index: 3; padding: 12px 14px; background: #f8f5ea; color: #1b1b22; border: 4px solid #1b1b22;
     border-radius: 6px; box-shadow: inset 0 0 0 2px #f8f5ea, inset 0 0 0 4px #7a7a8a; font-family: var(--texte); font-size: 1.05rem; line-height: 1.35; }
   .manette { flex: none; height: calc(176px + env(safe-area-inset-bottom, 0px)); padding: 14px 22px env(safe-area-inset-bottom, 0px); display: flex; align-items: center; justify-content: space-between; }
-  .croix-dir { display: grid; grid-template: repeat(3, 46px) / repeat(3, 46px); transform: rotate(45deg); }   /* en diagonale : chaque flèche suit la direction à l'écran de la vue isométrique */
-  .croix-dir button { border: none; background: #2a2e36; color: #8a909c; font-size: 1rem; box-shadow: 0 4px 0 #0b0d10; touch-action: none; }
-  .croix-dir button.enfonce { background: #1d2026; transform: translateY(3px); box-shadow: 0 1px 0 #0b0d10; color: var(--cyan); }
-  .croix-dir span { background: #2a2e36; }
-  .croix-dir [data-dir=haut] { grid-area: 1 / 2; border-radius: 8px 8px 0 0; } .croix-dir [data-dir=bas] { grid-area: 3 / 2; border-radius: 0 0 8px 8px; }
-  .croix-dir [data-dir=gauche] { grid-area: 2 / 1; border-radius: 8px 0 0 8px; } .croix-dir [data-dir=droite] { grid-area: 2 / 3; border-radius: 0 8px 8px 0; }
-  .croix-dir span { grid-area: 2 / 2; }
+  .joystick { position: relative; width: 136px; height: 136px; border-radius: 50%; flex: none; touch-action: none;
+    background: radial-gradient(circle, #2a2e36 0 55%, #22262d 56% 100%); box-shadow: inset 0 3px 8px rgba(0,0,0,.6), 0 2px 0 #3a404a; }
+  .joy-fleche { position: absolute; left: 50%; top: 50%; width: 0; height: 0; border: 7px solid transparent; border-bottom: 10px solid #4f5664; border-top: 0;
+    transform: translate(-50%, -50%) rotate(var(--a)) translateY(-56px); }   /* les 4 directions de la vue isométrique, en diagonale */
+  .joy-bouton { position: absolute; left: 50%; top: 50%; width: 62px; height: 62px; margin: -31px 0 0 -31px; border-radius: 50%; pointer-events: none;
+    background: radial-gradient(circle at 38% 32%, #6b7280, #3b414c 70%); box-shadow: 0 5px 0 #0b0d10, 0 6px 12px rgba(0,0,0,.5); transition: transform .12s ease-out; }
+  .joystick.actif .joy-bouton { transition: none; background: radial-gradient(circle at 38% 32%, #7fe8f0, #2f8f9c 70%); }
   .boutons-ab { display: flex; gap: 16px; transform: rotate(-22deg); align-items: flex-end; }
   .boutons-ab > div { display: flex; flex-direction: column; align-items: center; gap: 6px; }
   .boutons-ab > div:last-child { margin-bottom: 34px; }
@@ -453,7 +453,7 @@
     <div id="choixVirtuel" class="colonne" hidden>
       <div class="choix carte-mode" data-mode="virtuel" role="button" tabindex="0">
         <h3>Jeu vidéo</h3>
-        <p>Une aventure en pixel art à l'écran, comme sur une vieille console : explore la forêt, le village et le lac, puis le cercle de pierres. La croix sert à marcher, le bouton A à capturer.</p>
+        <p>Une aventure en 3D à l'écran, comme un jeu vidéo : explore une grande île (forêt sombre, hautes-terres, bayou, vieux village, désert) et retrouve les cryptides cachés, puis Sporran près de sa cabane. Le joystick sert à marcher, le bouton A à capturer.</p>
       </div>
     </div>
     <p id="modeParents" class="etat"></p>
@@ -539,12 +539,9 @@
     <div id="jeuDialogue" class="jeu-dialogue" hidden></div>
   </div>
   <div class="manette">
-    <div class="croix-dir">
-      <button data-dir="haut" type="button" aria-label="Haut">▲</button>
-      <button data-dir="gauche" type="button" aria-label="Gauche">◀</button>
-      <span></span>
-      <button data-dir="droite" type="button" aria-label="Droite">▶</button>
-      <button data-dir="bas" type="button" aria-label="Bas">▼</button>
+    <div id="jeuStick" class="joystick" role="application" aria-label="Joystick : pousse pour marcher">
+      <i class="joy-fleche" style="--a:45deg"></i><i class="joy-fleche" style="--a:135deg"></i><i class="joy-fleche" style="--a:225deg"></i><i class="joy-fleche" style="--a:315deg"></i>
+      <div id="jeuBouton" class="joy-bouton"></div>
     </div>
     <div class="boutons-ab">
       <div><button id="jeuB" type="button" aria-label="B : fuir ou fermer">B</button><small>Fuir</small></div>
@@ -1883,186 +1880,132 @@ window.__test = { ouvrir: () => { montrer(null); $("scene").hidden = false; init
   etat: () => { const c = moteur && moteur.creature; return { angle: c && c.angle, lacet: moteur && lacetCamera(), gyro, gyroOK, trouve: c && c.trouve, consigne: $("consigne").textContent }; } };
 
 /* ===================== Aventure virtuelle : jeu vidéo en 3D isométrique (vue de dessus en biais, façon Dofus) ===================== */
-// Chaque map est une grille de lettres : une lettre = une case (voir TUILES). Le décor en 3D est construit à partir de la grille
-// (dioramaJ). Maps provisoires en attendant celles de Sam : un plan dessiné à la main suffit, on le recopie en lettres.
+// Une seule grande île ouverte, découpée en régions (ZONES). La carte est une grille de lettres : une lettre = une case (voir TUILES).
+// Le décor en 3D est construit à partir de la grille (dioramaJ). Pour changer la carte, un plan dessiné à la main suffit : on le recopie en lettres.
 const TUILES = {
   ".": { libre: true }, ",": { libre: true }, "=": { libre: true }, ":": { libre: true }, "*": { libre: true }, "b": { libre: true },
-  "<": { libre: true }, ">": { libre: true }, "P": { libre: true },
-  "T": {}, "~": {}, "#": {}, "f": {}, "R": {}, "H": {}, "D": {}, "L": {}, "S": {}, "o": {}
-};   // . herbe  , hautes herbes  = chemin  : sable  * fleurs  b pont  < > sorties  P départ
+  "B": { libre: true }, "n": { libre: true }, "P": { libre: true },
+  "T": {}, "~": {}, "#": {}, "f": {}, "R": {}, "H": {}, "D": {}, "L": {}, "S": {}, "o": {},
+  "E": {}, "G": {}, "K": {}, "k": {}, "M": {}, "A": {}, "c": {}, "t": {}, "u": {}
+};   // . sol  , hautes herbes (bruyère, fougères, roseaux)  = chemin  : sable  * fleurs  b passerelle  B pont couvert  n neige  P départ
      // T arbre  ~ eau  # rocher  f barrière  R toit  H mur  D porte  L lampadaire  S panneau  o pierre levée
-const MAPS = [
-  { nom: "La forêt des Murmures", panneau: "Forêt des Murmures. Au nord : le village de Sporran.", grille: [
-    "TTTTTTTTT>>TTTTTTTTT",
-    "TTT,,,...==...,,,TTT",
-    "TT,,,,...==..*.,,,TT",
-    "T,,,..T..==..T...,,T",
-    "T,,..TTT.==.TTT...,T",
-    "T....TTT.==.TTT....T",
-    "T*.......==.......*T",
-    "T..~~~...==...,,,..T",
-    "T.~~~~~..==..,,,,,.T",
-    "T.~~~~~..==..,,,,,.T",
-    "T..~~~...==...,,,..T",
-    "T*.......==S.......T",
-    "TT..TT...==...TT..TT",
-    "T,,.TT...==...TT.,,T",
-    "T,,,.....==.....,,,T",
-    "T,,,..*..==..*..,,,T",
-    "TT,......==......,TT",
-    "TTT..TT..==..TT..TTT",
-    "TT...TT..==..TT...TT",
-    "T.*......==......*.T",
-    "T........P.......*.T",
-    "TTTTTTTTTTTTTTTTTTTT"] },
-  { nom: "Le village de Sporran", panneau: "Village de Sporran. Au nord : le lac aux Brumes.", grille: [
-    "TTTTTTTTT>>TTTTTTTTT",
-    "T*.......==.......*T",
-    "T.RRRR...==...RRRR.T",
-    "T.RRRR..L==L..RRRR.T",
-    "T.HHDH...==...HDHH.T",
-    "T...=....==....=...T",
-    "Tff.=....==....=.ffT",
-    "T...=....==....=...T",
-    "T==================T",
-    "T..L.....==S....L..T",
-    "T.RRRRR..==..RRRRR.T",
-    "T.RRRRR..==..RRRRR.T",
-    "T.HHDHH..==..HHDHH.T",
-    "T...=....==....=...T",
-    "T*..======.=====..*T",
-    "Tfff.....==.....fffT",
-    "T,,,..L..==..L..,,,T",
-    "T,,,,....==....,,,,T",
-    "T.,,..*..==..*..,,.T",
-    "TT.......==.......TT",
-    "TTT......==......TTT",
-    "TTTTTTTTT<<TTTTTTTTT"] },
-  { nom: "Le lac aux Brumes", panneau: "Lac aux Brumes. Au nord : le cercle de pierres.", grille: [
-    "TTTTTTTTT>>TTTTTTTTT",
-    "T#.......==.......#T",
-    "T..,,....==....,,..T",
-    "T.,,,::::==::::,,,.T",
-    "T::::~~~~bb~~~~::::T",
-    "T:~~~~~~~bb~~~~~~~:T",
-    "T~~~~~~~~bb~~~~~~~~T",
-    "T~~~~~~~~bb~~~~~~~~T",
-    "T~~~##~~~bb~~~~##~~T",
-    "T~~~~~~~~bb~~~~~~~~T",
-    "T:~~~~~~~bb~~~~~~~:T",
-    "T::~~~~~~bb~~~~~~::T",
-    "T.::~~~~~bb~~~~~::.T",
-    "T.,,:::::==:::::,,.T",
-    "T.,,,....==S....,,.T",
-    "T#.......==.......#T",
-    "T...*....==....*...T",
-    "T..#.....==.....#..T",
-    "T.,,,....==....,,,.T",
-    "TT,,,....==....,,,TT",
-    "TTT......==......TTT",
-    "TTTTTTTTT<<TTTTTTTTT"] },
-  { nom: "Le cercle de pierres", nuit: true, finale: true, panneau: "Le cercle de pierres. Ici se cachent les derniers cryptides.", grille: [
-    "TTTTTTTTTTTTTTTTTTTT",
-    "TTTTTTT,,,,,,TTTTTTT",
-    "TTTT,,,,....,,,,TTTT",
-    "TTT,,..o....o..,,TTT",
-    "TT,,.o........o.,,TT",
-    "TT,..............,TT",
-    "TT,.o....**....o.,TT",
-    "TT,......**......,TT",
-    "TT,.o..........o.,TT",
-    "TT,,..o......o..,,TT",
-    "TTT,,...o..o...,,TTT",
-    "TTTT,,...==...,,TTTT",
-    "TTTTT,...==...,TTTTT",
-    "TTTTTT..L==L..TTTTTT",
-    "TTTTTT...==...TTTTTT",
-    "TTTTTT,..==..,TTTTTT",
-    "TTTTTT,,.==.,,TTTTTT",
-    "TTTTTTT..==..TTTTTTT",
-    "TTTTTTT..==S.TTTTTTT",
-    "TTTTTTT..==..TTTTTTT",
-    "TTTTTTT..==..TTTTTTT",
-    "TTTTTTTTT<<TTTTTTTTT"] }
+     // E cathédrale  G sa porte  K cabane biscornue  k sa porte  M mesa  A montagne  c cactus  t tombe  u citrouille
+const CARTE = [
+  "AAAAAAAAAAAAAAAAAAAAAAMMMMMMMMMMMMMMMMMMMMMM",
+  "AAAAAnAAAAnTTnnnnn.T..:::MMM,,:#:#MMMM:::::M",
+  "AAnnnnn#nnnnTnnnnn....,::MMM::::::MMMM:::::M",
+  "Annnnnnnnnnnnn==..o...:c::c:::#:::MMMM,:c::M",
+  "Annnnnnnnnnnnn#====.o.::::,:::#c:========::M",
+  "Annn.,....~~~..,o.=...:::,::,:c::=:::::c:c:M",
+  "ATnn.,..~~~~~~~,..=.o.:::,:::::MM=:::::MMMMM",
+  "AnTn.T.~~~~~~~~~..=...::c,#:::#MM=:::::MMMMM",
+  "A..=.T.~~~~~~~~~,.=..#::fffffff:c=::::cMMMMM",
+  "A..=..#~~~~~~~~~..=,T##:f:RRR:f::=:::,:MMMMM",
+  "A..=...~~~~~~~,,..=S..c:f:HDH:f::=:::::c,:,M",
+  "A..====bb====..,,,=.,.::f:::::f::=::MMM#:::M",
+  "A...,,.~~...=,#T#.=.,.::fff:fff,:=S:MMMc#::M",
+  "A......~~,.,=.,...=...:::::=======::::::::,M",
+  "T..T.TT~~TTT=T,T..=.EEEEET.=..TT...,,T..,.*T",
+  "TT.,TT.~~.TT=,,TRR=REEEEE.R=RR.~.,.T.,,T.T.T",
+  "T,T....T~~.L=,T.HH=HEEEEE.H=HH.~.TT....T,,~T",
+  "TT.T,.T.~~..=TTf..=.EEEEE..=...~T...~~~T.~~T",
+  "TTTTTT..~~.T=T,.**=,EEGEE.,=**.~.*.*~~~~~~~T",
+  "T,TTTT.,~~T,=T.T.==L=====L==..T~,T,T~~~~~~~T",
+  "TTTT....~~.T=S=================b====bb~~,.~T",
+  "TT.TT.T.~~T.=.T..===========..T.S.,.~b~*..,T",
+  "T.TTT.T.~~.T=,...L...SP....L....,.T,~b,...,T",
+  "T,,T,.T.~~TT=L,.RRRR..=...RRRR.,,...~b..*..T",
+  "TTT..,T.~~.T=TT.HHDH..=...HDHHT*..,~Lb,.T.TT",
+  "TT,,T.T.~~,T=,TT..,.*.=.*..,...~T.,~~bTTT..T",
+  "Tfffffff~~,T=T.T**.,.T=TT.,.**T~~~~~~b~.T.,T",
+  "T......f~~.L=,TTTT,TT.=T,T..T,T~~~~~~b...T~T",
+  "T.t.Tt.f~~.T=.TTTT..,.=...T....~~..~~b.T,T~T",
+  "T......f~~.T=T.T,T.,..=ST.T.T,.~T....=.,TT~T",
+  "T.t..tL.~~L.=T.,...====....TT.T~.,,*T=L,.,,T",
+  "T.......BB===TTTT..=KKKKK...T,.....T,=*.,..T",
+  "T.t..tL.~~L.=T.,T.u=KKKKK*...,.,.T.TT=,..T.T",
+  "T......f~~,.=,TTT..=KKkKK....,...T.,.=,.,,.T",
+  "T.t..t.fT~~,=,T....====..u...,..T.T.~b~~..~T",
+  "T......f.~~,=L,T....u...u...T.,.,,,~~b~~.T~T",
+  "Tfffffff.~~T=TT..TT..*..........T,,~~b~~..~T",
+  "TT,,.,.,.~~.=.T.,.,TT...,T..,,T,.,*~~~~~...T",
+  "TTT,,,.T.~~.T.,..TT..TT,TTT,,,T.,,T~~~~...TT",
+  "TTTTTTTTT~~TTTTTTTTTTTTTTTTTTTTTTTTT~~TTTTTT"
 ];
-const FINALE = MAPS.findIndex(m => m.finale);
+const LARG = CARTE[0].length, HAUT = CARTE.length;
+// Les régions de l'île : la première qui contient la case gagne. Chaque créature a la sienne (HABITAT).
+const ZONES = {
+  cabane: { dans: (x, y) => x >= 15 && x <= 30 && y >= 27, nom: "Le bois Biscornu", panneau: "Le bois Biscornu. Dans la cabane de travers vit… Sporran !" },
+  foret: { dans: (x, y) => x <= 14 && y >= 14, nom: "La forêt Sombre", panneau: "La forêt Sombre : le pont couvert, puis le vieux cimetière." },
+  bayou: { dans: (x, y) => x >= 31 && y >= 14, nom: "Le bayou", panneau: "Le bayou : passerelles, cyprès et eaux boueuses." },
+  village: { dans: (x, y) => y >= 14, nom: "Le vieux village", panneau: "Le vieux village et sa cathédrale. Toutes les routes partent d'ici." },
+  lande: { dans: (x, y) => x <= 21, nom: "Les Hautes-Terres", panneau: "Les Hautes-Terres : la lande, le grand lac et les neiges du nord." },
+  desert: { dans: () => true, nom: "Le désert des Mesas", panneau: "Le désert des Mesas : cactus, rochers rouges et le vieux ranch." }
+};
+const zoneJ = (x, y) => Object.keys(ZONES).find(z => ZONES[z].dans(x, y));
+const HABITAT = { barghest: "foret", mothman: "foret", nessie: "lande", kraken: "lande", yeti: "lande", swamp: "bayou", faery: "bayou",
+  gargouille: "village", lutins: "village", chupacabra: "desert", thunderbird: "desert", jackalope: "desert", catsith: "cabane" };
 const DIRS = { haut: [0, -1], bas: [0, 1], gauche: [-1, 0], droite: [1, 0] };
 const DUREE_PAS = 190;   // ms pour avancer d'une case
 let JEU = null;
 
 // ---------- la grille ----------
-const tuileJ = (m, x, y) => (MAPS[m].grille[y] || "")[x] || "T";
-const libreJ = (m, x, y) => !!(TUILES[tuileJ(m, x, y)] || {}).libre;
-function trouverJ(m, ch) { const g = MAPS[m].grille; for (let y = 0; y < g.length; y++) { const x = g[y].indexOf(ch); if (x >= 0) return [x, y]; } return null; }
-function entreeJ(m, porte) {   // la case où l'on arrive : à côté de la sortie `porte`, ou le départ
-  const p = porte && trouverJ(m, porte); if (!p) return trouverJ(m, "P") || [1, 1];
-  for (const [dx, dy] of [[0, -1], [0, 1], [-1, 0], [1, 0]]) { const c = tuileJ(m, p[0] + dx, p[1] + dy); if (TUILES[c] && TUILES[c].libre && c !== "<" && c !== ">") return [p[0] + dx, p[1] + dy]; }
-  return p;
-}
-const accessiblesJ = {};
-function casesAccessibles(m) {   // toutes les cases où l'on peut aller à pied depuis l'entrée de la map
-  if (accessiblesJ[m]) return accessiblesJ[m];
-  const d = entreeJ(m, m ? "<" : null), vu = new Set([d + ""]), file = [d];
+const tuileJ = (x, y) => (CARTE[y] || "")[x] || "T";
+const libreJ = (x, y) => !!(TUILES[tuileJ(x, y)] || {}).libre;
+function trouverJ(ch) { for (let y = 0; y < HAUT; y++) { const x = CARTE[y].indexOf(ch); if (x >= 0) return [x, y]; } return null; }
+const DEPART = trouverJ("P");
+let accessiblesJ = null;
+function casesAccessibles() {   // toutes les cases où l'on peut aller à pied depuis le départ
+  if (accessiblesJ) return accessiblesJ;
+  const vu = new Set([DEPART + ""]), file = [DEPART];
   while (file.length) { const [x, y] = file.shift(); for (const [dx, dy] of Object.values(DIRS)) { const n = [x + dx, y + dy];
-    if (!vu.has(n + "") && libreJ(m, n[0], n[1])) { vu.add(n + ""); file.push(n); } } }
-  return accessiblesJ[m] = [...vu].map(s => s.split(",").map(Number));
+    if (!vu.has(n + "") && libreJ(n[0], n[1])) { vu.add(n + ""); file.push(n); } } }
+  return accessiblesJ = [...vu].map(s => s.split(",").map(Number));
 }
 
-// ---------- où se cache chaque créature (son habitat) ----------
-function autour(m, x, y, chars) { let n = 0; for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) if ((dx || dy) && chars.includes(tuileJ(m, x + dx, y + dy))) n++; return n; }
-function scoreJ(cle, m, x, y) {
-  const c = tuileJ(m, x, y), pres = s => autour(m, x, y, s) > 0;
+// ---------- où se cache chaque créature : dans sa région, au meilleur endroit ----------
+function autour(x, y, chars) { let n = 0; for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) if ((dx || dy) && chars.includes(tuileJ(x + dx, y + dy))) n++; return n; }
+function scoreJ(cle, x, y) {
+  const c = tuileJ(x, y), pres = s => autour(x, y, s) > 0;
   switch (cle) {
-    case "mothman": return pres("L") ? 3 : c === "=" ? 1 : 0;
-    case "nessie": case "kraken": return pres("~") ? 3 : 0;
-    case "swamp": return (pres("~") ? 2 : 0) + (c === "," ? 2 : 0);
-    case "thunderbird": return c === "." && autour(m, x, y, "T~#fRHDLSo") === 0 ? 2 : 0;
-    case "barghest": return (pres("T") ? 2 : 0) + (c === "," ? 1 : 0);
-    case "faery": return c === "*" ? 3 : pres("*") ? 1 : 0;
-    case "lutins": return c === "," ? 3 : 0;
-    case "jackalope": return c === "," ? 2 : c === "." ? 1 : 0;
-    case "yeti": return pres("#") ? 3 : c === ":" ? 1 : 0;
-    case "gargouille": return pres("oRH") ? 3 : 0;
-    case "chupacabra": return pres("HD") ? 3 : pres("f") ? 2 : 0;
+    case "mothman": return pres("L") ? 3 : pres("B") ? 2 : 1;
+    case "barghest": return pres("t") ? 3 : x <= 7 ? 2 : 1;
+    case "nessie": return pres("~") ? 3 : 1;
+    case "kraken": return (pres("~") ? 2 : 0) + (pres("#b") ? 1 : 0) || 1;
+    case "yeti": return c === "n" ? (pres("A") ? 3 : 2) : 1;
+    case "swamp": return (pres("~") ? 2 : 0) + (c === "," ? 1 : 0) || 1;
+    case "faery": return c === "*" ? 3 : pres("*") ? 2 : 1;
+    case "gargouille": return pres("EG") ? 3 : 1;
+    case "lutins": return "*,".includes(c) ? 3 : pres("RHD") ? 2 : 1;
+    case "chupacabra": return pres("f") ? 3 : 1;
+    case "thunderbird": return pres("M") ? 3 : 1;
+    case "jackalope": return (pres("c") ? 2 : 0) + (c === "," ? 1 : 0) || 1;
+    case "catsith": return pres("Kku") ? 3 : 1;
   }
-  return 0;
+  return 1;
 }
-function cachettesJ(cle, m, prises) {   // les meilleures cases de la map pour cette créature, loin du départ et des autres
-  const dep = [entreeJ(m, m ? "<" : null), trouverJ(m, ">")].filter(Boolean);
-  const ok = casesAccessibles(m).filter(([x, y]) => !"<>Pb".includes(tuileJ(m, x, y))
-    && dep.every(([a, b]) => Math.abs(a - x) + Math.abs(b - y) >= 5) && prises.every(([a, b]) => Math.max(Math.abs(a - x), Math.abs(b - y)) >= 3));
-  let best = 0; ok.forEach(([x, y]) => best = Math.max(best, scoreJ(cle, m, x, y)));
-  return { score: best, cases: ok.filter(([x, y]) => scoreJ(cle, m, x, y) === best) };
+function cachettesJ(cle, prises, loinDe) {   // les meilleures cases de sa région, loin du départ (ou du joueur) et des autres créatures
+  const z = HABITAT[cle] || "village", ok = casesAccessibles().filter(([x, y]) => zoneJ(x, y) === z && !"PbB".includes(tuileJ(x, y))
+    && Math.abs(loinDe[0] - x) + Math.abs(loinDe[1] - y) >= 5 && prises.every(([a, b]) => Math.max(Math.abs(a - x), Math.abs(b - y)) >= 3));
+  let best = 0; ok.forEach(([x, y]) => best = Math.max(best, scoreJ(cle, x, y)));
+  return ok.filter(([x, y]) => scoreJ(cle, x, y) === best);
 }
 const auHasardJ = l => l[Math.floor(Math.random() * l.length)];
-function placerJeu(p) {   // répartit les créatures de l'aventure dans les maps (la finale garde les plus difficiles)
-  const j = p.jeu, reste = p.liste.filter(k => !p.pris.includes(k) && !j.pos[k]);
-  if (!reste.length) return;
-  const prises = m => Object.values(j.pos).filter(q => q[0] === m).map(q => [q[1], q[2]]);
-  const dejaFinale = Object.values(j.pos).filter(q => q[0] === FINALE).length;
-  const nFinale = Math.max(0, (p.liste.length <= 4 ? 1 : 2) - dejaFinale);
-  const tri = reste.slice().sort((a, b) => (DIFF[TRAQUES[b].cle] || 2) - (DIFF[TRAQUES[a].cle] || 2));
-  const pourFinale = new Set(tri.slice(0, Math.min(nFinale, reste.length - (reste.length > 1 ? 1 : 0))));
-  reste.forEach(k => {
-    const cle = TRAQUES[k].cle, maps = pourFinale.has(k) ? [FINALE] : MAPS.map((_, i) => i).filter(i => i !== FINALE);
-    let choix = null;
-    maps.forEach(m => { const c = cachettesJ(cle, m, prises(m)); if (!c.cases.length) return;
-      const charge = prises(m).length, note = c.score * 10 - charge * 4 + Math.random();
-      if (!choix || note > choix.note) choix = { m, note, c }; });
-    if (choix) { const [x, y] = auHasardJ(choix.c.cases); j.pos[k] = [choix.m, x, y]; }
+function placerJeu(p) {   // chaque créature de l'aventure se cache dans sa région
+  const j = p.jeu, prises = () => Object.values(j.pos).map(q => [q[1], q[2]]);
+  p.liste.filter(k => !p.pris.includes(k) && !j.pos[k]).forEach(k => {
+    const l = cachettesJ(TRAQUES[k].cle, prises(), DEPART), c = l.length ? auHasardJ(l) : auHasardJ(casesAccessibles());
+    j.pos[k] = [0, c[0], c[1]];
   });
 }
-function cacherBoss(p) {
-  const pr = Object.entries(p.jeu.pos).filter(([k, q]) => q[0] === FINALE && !p.pris.includes(k)).map(([, q]) => [q[1], q[2]]);
-  const c = cachettesJ("gargouille", FINALE, pr.concat(JEU ? [[JEU.x, JEU.y]] : []));
-  const l = c.cases.length ? c.cases : casesAccessibles(FINALE);
-  p.jeu.boss = [FINALE].concat(auHasardJ(l));
+function cacherBoss(p) {   // Sporran rôde dans le bois Biscornu, autour de sa cabane
+  const l = cachettesJ("catsith", [], JEU ? [JEU.x, JEU.y] : DEPART);
+  p.jeu.boss = [0].concat(auHasardJ(l.length ? l : casesAccessibles().filter(([x, y]) => zoneJ(x, y) === "cabane")));
 }
-const resteAvantFinale = p => p.liste.some(k => !p.pris.includes(k) && p.jeu.pos[k] && p.jeu.pos[k][0] !== FINALE);
-function ciblesJ() {   // les créatures cachées dans la map où l'on est
+function ciblesJ() {   // les créatures encore cachées sur l'île
   const p = partie(); if (!p || !p.jeu) return [];
-  if (enBoss) return p.jeu.boss && p.jeu.boss[0] === JEU.m ? [{ k: "catsith", x: p.jeu.boss[1], y: p.jeu.boss[2] }] : [];
-  return p.liste.filter(k => !p.pris.includes(k) && p.jeu.pos[k] && p.jeu.pos[k][0] === JEU.m).map(k => ({ k, x: p.jeu.pos[k][1], y: p.jeu.pos[k][2] }));
+  if (enBoss) return p.jeu.boss ? [{ k: "catsith", x: p.jeu.boss[1], y: p.jeu.boss[2] }] : [];
+  return p.liste.filter(k => !p.pris.includes(k) && p.jeu.pos[k]).map(k => ({ k, x: p.jeu.pos[k][1], y: p.jeu.pos[k][2] }));
 }
 
 // ---------- ouverture, sauvegarde ----------
@@ -2071,27 +2014,27 @@ function ouvrirJeu() {
   changerAmbiance("chasse");
   let p = partie();
   if (!p) { p = { liste: [], pris: [], membres: {}, debut: Date.now() }; ecrire(CLES.partie, p); }
-  if (!p.jeu) { const d = entreeJ(0, null); p.jeu = { m: 0, x: d[0], y: d[1], dir: "haut", pos: {} }; }
+  if (p.jeu && p.jeu.v !== 2) delete p.jeu;   // une partie de l'ancien jeu (4 petites maps) : on repart du village, les créatures sauvées le restent
+  if (!p.jeu) p.jeu = { v: 2, m: 0, x: DEPART[0], y: DEPART[1], dir: "haut", pos: {} };
   placerJeu(p);
-  if (enBoss && !p.jeu.boss) { const d = entreeJ(FINALE, "<"); Object.assign(p.jeu, { m: FINALE, x: d[0], y: d[1], dir: "haut" }); }
+  JEU = { x: p.jeu.x, y: p.jeu.y, dir: p.jeu.dir || "bas", pas: null, tenu: null, revele: null, raf: 0, t: 0, dernierBip: 0, eloigne: null, zone: null };
+  if (enBoss && !p.jeu.boss) { cacherBoss(p); bossPhase = 0; }
   ecrire(CLES.partie, p);
-  JEU = { m: p.jeu.m, x: p.jeu.x, y: p.jeu.y, dir: p.jeu.dir || "bas", pas: null, tenu: null, revele: null, raf: 0, t: 0,
-    dernierBip: 0, eloigne: null };
-  if (enBoss && !p.jeu.boss) { cacherBoss(p); ecrire(CLES.partie, p); bossPhase = 0; }
   $("jeu").hidden = false; allumerJ(0);
   arriverJ(true);
   if (!JEU.raf) JEU.raf = requestAnimationFrame(boucleJeu);
 }
-function sauverJ() { majPartie(p => { if (p.jeu) Object.assign(p.jeu, { m: JEU.m, x: JEU.x, y: JEU.y, dir: JEU.dir }); }); }
+function sauverJ() { majPartie(p => { if (p.jeu) Object.assign(p.jeu, { x: JEU.x, y: JEU.y, dir: JEU.dir }); }); }
 function fermerJeu() {
   if (JEU) { cancelAnimationFrame(JEU.raf); JEU.raf = 0; JEU.tenu = null; sauverJ(); }
   $("jeu").hidden = true;
 }
-function arriverJ(debut) {   // on entre dans une map : son nom, et combien de cryptides s'y cachent
-  const n = ciblesJ().length, M = MAPS[JEU.m];
-  $("jeuLieu").textContent = M.nom;
-  const txt = enBoss ? (n ? "Sporran se cache quelque part par ici…" : "") : n ? n + (n > 1 ? " cryptides se cachent ici" : " cryptide se cache ici") : "Aucun cryptide ici. Cherche ailleurs !";
-  titreJ(M.nom, txt); if (!debut) sfx("page");
+function arriverJ(debut) {   // on entre dans une région : son nom, et combien de cryptides s'y cachent
+  const z = JEU.zone = zoneJ(JEU.x, JEU.y), Z = ZONES[z], n = ciblesJ().filter(q => zoneJ(q.x, q.y) === z).length;
+  $("jeuLieu").textContent = Z.nom;
+  let txt = n ? n + (n > 1 ? " cryptides se cachent ici" : " cryptide se cache ici") : "Aucun cryptide ici. Cherche ailleurs !";
+  if (enBoss) txt = z === "cabane" ? "Sporran rôde autour de sa cabane…" : "Sporran t'attend dans le bois Biscornu, au sud du village !";
+  titreJ(Z.nom, txt); if (!debut) sfx("page");
 }
 let minuterieTitre = 0;
 function titreJ(titre, sous) {
@@ -2107,23 +2050,13 @@ function dialogueJ(texte, duree) {
 // ---------- déplacement ----------
 function essayerPas(dir) {
   if (!JEU || JEU.pas || JEU.revele) return;
-  JEU.dir = dir; const [dx, dy] = DIRS[dir], x = JEU.x + dx, y = JEU.y + dy, c = tuileJ(JEU.m, x, y);
-  if (!libreJ(JEU.m, x, y)) { if (performance.now() - (JEU.tCogne || 0) > 350) { JEU.tCogne = performance.now(); sfx("clic"); } return; }
-  if (c === ">" && JEU.m + 1 === FINALE && !enBoss && resteAvantFinale(partie())) {
-    if (performance.now() - (JEU.tCogne || 0) > 1500) { JEU.tCogne = performance.now(); sfx("rate");
-      dialogueJ("Un sceau magique ferme le passage. Sauve d'abord tous les cryptides cachés avant le cercle de pierres !"); }
-    return;
-  }
+  JEU.dir = dir; const [dx, dy] = DIRS[dir], x = JEU.x + dx, y = JEU.y + dy;
+  if (!libreJ(x, y)) { if (performance.now() - (JEU.tCogne || 0) > 350) { JEU.tCogne = performance.now(); sfx("clic"); } return; }
   JEU.pas = { de: [JEU.x, JEU.y], t0: performance.now() }; JEU.x = x; JEU.y = y;
 }
 function finPas() {
-  JEU.pas = null; const c = tuileJ(JEU.m, JEU.x, JEU.y);
-  if (c === ">" || c === "<") {
-    const m = JEU.m + (c === ">" ? 1 : -1); if (!MAPS[m]) return;
-    const d = entreeJ(m, c === ">" ? "<" : ">"); JEU.m = m; JEU.x = d[0]; JEU.y = d[1]; JEU.dir = c === ">" ? "haut" : "bas"; JEU.eloigne = null;
-    sauverJ(); arriverJ(); return;
-  }
-  sauverJ();
+  JEU.pas = null; sauverJ();
+  if (zoneJ(JEU.x, JEU.y) !== JEU.zone) arriverJ();
   // tout près d'une cachette : la créature surgit (« ! » au-dessus de sa cachette) ; A ouvre l'œil magique pour la capturer
   const q = ciblesJ().find(q => Math.abs(q.x - JEU.x) + Math.abs(q.y - JEU.y) <= 1);
   if (JEU.eloigne && Math.abs(JEU.eloigne[0] - JEU.x) + Math.abs(JEU.eloigne[1] - JEU.y) >= 3) JEU.eloigne = null;
@@ -2134,14 +2067,14 @@ function boutonA() {
   if (!JEU) return;
   if (JEU.revele) return trouveJ();
   const [dx, dy] = DIRS[JEU.dir];
-  if (tuileJ(JEU.m, JEU.x + dx, JEU.y + dy) === "S") { sfx("page"); return dialogueJ(texteSigne(), 6000); }
+  if (tuileJ(JEU.x + dx, JEU.y + dy) === "S") { sfx("page"); return dialogueJ(texteSigne(JEU.x + dx, JEU.y + dy), 6000); }
   sfx("clic"); dialogueJ(["Rien par ici…", "Le détecteur t'aide : plus il s'allume, plus un cryptide est proche !"][Math.random() < .5 ? 0 : 1], 2200);
 }
-function texteSigne() {
-  const p = partie(), l = enBoss ? [] : ciblesJ().map(q => TRAQUES[q.k].indice);
-  const txt = MAPS[JEU.m].panneau;
-  if (enBoss) return txt + " Sporran rôde autour des pierres levées…";
-  return l.length ? txt + " Indices : " + l.map(s => "« " + s + " »").join(", ") + "." : txt + " Aucun cryptide ne se cache ici.";
+function texteSigne(x, y) {   // le panneau d'une région donne les indices des créatures qui s'y cachent
+  const z = zoneJ(x, y), txt = ZONES[z].panneau;
+  if (enBoss) return txt + (z === "cabane" ? " Sporran rôde tout près…" : " Sporran t'attend dans le bois Biscornu !");
+  const l = ciblesJ().filter(q => zoneJ(q.x, q.y) === z).map(q => TRAQUES[q.k].indice);
+  return l.length ? txt + " Indices : " + l.map(s => "« " + s + " »").join(", ") + "." : txt + " Aucun cryptide ne se cache par ici.";
 }
 function boutonB() {
   if (!JEU) return;
@@ -2170,27 +2103,45 @@ function fuiteBoss() {   // comme sur la carte GPS : Sporran file ailleurs deux 
 
 import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
 // ---------- rendu en 3D isométrique (three.js) : formes rondes et douces, couleurs de forêt de pins au crépuscule ----------
-// Chaque map devient un petit diorama : les cases de la grille donnent le sol, et chaque lettre pose son objet (arbre, maison…).
-const COUL = { herbe: 0x86b26a, herbe2: 0x79a85f, hautes: 0x4e8b55, chemin: 0xe2b77c, sable: 0xf0d6a0, terre: 0x8a5a3b, fond: 0x2e6470, eau: 0x5cc2c9,
-  pin: 0x2c6450, pin2: 0x3b7d5c, feuillu: 0x7fb85c, feuillu2: 0x9cc96b, tronc: 0x7a5134, rocher: 0xa3a1ac, pierre: 0x8e85ad, rune: 0x5ff0d0,
+// L'île devient un grand diorama : les cases de la grille donnent le sol, et chaque lettre pose son objet (arbre, maison…),
+// dans le style de sa région. La lumière change en douceur d'une région à l'autre (AMB).
+const COUL = { terre: 0x8a5a3b, tronc: 0x7a5134, rocher: 0xa3a1ac, pierre: 0x8e85ad, rune: 0x5ff0d0,
   mur: 0xf3e2c4, toits: [0xc9573f, 0x6b569b, 0x3f8790, 0xd99a3c], porte: 0x6e4630, vitre: 0xffd36e, bois: 0xc98d4b, lampe: 0x3d3a4a, lumiere: 0xffe08a,
-  capuche: 0x6f52a8, capuche2: 0x58408a, peau: 0xf5c9a2, yeux: 0x2a1d24, botte: 0x4a3326, cristal: 0x5ff0d0, scelle: 0xff6b6b,
+  capuche: 0x6f52a8, capuche2: 0x58408a, peau: 0xf5c9a2, yeux: 0x2a1d24, botte: 0x4a3326, sable: 0xeab47a, sable2: 0xe3a86c, neige: 0xf3f6fb, neige2: 0xe4ecf6,
   fleurs: [0xff8fa3, 0xfff1d6, 0xffc94d, 0xb48ee8] };
+const ZC = {   // les couleurs de chaque région : sol (2 tons), hautes herbes, chemin, eau, fond de l'eau
+  lande: { sol: [0x93a862, 0x87a05a], herbes: 0x9a6fb0, chemin: 0xc8b28a, eau: 0x5cb8d0, fond: 0x2e5f78 },
+  desert: { sol: [COUL.sable, COUL.sable2], herbes: 0xb8a46a, chemin: 0xd49a62, eau: 0x5cc2c9, fond: 0x2e6470 },
+  village: { sol: [0x86b26a, 0x79a85f], herbes: 0x4e8b55, chemin: 0xe2b77c, eau: 0x5cc2c9, fond: 0x2e6470 },
+  foret: { sol: [0x3e6b52, 0x46745a], herbes: 0x2b5a48, chemin: 0x9a7e62, eau: 0x3f6f9e, fond: 0x1e3550 },
+  bayou: { sol: [0x76904c, 0x6c8644], herbes: 0x9aa552, chemin: 0xa58a62, eau: 0x3f6b5c, fond: 0x26362a },
+  cabane: { sol: [0x7f9e58, 0x8aa862], herbes: 0x5f8a4a, chemin: 0xc89a6a, eau: 0x5cc2c9, fond: 0x2e6470 }
+};
+const AMB = {   // lumière de chaque région : ciel, sol, intensité ; soleil ; couleur du fond ; nuit (0 = plein jour, 1 = nuit noire)
+  lande: { ciel: [0xdfeaf5, 0x6a6a5a, 1.5], soleil: [0xf4f1ff, 1.9], fond: 0xbcd3dc, nuit: .1 },
+  desert: { ciel: [0xffe9c8, 0xa0603a, 1.7], soleil: [0xffe0a8, 2.5], fond: 0xf3c98e, nuit: 0 },
+  village: { ciel: [0xd8ecff, 0x7a5a40, 1.6], soleil: [0xfff0d6, 2.2], fond: 0xf3d9ae, nuit: 0 },
+  foret: { ciel: [0x7f74c8, 0x241c40, .85], soleil: [0x9fb0ff, .5], fond: 0x241d40, nuit: 1 },
+  bayou: { ciel: [0xcfe0a8, 0x45532c, 1.25], soleil: [0xffdf9a, 1.5], fond: 0x8a9a6a, nuit: .45 },
+  cabane: { ciel: [0xe6a8c4, 0x35284a, 1.05], soleil: [0xff9a6a, 1.25], fond: 0x5a3f6a, nuit: .7 }
+};
 const M3 = {};   // matériaux partagés, mats et doux (pas de reflets)
 const mat3 = (c, e) => M3[c + "/" + (e || 0)] || (M3[c + "/" + (e || 0)] = new THREE.MeshLambertMaterial({ color: c, emissive: e ? c : 0x000000, emissiveIntensity: e || 0 }));
-const hautSol = c => c === "~" || c === "b" ? -.34 : 0;
-let R3 = null;   // le moteur du jeu : rendu, scène, caméra, lumières, héros, et un diorama par map
+const hautSol = c => "~bB".includes(c) ? -.34 : 0;
+let R3 = null;   // le moteur du jeu : rendu, scène, caméra, lumières, héros, et le diorama de l'île
 function moteurJeu() {
   if (R3) return R3;
-  const rendu = new THREE.WebGLRenderer({ canvas: $("jeuCanvas"), antialias: true, alpha: true });
+  const rendu = new THREE.WebGLRenderer({ canvas: $("jeuCanvas"), antialias: true });
   rendu.setPixelRatio(Math.min(devicePixelRatio || 1, 2)); rendu.shadowMap.enabled = true; rendu.shadowMap.type = THREE.PCFSoftShadowMap;
   const scene = new THREE.Scene(), camera = new THREE.OrthographicCamera(-5, 5, 5, -5, .1, 100);
   const ciel = new THREE.HemisphereLight(0xd8ecff, 0x7a5a40, 1.6), soleil = new THREE.DirectionalLight(0xfff0d6, 2.2);
   soleil.castShadow = true; soleil.shadow.mapSize.set(1024, 1024); Object.assign(soleil.shadow.camera, { left: -9, right: 9, top: 9, bottom: -9, near: .5, far: 40 });
   soleil.shadow.bias = -.002; scene.add(ciel, soleil, soleil.target);
+  const lampes = [0, 1, 2, 3].map(() => { const l = new THREE.PointLight(0xffd27a, 0, 5, 1.4); scene.add(l); return l; });   // 4 lumières prêtées aux lampadaires les plus proches
   const heros = creerHeros(); scene.add(heros);
   const signe = new THREE.Sprite(new THREE.SpriteMaterial({ map: texteSprite("!"), depthTest: false })); signe.scale.set(.7, .7, 1); signe.visible = false; signe.renderOrder = 9; scene.add(signe);
-  return R3 = { rendu, scene, camera, ciel, soleil, heros, signe, maps: {}, actuelle: -1 };
+  const fond = new THREE.Color(AMB.village.fond);
+  return R3 = { rendu, scene, camera, ciel, soleil, lampes, heros, signe, ile: null, fond, nuit: 0 };
 }
 function texteSprite(ch) {
   const c = document.createElement("canvas"); c.width = c.height = 128; const g = c.getContext("2d");
@@ -2217,16 +2168,31 @@ function prisme(w, d, h) {   // un toit à deux pentes, faîtage le long de x
   const geo = new THREE.BufferGeometry(); geo.setAttribute("position", new THREE.Float32BufferAttribute(p, 3));
   geo.setIndex([0, 3, 2, 0, 2, 1, 4, 5, 2, 4, 2, 3, 0, 4, 3, 1, 2, 5, 0, 1, 5, 0, 5, 4]); geo.computeVertexNormals(); return geo;
 }
-function dioramaJ(m) {   // construit la map m en 3D, une seule fois
-  const R = moteurJeu(); if (R.maps[m]) return R.maps[m];
-  const G = MAPS[m].grille, H = G.length, W = G[0].length, groupe = new THREE.Group(), anim = [], rnd = hasard(311 + m * 53), nuit = !!MAPS[m].nuit;
+function blocsJ(lettres) {   // les groupes de cases voisines faits de ces lettres (une maison, la cathédrale, une mesa…)
+  const vu = new Set(), blocs = [];
+  for (let y = 0; y < HAUT; y++) for (let x = 0; x < LARG; x++) {
+    if (!lettres.includes(CARTE[y][x]) || vu.has(x + "," + y)) continue;
+    const cases = [], file = [[x, y]]; vu.add(x + "," + y);
+    while (file.length) { const [a, b] = file.pop(); cases.push([a, b]); [[1, 0], [-1, 0], [0, 1], [0, -1]].forEach(([dx, dy]) => { const k = (a + dx) + "," + (b + dy);
+      if (!vu.has(k) && lettres.includes(tuileJ(a + dx, b + dy))) { vu.add(k); file.push([a + dx, b + dy]); } }); }
+    const xs = cases.map(c => c[0]), ys = cases.map(c => c[1]);
+    blocs.push({ cases, x0: Math.min(...xs), x1: Math.max(...xs), y0: Math.min(...ys), y1: Math.max(...ys) });
+  }
+  return blocs;
+}
+function dioramaJ() {   // construit l'île en 3D, une seule fois
+  const R = moteurJeu(); if (R.ile) return R.ile;
+  const G = CARTE, H = HAUT, W = LARG, groupe = new THREE.Group(), anim = [], lampes = [], rnd = hasard(311);
   const ajoute = (o, x, y, z, ombre) => { o.position.set(x, y, z); if (ombre !== false) o.castShadow = true; groupe.add(o); return o; };
+  const boite = (w, h, d, c, x, y, z, e) => ajoute(new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat3(c, e)), x, y, z);
+  const neigeux = (x, y) => G[y][x] === "n" || autour(x, y, "n") >= 3;
   // le sol : une seule géométrie (dessus de chaque case, et flancs de terre là où le sol descend)
   const pos = [], col = [], c3 = new THREE.Color();
   const quad = (a, b, c, d, hex) => { c3.setHex(hex); for (const p of [a, b, c, a, c, d]) { pos.push(...p); col.push(c3.r, c3.g, c3.b); } };
   for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
-    const ch = G[y][x], h = hautSol(ch), x0 = x - .5, x1 = x + .5, z0 = y - .5, z1 = y + .5;
-    const dessus = "=<>".includes(ch) ? COUL.chemin : ch === ":" ? COUL.sable : h < 0 ? COUL.fond : rnd() < .5 ? COUL.herbe : COUL.herbe2;
+    const ch = G[y][x], h = hautSol(ch), Z = ZC[zoneJ(x, y)], x0 = x - .5, x1 = x + .5, z0 = y - .5, z1 = y + .5, r = rnd() < .5;
+    const dessus = h < 0 ? Z.fond : ch === "=" ? Z.chemin : ch === ":" ? (r ? COUL.sable : COUL.sable2)
+      : neigeux(x, y) ? (r ? COUL.neige : COUL.neige2) : Z.sol[r ? 0 : 1];
     quad([x0, h, z0], [x0, h, z1], [x1, h, z1], [x1, h, z0], dessus);
     [[0, -1, [x0, z0], [x1, z0]], [0, 1, [x1, z1], [x0, z1]], [-1, 0, [x0, z1], [x0, z0]], [1, 0, [x1, z0], [x1, z1]]].forEach(([dx, dy, a, b]) => {
       const n = G[y + dy] && G[y + dy][x + dx], nh = n === undefined ? -1.1 : hautSol(n);
@@ -2235,131 +2201,221 @@ function dioramaJ(m) {   // construit la map m en 3D, une seule fois
     });
   }
   const sol = new THREE.BufferGeometry(); sol.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3)); sol.setAttribute("color", new THREE.Float32BufferAttribute(col, 3)); sol.computeVertexNormals();
-  const msol = new THREE.Mesh(sol, new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide })); msol.receiveShadow = true; groupe.add(msol);
-  // l'eau : une surface claire, un peu transparente, au-dessus du fond
-  const eauPos = []; for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if ("~b".includes(G[y][x])) eauPos.push([x, y]);
-  if (eauPos.length) {
-    const ge = new THREE.BufferGeometry(), p = []; eauPos.forEach(([x, y]) => p.push(x - .5, -.1, y - .5, x - .5, -.1, y + .5, x + .5, -.1, y + .5, x - .5, -.1, y - .5, x + .5, -.1, y + .5, x + .5, -.1, y - .5));
-    ge.setAttribute("position", new THREE.Float32BufferAttribute(p, 3)); ge.computeVertexNormals();
-    const me = new THREE.MeshLambertMaterial({ color: COUL.eau, transparent: true, opacity: .78, side: THREE.DoubleSide, emissive: COUL.eau, emissiveIntensity: .12 });
-    const eau = new THREE.Mesh(ge, me); eau.receiveShadow = true; eau.userData.vivant = true; groupe.add(eau); anim.push(t => { me.emissiveIntensity = .1 + .06 * Math.sin(t / 700); });
+  const msol = new THREE.Mesh(sol, new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide })); msol.receiveShadow = true; msol.userData.vivant = true; groupe.add(msol);
+  // l'eau : une surface un peu transparente, bleue au lac, sombre dans la forêt, verte et boueuse au bayou
+  const ep = [], ec = [];
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if ("~bB".includes(G[y][x])) {
+    c3.setHex(ZC[zoneJ(x, y)].eau); ep.push(x - .5, -.1, y - .5, x - .5, -.1, y + .5, x + .5, -.1, y + .5, x - .5, -.1, y - .5, x + .5, -.1, y + .5, x + .5, -.1, y - .5);
+    for (let i = 0; i < 6; i++) ec.push(c3.r, c3.g, c3.b);
   }
-  // herbes hautes et fleurs : des milliers de petits brins, dessinés en une fois
+  if (ep.length) {
+    const ge = new THREE.BufferGeometry(); ge.setAttribute("position", new THREE.Float32BufferAttribute(ep, 3)); ge.setAttribute("color", new THREE.Float32BufferAttribute(ec, 3)); ge.computeVertexNormals();
+    const me = new THREE.MeshLambertMaterial({ vertexColors: true, transparent: true, opacity: .8, side: THREE.DoubleSide, emissive: 0x5cc2c9, emissiveIntensity: .08 });
+    const eau = new THREE.Mesh(ge, me); eau.receiveShadow = true; eau.userData.vivant = true; groupe.add(eau); anim.push(t => { me.emissiveIntensity = .06 + .05 * Math.sin(t / 700); });
+  }
+  // hautes herbes (bruyère violette, fougères, roseaux) et fleurs : des milliers de petits brins, dessinés en une fois
   const brins = [], fleurs = [];
   for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
-    if (G[y][x] === ",") for (let i = 0; i < 9; i++) brins.push([x + (rnd() - .5) * .85, y + (rnd() - .5) * .85, .7 + rnd() * .6]);
+    if (G[y][x] === ",") { const c = ZC[zoneJ(x, y)].herbes; for (let i = 0; i < 9; i++) brins.push([x + (rnd() - .5) * .85, y + (rnd() - .5) * .85, .7 + rnd() * .6, c]); }
     if (G[y][x] === "*") for (let i = 0; i < 7; i++) fleurs.push([x + (rnd() - .5) * .8, y + (rnd() - .5) * .8, COUL.fleurs[(rnd() * 4) | 0]]);
   }
   const mat4 = new THREE.Matrix4(), q = new THREE.Quaternion(), un = new THREE.Vector3(1, 1, 1);
-  if (brins.length) { const ib = new THREE.InstancedMesh(new THREE.ConeGeometry(.07, .42, 5).translate(0, .21, 0), mat3(COUL.hautes), brins.length);
-    brins.forEach(([x, z, s], i) => { q.setFromAxisAngle(new THREE.Vector3(rnd() - .5, 0, rnd() - .5).normalize(), (rnd() - .5) * .5); ib.setMatrixAt(i, mat4.compose(new THREE.Vector3(x, 0, z), q, new THREE.Vector3(s, s, s))); });
+  if (brins.length) { const ib = new THREE.InstancedMesh(new THREE.ConeGeometry(.07, .42, 5).translate(0, .21, 0), new THREE.MeshLambertMaterial(), brins.length);
+    brins.forEach(([x, z, s, c], i) => { q.setFromAxisAngle(new THREE.Vector3(rnd() - .5, 0, rnd() - .5).normalize(), (rnd() - .5) * .5); ib.setMatrixAt(i, mat4.compose(new THREE.Vector3(x, 0, z), q, new THREE.Vector3(s, s, s))); ib.setColorAt(i, c3.setHex(c)); });
     ib.castShadow = true; groupe.add(ib); }
   if (fleurs.length) { const ifl = new THREE.InstancedMesh(new THREE.SphereGeometry(.065, 8, 6), new THREE.MeshLambertMaterial(), fleurs.length);
     fleurs.forEach(([x, z, c], i) => { ifl.setMatrixAt(i, mat4.compose(new THREE.Vector3(x, .07, z), q.identity(), un)); ifl.setColorAt(i, c3.setHex(c)); }); groupe.add(ifl); }
-  // maisons : chaque bloc de toits et de murs devient une maison
-  const vu = new Set(); let nMaison = 0;
-  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
-    if (!"RHD".includes(G[y][x]) || vu.has(x + "," + y)) continue;
-    const bloc = [], file = [[x, y]]; vu.add(x + "," + y);
-    while (file.length) { const [a, b] = file.pop(); bloc.push([a, b]); [[1, 0], [-1, 0], [0, 1], [0, -1]].forEach(([dx, dy]) => { const k = (a + dx) + "," + (b + dy);
-      if (!vu.has(k) && "RHD".includes((G[b + dy] || "")[a + dx] || "")) { vu.add(k); file.push([a + dx, b + dy]); } }); }
-    const xs = bloc.map(c => c[0]), ys = bloc.map(c => c[1]), x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys), y1 = Math.max(...ys);
-    const w = x1 - x0 + 1 - .1, d = y1 - y0 + 1 - .1, cx = (x0 + x1) / 2, cz = (y0 + y1) / 2, hm = 1.05, toit = COUL.toits[nMaison++ % 4];
-    ajoute(new THREE.Mesh(new THREE.BoxGeometry(w, hm, d), mat3(COUL.mur)), cx, hm / 2, cz).receiveShadow = true;
+  // maisons du village et du ranch : chaque bloc de toits et de murs devient une maison
+  blocsJ("RHD").forEach(({ cases, x0, x1, y0, y1 }, i) => {
+    const w = x1 - x0 + 1 - .1, d = y1 - y0 + 1 - .1, cx = (x0 + x1) / 2, cz = (y0 + y1) / 2, hm = 1.05, toit = COUL.toits[i % 4];
+    boite(w, hm, d, COUL.mur, cx, hm / 2, cz).receiveShadow = true;
     ajoute(new THREE.Mesh(prisme(w + .3, d + .3, .75), mat3(toit)), cx, hm, cz);
-    ajoute(new THREE.Mesh(new THREE.BoxGeometry(.22, .5, .22), mat3(COUL.terre)), cx + w * .3, hm + .5, cz - d * .15);
-    bloc.filter(([a, b]) => b === y1).forEach(([a]) => {
+    boite(.22, .5, .22, COUL.terre, cx + w * .3, hm + .5, cz - d * .15);
+    cases.filter(([, b]) => b === y1).forEach(([a]) => {
       if (G[y1][a] === "D") ajoute(new THREE.Mesh(new THREE.BoxGeometry(.36, .62, .06), mat3(COUL.porte)), a, .31, cz + d / 2 + .02, false);
-      else ajoute(new THREE.Mesh(new THREE.BoxGeometry(.3, .28, .05), mat3(COUL.vitre, nuit ? 1.4 : .5)), a, .62, cz + d / 2 + .02, false);
+      else ajoute(new THREE.Mesh(new THREE.BoxGeometry(.3, .28, .05), mat3(COUL.vitre, .8)), a, .62, cz + d / 2 + .02, false);
     });
-  }
-  // les autres objets, case par case
-  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
-    const ch = G[y][x], jx = (rnd() - .5) * .16, jz = (rnd() - .5) * .16, s = .85 + rnd() * .3;
-    if (ch === "T") {
-      const arbre = new THREE.Group(); arbre.add(Object.assign(new THREE.Mesh(new THREE.CylinderGeometry(.07, .1, .45, 7), mat3(COUL.tronc)), { castShadow: true }));
-      arbre.children[0].position.y = .22;
-      if (rnd() < .65) [[.46, .55, .5], [.36, .5, .8], [.24, .42, 1.08]].forEach(([r, hh, yy]) => { const c = new THREE.Mesh(new THREE.ConeGeometry(r, hh, 9), mat3(rnd() < .5 ? COUL.pin : COUL.pin2)); c.position.y = yy; c.castShadow = true; arbre.add(c); });
-      else [[.42, 0, .72, 0], [.3, -.16, .98, .08], [.26, .18, .92, -.06]].forEach(([r, ox, yy, oz]) => { const b = new THREE.Mesh(new THREE.SphereGeometry(r, 14, 10), mat3(rnd() < .5 ? COUL.feuillu : COUL.feuillu2)); b.position.set(ox, yy, oz); b.castShadow = true; arbre.add(b); });
-      arbre.scale.setScalar(s); arbre.rotation.y = rnd() * 6; ajoute(arbre, x + jx, 0, y + jz, false);
+  });
+  // la cathédrale : une nef de pierre, une tour-clocher en façade avec sa flèche, une rosace et des vitraux allumés, des gargouilles aux coins
+  blocsJ("EG").forEach(({ x0, x1, y0, y1 }) => {
+    const cx = (x0 + x1) / 2, w = x1 - x0 + 1, d = y1 - y0 + 1, pierre = 0xcfc4b2, ardoise = 0x4f5a78, nef = d - 1.3, nz = y0 - .5 + nef / 2;
+    boite(w * .62, 1.7, nef, pierre, cx, .85, nz).receiveShadow = true;
+    ajoute(new THREE.Mesh(prisme(nef + .2, w * .62 + .3, 1.1), mat3(ardoise)), cx, 1.7, nz).rotation.y = Math.PI / 2;
+    [-1, 1].forEach(s => { boite(w * .2, 1, nef - .4, 0xbdb2a0, cx + s * w * .41, .5, nz);
+      for (let k = 0; k < 3; k++) boite(.05, .55, .24, [0xff8fa3, 0x9ad8ff, 0xffd36e][k], cx + s * (w * .31 + .02), 1.25, y0 + .3 + k * (nef - .6) / 2, .9); });
+    const tz = y1 - .45; boite(1.7, 3.1, 1.5, pierre, cx, 1.55, tz).receiveShadow = true;
+    const fleche = ajoute(new THREE.Mesh(new THREE.ConeGeometry(1.15, 2.1, 4), mat3(ardoise)), cx, 3.1 + 1.05, tz); fleche.rotation.y = Math.PI / 4;
+    ajoute(new THREE.Mesh(new THREE.CylinderGeometry(.34, .34, .06, 16), mat3(0xb48ee8, 1)), cx, 2.25, tz + .76, false).rotation.x = Math.PI / 2;
+    boite(.56, .9, .06, COUL.porte, cx, .45, tz + .76);
+    ajoute(new THREE.Mesh(new THREE.CylinderGeometry(.28, .28, .06, 12, 1, false, 0, Math.PI), mat3(COUL.porte)), cx, .9, tz + .76, false).rotation.set(Math.PI / 2, 0, Math.PI / 2);
+    [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(([sx, sz]) => { const g = ajoute(new THREE.Mesh(new THREE.SphereGeometry(.15, 8, 6), mat3(0x7a7488)), cx + sx * .78, 3.15, tz + sz * .68); g.scale.set(1, .8, 1.4); });
+  });
+  // la cabane biscornue : tout y est de travers (murs penchés, toit trop grand, petite tour en chapeau pointu, cheminée tordue)
+  blocsJ("Kk").forEach(({ x0, x1, y0, y1 }) => {
+    const cx = (x0 + x1) / 2, cz = (y0 + y1) / 2, w = x1 - x0 + 1, d = y1 - y0 + 1, cab = new THREE.Group(), bois = 0x8c6a4a, toit = 0x5b3f78, face = (d - .4) / 2 + .03;
+    const m = (geo, c, x, y, z, e) => { const o = new THREE.Mesh(geo, mat3(c, e)); o.position.set(x, y, z); o.castShadow = true; cab.add(o); return o; };
+    m(new THREE.BoxGeometry(w - .5, 1.25, d - .4), bois, 0, .62, 0).rotation.z = .05;
+    for (let k = 0; k < 4; k++) m(new THREE.BoxGeometry(w - .45, .05, .02), 0x6a4e36, 0, .2 + k * .3, face - .02).rotation.z = .05;
+    const t1 = m(prisme(w + .2, d + .5, 1), toit, -.1, 1.22, 0); t1.rotation.z = -.07; t1.rotation.y = .04;
+    const etage = m(new THREE.BoxGeometry(1.4, .95, 1.2), 0x7b5a40, .85, 2.05, -.1); etage.rotation.set(0, .28, -.1);
+    m(new THREE.CylinderGeometry(.2, .2, .05, 14), COUL.vitre, .95, 2.1, .5, 1.2).rotation.x = Math.PI / 2;
+    const chapeau = m(new THREE.ConeGeometry(1, 1.5, 7), 0x3d2a52, .95, 3.2, -.1); chapeau.rotation.z = .22;
+    m(new THREE.ConeGeometry(.3, .6, 6), 0x3d2a52, 1.38, 3.95, -.1).rotation.z = .9;
+    const ch1 = m(new THREE.BoxGeometry(.32, 1.1, .32), 0x9a5a4a, -1.5, 1.9, -.4); ch1.rotation.z = .18;
+    m(new THREE.BoxGeometry(.3, .45, .3), 0x9a5a4a, -1.62, 2.6, -.4).rotation.z = -.3;
+    m(new THREE.BoxGeometry(.52, .82, .06), COUL.porte, G[y1].indexOf("k") - cx, .41, face);
+    [-1.45, 1.25].forEach(x => m(new THREE.BoxGeometry(.42, .36, .05), COUL.vitre, x, .78, face, 1).rotation.z = .12);
+    [-.5, .55].forEach(x => m(new THREE.BoxGeometry(.08, .9, .08), 0x6a4e36, G[y1].indexOf("k") - cx + x, .45, d / 2 + .1));
+    m(new THREE.BoxGeometry(1.4, .06, .55), toit, G[y1].indexOf("k") - cx, .95, d / 2 - .05).rotation.x = .3;
+    cab.rotation.y = -.05; ajoute(cab, cx, 0, cz, false);
+  });
+  // le pont couvert de la forêt, rouge comme ceux de l'Oregon : toit et murs deviennent transparents quand on passe dessous
+  const ponts = [];
+  blocsJ("B").forEach(({ x0, x1, y0 }) => {
+    const L = x1 - x0 + 1 + .5, cx = (x0 + x1) / 2, z = y0, mm = new THREE.MeshLambertMaterial({ color: 0xa8423a, transparent: true }), mt = new THREE.MeshLambertMaterial({ color: 0x5a3a2e, transparent: true });
+    boite(L, .1, 1.05, COUL.bois, cx, -.02, z).receiveShadow = true;
+    [-.5, .5].forEach(s => { const mur = ajoute(new THREE.Mesh(new THREE.BoxGeometry(L, .82, .07), mm), cx, .4, z + s); mur.userData.vivant = true; });
+    const t = ajoute(new THREE.Mesh(prisme(L + .3, 1.35, .55), mt), cx, .81, z); t.userData.vivant = true;
+    ponts.push({ x0, x1, z, mats: [mm, mt] });
+  });
+  anim.push(() => ponts.forEach(p => { const dans = JEU && JEU.x >= p.x0 - 1 && JEU.x <= p.x1 + 1 && Math.abs(JEU.y - p.z) <= 1, o = dans ? .22 : 1;
+    p.mats.forEach(m => { m.opacity += (o - m.opacity) * .2; m.depthWrite = m.opacity > .9; }); }));
+  // les mesas du désert : de hautes tables de roche rouge, en couches
+  blocsJ("M").forEach(({ cases }) => { const h = 1.6 + rnd() * 1.2;
+    cases.forEach(([x, y]) => { [0xb5532f, 0xd47a45, 0xc4643a].forEach((c, k) => boite(1, h / 3, 1, c, x, h / 6 + k * h / 3, y).receiveShadow = true); boite(1, .06, 1, 0xe8a066, x, h + .03, y); });
+  });
+  // les autres objets, case par case, dans le style de leur région
+  const arbre = (x, y, z, s) => {
+    const a = new THREE.Group(), o = (geo, c, px, py, pz) => { const m = new THREE.Mesh(geo, mat3(c)); m.position.set(px, py, pz); m.castShadow = true; a.add(m); return m; };
+    const pin = (c1, c2, cap) => { o(new THREE.CylinderGeometry(.07, .1, .45, 6), COUL.tronc, 0, .22, 0);
+      [[.46, .55, .5], [.36, .5, .8], [.24, .42, 1.08]].forEach(([r, hh, yy], k) => o(new THREE.ConeGeometry(r, hh, 8), cap && k === 2 ? COUL.neige : rnd() < .5 ? c1 : c2, 0, yy, 0)); };
+    const rond = cs => { o(new THREE.CylinderGeometry(.07, .1, .45, 6), COUL.tronc, 0, .22, 0);
+      [[.42, 0, .72, 0], [.3, -.16, .98, .08], [.26, .18, .92, -.06]].forEach(([r, ox, yy, oz]) => o(new THREE.SphereGeometry(r, 10, 7), cs[(rnd() * cs.length) | 0], ox, yy, oz)); };
+    const mort = () => { o(new THREE.CylinderGeometry(.05, .1, 1, 5), 0x4a3a32, 0, .5, 0);
+      [[.35, .7, .7], [-.4, .55, -.6], [.1, .85, 2.2]].forEach(([, yy, ry]) => { const b = o(new THREE.CylinderGeometry(.025, .04, .5, 4), 0x4a3a32, Math.sin(ry) * .14, yy, Math.cos(ry) * .14); b.rotation.set(Math.cos(ry) * .9, 0, -Math.sin(ry) * .9); }); };
+    if (z === "foret") rnd() < .2 ? mort() : pin(0x1f4a3e, 0x2a5c4a);
+    else if (z === "lande") neigeux(x, y) || y <= 7 && x <= 13 ? pin(0x2c6450, 0x3b7d5c, true) : rnd() < .55 ? pin(0x2c6450, 0x3b7d5c) : (o(new THREE.CylinderGeometry(.05, .07, .55, 6), 0xe8e4dc, 0, .27, 0), o(new THREE.SphereGeometry(.36, 10, 7), 0xa8c060, 0, .8, 0));
+    else if (z === "bayou") {   // cyprès chauve : pied évasé, feuillage plat, mousse espagnole qui pend
+      o(new THREE.CylinderGeometry(.08, .24, .95, 7), 0x6b4f3a, 0, .47, 0);
+      [[.5, 1.0], [.38, 1.25]].forEach(([r, yy]) => o(new THREE.SphereGeometry(r, 10, 7), rnd() < .5 ? 0x5f7d3c : 0x6e8a44, 0, yy, 0).scale.y = .45);
+      [0, 2.1, 4.2].forEach(ang => o(new THREE.ConeGeometry(.06, .45, 4), 0xa0ab88, Math.cos(ang) * .38, .78, Math.sin(ang) * .38).rotation.x = Math.PI);
     }
-    if (ch === "#") { const r = ajoute(new THREE.Mesh(new THREE.DodecahedronGeometry(.36, 1), mat3(COUL.rocher)), x + jx, .16, y + jz); r.scale.set(s, .72 * s, s); r.rotation.y = rnd() * 6; }
+    else if (z === "cabane") rnd() < .45 ? pin(0x2c6450, 0x3b7d5c) : rond([0xd9822b, 0xc9573f, 0xe3a73a]);
+    else if (z === "desert") mort();
+    else rnd() < .65 ? pin(0x2c6450, 0x3b7d5c) : rond([0x7fb85c, 0x9cc96b]);
+    a.scale.setScalar(s); a.rotation.y = rnd() * 6; return a;
+  };
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+    const ch = G[y][x], z = zoneJ(x, y), jx = (rnd() - .5) * .16, jz = (rnd() - .5) * .16, s = .85 + rnd() * .3;
+    if (ch === "T") ajoute(arbre(x, y, z, s), x + jx, 0, y + jz, false);
+    if (ch === "#") { const r = ajoute(new THREE.Mesh(new THREE.DodecahedronGeometry(.36, 1), mat3(z === "desert" ? 0xc77a4a : COUL.rocher)), x + jx, .16, y + jz); r.scale.set(s, .72 * s, s); r.rotation.y = rnd() * 6; }
+    if (ch === "A") {   // une montagne au sommet enneigé
+      const h = 1.6 + rnd() * 1.4, r = .78, cap = h * .38;
+      ajoute(new THREE.Mesh(new THREE.ConeGeometry(r, h, 7), mat3(rnd() < .5 ? 0x7d8399 : 0x8d93a8)), x + jx, h / 2, y + jz).rotation.y = rnd() * 3;
+      ajoute(new THREE.Mesh(new THREE.ConeGeometry(r * cap / h * 1.06, cap, 7), mat3(COUL.neige)), x + jx, h - cap / 2 + .01, y + jz, false);
+    }
+    if (ch === "c") {   // un cactus à deux bras
+      const g = new THREE.Group(), v = 0x5f9a5a, p = (geo, px, py, rz) => { const m = new THREE.Mesh(geo, mat3(v)); m.position.set(px, py, 0); m.rotation.z = rz || 0; m.castShadow = true; g.add(m); };
+      p(new THREE.CapsuleGeometry(.12, .7, 4, 8), 0, .5); p(new THREE.CapsuleGeometry(.07, .22, 4, 6), -.2, .62); p(new THREE.CapsuleGeometry(.07, .18, 4, 6), .2, .5);
+      p(new THREE.CapsuleGeometry(.06, .12, 4, 6), -.12, .48, Math.PI / 2); p(new THREE.CapsuleGeometry(.06, .1, 4, 6), .12, .38, Math.PI / 2);
+      g.rotation.y = rnd() * 6; g.scale.setScalar(s); ajoute(g, x + jx, 0, y + jz, false);
+    }
+    if (ch === "t") {   // une tombe : pierre arrondie ou croix, un peu penchée
+      const g = new THREE.Group(), gris = rnd() < .5 ? 0x9a98a8 : 0x86849a, p = (geo, py) => { const m = new THREE.Mesh(geo, mat3(gris)); m.position.set(0, py, 0); m.castShadow = true; g.add(m); return m; };
+      if (rnd() < .6) { p(new THREE.BoxGeometry(.48, .45, .14), .22); p(new THREE.CylinderGeometry(.24, .24, .14, 12, 1, false, 0, Math.PI), .45).rotation.set(Math.PI / 2, 0, Math.PI / 2); }
+      else { p(new THREE.BoxGeometry(.1, .7, .1), .35); p(new THREE.BoxGeometry(.42, .1, .1), .5); }
+      p(new THREE.BoxGeometry(.6, .06, .5), .03);
+      g.rotation.set((rnd() - .5) * .15, (rnd() - .5) * .3, (rnd() - .5) * .2); ajoute(g, x, 0, y, false);
+    }
+    if (ch === "u") {   // une citrouille, parfois allumée
+      const allumee = rnd() < .5, c = ajoute(new THREE.Mesh(new THREE.SphereGeometry(.24, 12, 8), mat3(0xe0782a, allumee ? .45 : 0)), x + jx, .17, y + jz); c.scale.y = .72;
+      boite(.05, .12, .05, 0x5a7a3a, x + jx, .36, y + jz);
+    }
     if (ch === "o") {
       const p = ajoute(new THREE.Mesh(new THREE.CapsuleGeometry(.2, .85, 4, 8), mat3(COUL.pierre)), x, .62, y); p.scale.set(1.1, 1, .7); p.rotation.set((rnd() - .5) * .12, rnd() * 3, (rnd() - .5) * .12);
       const r = ajoute(new THREE.Mesh(new THREE.BoxGeometry(.12, .2, .02), new THREE.MeshLambertMaterial({ color: COUL.rune, emissive: COUL.rune })), x, .75, y + .16, false); r.userData.vivant = true;
-      anim.push(t => { r.material.emissiveIntensity = (nuit ? 1.4 : .3) + Math.sin(t / 500 + x) * .4; });
+      anim.push(t => { r.material.emissiveIntensity = .4 + Math.sin(t / 500 + x) * .3; });
     }
-    if (ch === "f") {
-      const g = new THREE.Group();
-      [-.38, .38].forEach(o => { const pt = new THREE.Mesh(new THREE.BoxGeometry(.1, .5, .1), mat3(COUL.bois)); pt.position.set(o, .25, 0); pt.castShadow = true; g.add(pt); });
-      [.2, .38].forEach(hh => { const r = new THREE.Mesh(new THREE.BoxGeometry(1, .07, .05), mat3(COUL.bois)); r.position.y = hh; r.castShadow = true; g.add(r); });
+    if (ch === "f") {   // barrière en bois, grille en fer noir autour du cimetière
+      const g = new THREE.Group(), c = z === "foret" ? 0x3a3540 : COUL.bois;
+      [-.38, .38].forEach(o => { const pt = new THREE.Mesh(new THREE.BoxGeometry(.1, .5, .1), mat3(c)); pt.position.set(o, .25, 0); pt.castShadow = true; g.add(pt); });
+      [.2, .38].forEach(hh => { const r = new THREE.Mesh(new THREE.BoxGeometry(1, .07, .05), mat3(c)); r.position.y = hh; r.castShadow = true; g.add(r); });
       if (!(G[y][x - 1] === "f" || G[y][x + 1] === "f")) g.rotation.y = Math.PI / 2; ajoute(g, x, 0, y, false);
     }
     if (ch === "L") {
-      ajoute(new THREE.Mesh(new THREE.CylinderGeometry(.04, .06, 1.35, 6), mat3(COUL.lampe)), x, .67, y);
-      ajoute(new THREE.Mesh(new THREE.SphereGeometry(.14, 12, 10), mat3(COUL.lumiere, nuit ? 2 : .8)), x, 1.42, y, false);
-      if (nuit) { const l = new THREE.PointLight(0xffd27a, 3, 5, 1.4); l.position.set(x, 1.3, y); groupe.add(l); }
+      boite(.08, 1.35, .08, COUL.lampe, x, .67, y);
+      ajoute(new THREE.Mesh(new THREE.SphereGeometry(.14, 12, 10), mat3(COUL.lumiere, 1.6)), x, 1.42, y, false);
+      lampes.push([x, y]);
     }
     if (ch === "S") {
-      ajoute(new THREE.Mesh(new THREE.BoxGeometry(.08, .6, .08), mat3(COUL.tronc)), x, .3, y);
-      ajoute(new THREE.Mesh(new THREE.BoxGeometry(.6, .34, .07), mat3(COUL.bois)), x, .62, y + .02);
+      boite(.08, .6, .08, COUL.tronc, x, .3, y);
+      boite(.6, .34, .07, COUL.bois, x, .62, y + .02);
     }
-    if (ch === "b") {
-      ajoute(new THREE.Mesh(new THREE.BoxGeometry(.98, .08, .98), mat3(COUL.bois)), x, -.02, y).receiveShadow = true;
-      if (G[y][x - 1] !== "b") ajoute(new THREE.Mesh(new THREE.BoxGeometry(.06, .3, 1), mat3(COUL.tronc)), x - .46, .13, y);
-      if (G[y][x + 1] !== "b") ajoute(new THREE.Mesh(new THREE.BoxGeometry(.06, .3, 1), mat3(COUL.tronc)), x + .46, .13, y);
-    }
-    if ((ch === "<" || ch === ">") && G[y][x + 1] !== ch) {   // un cristal flotte au-dessus de chaque sortie
-      const c = ajoute(new THREE.Mesh(new THREE.OctahedronGeometry(.18), new THREE.MeshLambertMaterial({ color: COUL.cristal, emissive: COUL.cristal, emissiveIntensity: .9 })), G[y][x - 1] === ch ? x - .5 : x, .9, y, false);
-      c.userData.vivant = true; const sortie = ch;
-      anim.push(t => { c.rotation.y = t / 600; c.position.y = .9 + Math.sin(t / 400) * .08;
-        const scelle = sortie === ">" && m + 1 === FINALE && !enBoss && partie() && partie().jeu && resteAvantFinale(partie());
-        c.material.color.setHex(scelle ? COUL.scelle : COUL.cristal); c.material.emissive.setHex(scelle ? COUL.scelle : COUL.cristal); });
+    if (ch === "b") {   // planches de bois, avec des garde-fous sur les côtés
+      boite(.98, .08, .98, COUL.bois, x, -.02, y).receiveShadow = true;
+      const long = "bB".includes(tuileJ(x - 1, y)) || "bB".includes(tuileJ(x + 1, y));
+      if (long) { if (!"bB".includes(tuileJ(x, y - 1))) boite(1, .3, .06, COUL.tronc, x, .13, y - .46); if (!"bB".includes(tuileJ(x, y + 1))) boite(1, .3, .06, COUL.tronc, x, .13, y + .46); }
+      else { if (!"bB".includes(tuileJ(x - 1, y))) boite(.06, .3, 1, COUL.tronc, x - .46, .13, y); if (!"bB".includes(tuileJ(x + 1, y))) boite(.06, .3, 1, COUL.tronc, x + .46, .13, y); }
     }
   }
-  msol.userData.vivant = true; fusionnerJ(groupe);
-  return R.maps[m] = { groupe, anim, nuit, W, H };
+  // des lucioles au-dessus du bayou
+  const luc = []; for (let y = 14; y < H; y++) for (let x = 31; x < W; x++) if (rnd() < .12) luc.push(x + rnd() - .5, .4 + rnd() * .8, y + rnd() - .5);
+  if (luc.length) {
+    const gl = new THREE.BufferGeometry(), base = luc.slice(); gl.setAttribute("position", new THREE.Float32BufferAttribute(luc, 3));
+    const pts = new THREE.Points(gl, new THREE.PointsMaterial({ color: 0xfff3a0, size: 5, sizeAttenuation: false, transparent: true, opacity: .9 })); pts.userData.vivant = true; groupe.add(pts);
+    anim.push(t => { const a = gl.attributes.position.array; for (let i = 0; i < a.length; i += 3) { a[i + 1] = base[i + 1] + Math.sin(t / 600 + i) * .15; a[i] = base[i] + Math.sin(t / 900 + i * 2) * .1; }
+      gl.attributes.position.needsUpdate = true; pts.material.opacity = .4 + .5 * Math.abs(Math.sin(t / 400)); });
+  }
+  fusionnerJ(groupe); R.scene.add(groupe);
+  return R.ile = { groupe, anim, lampes };
 }
-function fusionnerJ(groupe) {   // tous les objets immobiles de même couleur fondus en un seul : bien moins de travail pour le téléphone
+function fusionnerJ(groupe) {   // les objets immobiles de même couleur fondus ensemble, par morceaux de l'île : bien moins de travail pour le téléphone
   groupe.updateMatrixWorld(true);
-  const parMat = new Map(), vieux = [];
+  const lots = new Map(), vieux = [], centre = new THREE.Vector3();
   groupe.traverse(o => { if (!o.isMesh || o.isInstancedMesh || o.userData.vivant) return;
     const g = o.geometry.clone().applyMatrix4(o.matrixWorld); g.deleteAttribute("uv"); if (!g.index) return;
-    if (!parMat.has(o.material)) parMat.set(o.material, { g: [], ombre: false }); const e = parMat.get(o.material); e.g.push(g); e.ombre = e.ombre || o.castShadow; vieux.push(o); });
+    g.computeBoundingBox(); g.boundingBox.getCenter(centre);
+    const cle = o.material.uuid + "/" + Math.floor(centre.x / 11) + "/" + Math.floor(centre.z / 10);
+    if (!lots.has(cle)) lots.set(cle, { mat: o.material, g: [], ombre: false }); const e = lots.get(cle); e.g.push(g); e.ombre = e.ombre || o.castShadow; vieux.push(o); });
   vieux.forEach(o => o.parent.remove(o));
-  parMat.forEach(({ g, ombre }, mat) => { const m = new THREE.Mesh(mergeGeometries(g), mat); m.castShadow = ombre; m.receiveShadow = true; groupe.add(m); });
-}
-function montrerMapJ(m) {
-  const R = moteurJeu(), d = dioramaJ(m);
-  if (R.actuelle === m) return d;
-  if (R.maps[R.actuelle]) R.scene.remove(R.maps[R.actuelle].groupe);
-  R.scene.add(d.groupe); R.actuelle = m;
-  R.ciel.color.setHex(d.nuit ? 0x8a7fd0 : 0xd8ecff); R.ciel.groundColor.setHex(d.nuit ? 0x2a2046 : 0x7a5a40); R.ciel.intensity = d.nuit ? .9 : 1.6;
-  R.soleil.color.setHex(d.nuit ? 0x9fb0ff : 0xfff0d6); R.soleil.intensity = d.nuit ? .55 : 2.2;
-  R.heros.userData.lueur.intensity = d.nuit ? 3 : 1.2;
-  $("jeu").classList.toggle("nuit", d.nuit);
-  return d;
+  lots.forEach(({ mat, g, ombre }) => { const m = new THREE.Mesh(mergeGeometries(g), mat); m.castShadow = ombre; m.receiveShadow = true; groupe.add(m); });
 }
 const ANGLE = { bas: 0, droite: Math.PI / 2, haut: Math.PI, gauche: -Math.PI / 2 };
+const _c = new THREE.Color();
+function lumiereJ(R, zone, vite) {   // la lumière glisse doucement vers celle de la région où l'on marche
+  const A = AMB[zone], k = vite ? 1 : .04;
+  R.ciel.color.lerp(_c.setHex(A.ciel[0]), k); R.ciel.groundColor.lerp(_c.setHex(A.ciel[1]), k); R.ciel.intensity += (A.ciel[2] - R.ciel.intensity) * k;
+  R.soleil.color.lerp(_c.setHex(A.soleil[0]), k); R.soleil.intensity += (A.soleil[1] - R.soleil.intensity) * k;
+  R.fond.lerp(_c.setHex(A.fond), k); R.rendu.setClearColor(R.fond, 1);
+  R.nuit += (A.nuit - R.nuit) * k; R.heros.userData.lueur.intensity = 1.2 + 2 * R.nuit;
+  $("jeu").classList.toggle("nuit", R.nuit > .5);
+}
 function boucleJeu(t) {
   JEU.raf = 0; if ($("jeu").hidden) return;
   JEU.raf = requestAnimationFrame(boucleJeu);
-  const R = moteurJeu(), cv = $("jeuCanvas"), W = cv.clientWidth, H = cv.clientHeight;
+  const R = moteurJeu(), cv = $("jeuCanvas"), W = cv.clientWidth, H = cv.clientHeight, premier = !JEU.t;
   const taille = R.rendu.getSize(new THREE.Vector2()); if (taille.x !== W || taille.y !== H) R.rendu.setSize(W, H, false);
-  // un pas en cours ? on avance en douceur, sinon on repart si une flèche est tenue
+  // un pas en cours ? on avance en douceur, sinon on repart si le joystick est tenu
   let fx = JEU.x, fy = JEU.y, bond = 0;
   if (JEU.pas) { const k = Math.min(1, (t - JEU.pas.t0) / DUREE_PAS); fx = JEU.pas.de[0] + (JEU.x - JEU.pas.de[0]) * k; fy = JEU.pas.de[1] + (JEU.y - JEU.pas.de[1]) * k; bond = Math.sin(k * Math.PI) * .12;
     if (k >= 1) { finPas(); fx = JEU.x; fy = JEU.y; bond = 0; } }
   if (!JEU.pas && JEU.tenu) essayerPas(JEU.tenu);
-  const d = montrerMapJ(JEU.m), h = R.heros, sol = hautSol(tuileJ(JEU.m, Math.round(fx), Math.round(fy)));
+  const d = dioramaJ(), h = R.heros, sol = hautSol(tuileJ(Math.round(fx), Math.round(fy)));
+  lumiereJ(R, zoneJ(Math.round(fx), Math.round(fy)), premier);
   h.position.set(fx, Math.max(0, sol) + bond, fy);
   const cible = ANGLE[JEU.dir], da = Math.atan2(Math.sin(cible - h.rotation.y), Math.cos(cible - h.rotation.y)); h.rotation.y += da * .35;
   h.userData.corps.scale.y = 1 + Math.sin(t / 260) * .015;
   // caméra isométrique qui suit le héros
-  const demi = 3.9, ratio = W / Math.max(1, H);
+  const demi = 4.2, ratio = W / Math.max(1, H);
   Object.assign(R.camera, { left: -demi, right: demi, top: demi / ratio, bottom: -demi / ratio }); R.camera.updateProjectionMatrix();
   R.camera.position.set(fx + 10, 10.5, fy + 10); R.camera.lookAt(fx, 0, fy);
   R.soleil.position.set(fx - 5, 12, fy + 3); R.soleil.target.position.set(fx, 0, fy);
+  if (premier || t - (JEU.tLampes || 0) > 300) {   // les 4 lumières vont aux lampadaires les plus proches
+    JEU.tLampes = t;
+    const proches = d.lampes.map(l => [l, (l[0] - fx) ** 2 + (l[1] - fy) ** 2]).sort((a, b) => a[1] - b[1]).slice(0, R.lampes.length);
+    R.lampes.forEach((l, i) => { const p = proches[i]; if (p) l.position.set(p[0][0], 1.3, p[0][1]); l.userData.ok = !!p && p[1] < 100; });
+  }
+  R.lampes.forEach(l => l.intensity = l.userData.ok ? .4 + 2.8 * R.nuit : 0);
   d.anim.forEach(f => f(t));
   const rv = JEU.revele; R.signe.visible = !!rv;
   if (rv) R.signe.position.set(rv.q.x, 1.25 + Math.abs(Math.sin(t / 220)) * .2, rv.q.y);
@@ -2377,12 +2433,25 @@ function detecteurJ(t) {
 }
 function allumerJ(n) { document.querySelectorAll("#jeuLeds i").forEach((l, i) => l.classList.toggle("on", i < n)); }
 
-// ---------- boutons (croix directionnelle, A, B) et clavier ----------
-document.querySelectorAll("#jeu [data-dir]").forEach(b => {
-  const go = e => { e.preventDefault(); JEU && (JEU.tenu = b.dataset.dir); b.classList.add("enfonce"); essayerPas(b.dataset.dir); };
-  const stop = () => { if (JEU && JEU.tenu === b.dataset.dir) JEU.tenu = null; b.classList.remove("enfonce"); };
-  b.addEventListener("pointerdown", go); ["pointerup", "pointercancel", "pointerleave"].forEach(ev => b.addEventListener(ev, stop));
-});
+// ---------- joystick, boutons A et B, clavier ----------
+// La vue est en biais : les 4 directions de marche sont les 4 diagonales de l'écran. Le joystick choisit la plus proche
+// (en haut à droite = « haut », en bas à droite = « droite », en bas à gauche = « bas », en haut à gauche = « gauche »).
+const CAP = { haut: 45, gauche: 135, bas: 225, droite: 315 };
+const stick = $("jeuStick"), pommeau = $("jeuBouton"); let doigtStick = null;
+function bougerStick(e) {
+  const r = stick.getBoundingClientRect(), dx = e.clientX - (r.left + r.width / 2), dy = e.clientY - (r.top + r.height / 2), d = Math.hypot(dx, dy), max = r.width * .3, k = d > max ? max / d : 1;
+  pommeau.style.transform = `translate(${dx * k}px, ${dy * k}px)`;
+  if (!JEU) return;
+  if (d < r.width * .12) { JEU.tenu = null; return; }
+  const a = (Math.atan2(-dy, dx) * 180 / Math.PI + 360) % 360, ecart = c => Math.abs(((a - c + 540) % 360) - 180);
+  let dir = JEU.tenu && ecart(CAP[JEU.tenu]) < 60 ? JEU.tenu : null;   // un peu de marge : on ne change pas de direction au moindre tremblement
+  if (!dir) dir = Object.keys(CAP).reduce((m, k) => ecart(CAP[k]) < ecart(CAP[m]) ? k : m);
+  if (dir !== JEU.tenu) { JEU.tenu = dir; essayerPas(dir); }
+}
+function lacherStick() { doigtStick = null; stick.classList.remove("actif"); pommeau.style.transform = ""; if (JEU) JEU.tenu = null; }
+stick.addEventListener("pointerdown", e => { e.preventDefault(); doigtStick = e.pointerId; stick.setPointerCapture(e.pointerId); stick.classList.add("actif"); bougerStick(e); });
+stick.addEventListener("pointermove", e => { if (e.pointerId === doigtStick) bougerStick(e); });
+["pointerup", "pointercancel", "lostpointercapture"].forEach(ev => stick.addEventListener(ev, e => { if (e.pointerId === doigtStick) lacherStick(); }));
 $("jeuA").addEventListener("pointerdown", e => { e.preventDefault(); if (!(JEU && JEU.revele)) boutonA(); });
 $("jeuA").addEventListener("click", () => { if (JEU && JEU.revele) trouveJ(); });   // ouvrir la caméra demande un vrai clic sur iPhone
 $("jeuB").addEventListener("pointerdown", e => { e.preventDefault(); boutonB(); });
@@ -2396,9 +2465,9 @@ addEventListener("keydown", e => {
 addEventListener("keyup", e => { if (JEU && TOUCHES[e.key] === JEU.tenu) JEU.tenu = null; });
 $("jeuQuitter").addEventListener("click", () => { fermerJeu(); enBoss = false; majAccueil(); montrer("accueil"); });
 
-window.__jeu = { etat: () => JEU && { m: JEU.m, x: JEU.x, y: JEU.y, dir: JEU.dir, revele: JEU.revele && JEU.revele.q.k, cibles: ciblesJ() },
-  aller: (m, x, y) => { JEU.m = m; JEU.x = x; JEU.y = y; JEU.pas = null; }, pas: d => essayerPas(d), A: () => boutonA(), B: () => boutonB(),
-  maps: MAPS, accessibles: m => casesAccessibles(m).length, trouver: k => { JEU.revele = { q: { k }, t0: 0 }; trouveJ(); } };
+window.__jeu = { etat: () => JEU && { x: JEU.x, y: JEU.y, dir: JEU.dir, zone: zoneJ(JEU.x, JEU.y), revele: JEU.revele && JEU.revele.q.k, cibles: ciblesJ() },
+  aller: (x, y) => { JEU.x = x; JEU.y = y; JEU.pas = null; arriverJ(true); }, pas: d => essayerPas(d), A: () => boutonA(), B: () => boutonB(),
+  carte: CARTE, zone: zoneJ, accessibles: () => casesAccessibles().length, trouver: k => { JEU.revele = { q: { k }, t0: 0 }; trouveJ(); } };
 </script>
 </body>
 </html>
