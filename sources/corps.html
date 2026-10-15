@@ -119,7 +119,7 @@
     <div id="choixVirtuel" class="colonne" hidden>
       <div class="choix carte-mode" data-mode="virtuel" role="button" tabindex="0">
         <h3>Jeu vidéo</h3>
-        <p>Une aventure en pixel art à l'écran, comme sur une vieille console : explore la forêt, le village et le lac, puis le cercle de pierres. La croix sert à marcher, le bouton A à capturer.</p>
+        <p>Une aventure en 3D à l'écran, comme un jeu vidéo : explore une grande île (forêt sombre, hautes-terres, bayou, vieux village, désert) et retrouve les cryptides cachés, puis Sporran près de sa cabane. Le joystick sert à marcher, le bouton A à capturer.</p>
       </div>
     </div>
     <p id="modeParents" class="etat"></p>
@@ -205,12 +205,9 @@
     <div id="jeuDialogue" class="jeu-dialogue" hidden></div>
   </div>
   <div class="manette">
-    <div class="croix-dir">
-      <button data-dir="haut" type="button" aria-label="Haut">▲</button>
-      <button data-dir="gauche" type="button" aria-label="Gauche">◀</button>
-      <span></span>
-      <button data-dir="droite" type="button" aria-label="Droite">▶</button>
-      <button data-dir="bas" type="button" aria-label="Bas">▼</button>
+    <div id="jeuStick" class="joystick" role="application" aria-label="Joystick : pousse pour marcher">
+      <i class="joy-fleche" style="--a:45deg"></i><i class="joy-fleche" style="--a:135deg"></i><i class="joy-fleche" style="--a:225deg"></i><i class="joy-fleche" style="--a:315deg"></i>
+      <div id="jeuBouton" class="joy-bouton"></div>
     </div>
     <div class="boutons-ab">
       <div><button id="jeuB" type="button" aria-label="B : fuir ou fermer">B</button><small>Fuir</small></div>

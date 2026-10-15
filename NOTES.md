@@ -61,13 +61,14 @@ La version 1 est dans le dépôt `carrioncrow494/chasse-monstres` et n'est pas m
   - **Aventure virtuelle** : le jeu vidéo (mode `virtuel`).
 - **Le jeu vidéo** (`sources/jeu.js`, ajouté à la suite d'`app.js` par `assemble.py`) :
   - vue en 3D isométrique façon Dofus (three.js, caméra orthographique), formes rondes et douces, couleurs de forêt de pins au crépuscule (`COUL`). La map est un petit diorama construit à partir de la grille (`dioramaJ`) ; les objets immobiles sont fondus par couleur (`fusionnerJ`) pour alléger le rendu sur téléphone ;
-  - croix directionnelle tournée de 45° (chaque flèche suit la direction à l'écran), bouton A (chercher, lire un panneau, ouvrir l'œil magique) et bouton B (s'éloigner, fermer) ; au clavier : flèches ou ZQSD, Espace et Échap ;
-  - 4 maps **provisoires** dans `MAPS` : la forêt des Murmures, le village de Sporran, le lac aux Brumes, puis la finale, le cercle de pierres (de nuit) ;
-  - chaque map est une grille de lettres (la légende est sous `TUILES`) : pour une map de Sam, un plan dessiné suffit, on le recopie en lettres et la 3D se construit toute seule ;
-  - les créatures de l'aventure sont réparties dans les maps selon leur habitat (`scoreJ`) ; la finale garde les plus difficiles et ne s'ouvre qu'une fois toutes les autres sauvées. Positions enregistrées dans `partie.jeu` ;
-  - le détecteur (5 LED) donne la distance à la créature la plus proche de la map ; les panneaux donnent les indices des créatures de la map ;
+  - joystick tactile : la vue est en biais, donc les 4 directions de marche sont les 4 diagonales de l'écran, et le joystick prend la plus proche (avec un peu de marge pour ne pas changer de direction au moindre tremblement). Bouton A (chercher, lire un panneau, ouvrir l'œil magique) et bouton B (s'éloigner, fermer) ; au clavier : flèches ou ZQSD, Espace et Échap ;
+  - **une seule île ouverte** de 44 × 40 cases (`CARTE`), découpée en 6 régions (`ZONES`), sans changement de map. Le village est au centre (départ), entouré de : la forêt Sombre (nuit, rivière, pont couvert rouge façon Oregon, lampadaires, cimetière), les Hautes-Terres (lande de bruyère, grand lac, pierres levées, neiges et montagnes au nord), le bayou (eaux boueuses, cyprès, passerelles, lucioles), le désert des Mesas (sable orange, mesas, cactus, ranch) et le bois Biscornu (arbres d'automne, citrouilles, la cabane de travers de Sporran, un dessin original) ;
+  - la lumière glisse d'une région à l'autre (`AMB`) ; 4 lumières seulement suivent les lampadaires les plus proches, pour ménager le téléphone ; les objets immobiles sont fondus par couleur et par morceau de l'île ;
+  - la grille est une suite de lettres (légende sous `TUILES`) : pour une carte de Sam, un plan dessiné suffit. Le plan actuel a été produit par un petit script puis retouché ;
+  - chaque créature se cache dans sa région (`HABITAT`, choix de Sam du 15/10/2026), au meilleur endroit (`scoreJ`) : barghest et mothman dans la forêt Sombre, Nessie, le Kraken et le Yeti dans les Hautes-Terres, le monstre des marais et la faery au bayou, la gargouille et les lutins au village, le chupacabra, le thunderbird et le jackalope au désert. Positions dans `partie.jeu` (`v: 2` ; une partie de l'ancien jeu à 4 maps repart du village) ;
+  - le détecteur (5 LED) donne la distance à la créature la plus proche ; en entrant dans une région, son nom et le nombre de cryptides cachés s'affichent ; le panneau de chaque région donne les indices de ses créatures ;
   - tout près d'une cachette, la créature surgit (« ! ») ; le bouton A ouvre alors l'œil magique (RA, caméra), et la capture se fait comme dans les autres modes. Après « Continuer le sauvetage », on revient dans le jeu à la même place. La caméra et les capteurs sont demandés au moment de ce clic, car iOS l'exige ;
-  - le défi de Sporran a lieu dans le cercle de pierres : il s'enfuit deux fois dans le jeu, puis la capture se fait en RA.
+  - le défi de Sporran a lieu dans le bois Biscornu, autour de sa cabane : il s'enfuit deux fois dans le jeu, puis la capture se fait en RA.
 
 ## Tout le reste vient de la V1 (état au 12/10/2026)
 
