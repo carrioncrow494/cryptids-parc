@@ -194,17 +194,17 @@ function ouvrirJeu() {
   placerJeu(p);
   if (enBoss && !p.jeu.boss) { const d = entreeJ(FINALE, "<"); Object.assign(p.jeu, { m: FINALE, x: d[0], y: d[1], dir: "haut" }); }
   ecrire(CLES.partie, p);
-  JEU = { m: p.jeu.m, x: p.jeu.x, y: p.jeu.y, dir: p.jeu.dir || "bas", pas: null, tenu: null, combat: null, revele: null, raf: 0, t: 0,
+  JEU = { m: p.jeu.m, x: p.jeu.x, y: p.jeu.y, dir: p.jeu.dir || "bas", pas: null, tenu: null, revele: null, raf: 0, t: 0,
     dernierBip: 0, eloigne: null, rendu: {} };
   if (enBoss && !p.jeu.boss) { cacherBoss(p); ecrire(CLES.partie, p); bossPhase = 0; }
-  $("jeu").hidden = false; $("combat").hidden = true; allumerJ(0);
+  $("jeu").hidden = false; allumerJ(0);
   arriverJ(true);
   if (!JEU.raf) JEU.raf = requestAnimationFrame(boucleJeu);
 }
 function sauverJ() { majPartie(p => { if (p.jeu) Object.assign(p.jeu, { m: JEU.m, x: JEU.x, y: JEU.y, dir: JEU.dir }); }); }
 function fermerJeu() {
   if (JEU) { cancelAnimationFrame(JEU.raf); JEU.raf = 0; JEU.tenu = null; sauverJ(); }
-  $("jeu").hidden = true; $("combat").hidden = true;
+  $("jeu").hidden = true;
 }
 function arriverJ(debut) {   // on entre dans une map : son nom, et combien de cryptides s'y cachent
   const n = ciblesJ().length, M = MAPS[JEU.m];
@@ -225,7 +225,7 @@ function dialogueJ(texte, duree) {
 
 // ---------- déplacement ----------
 function essayerPas(dir) {
-  if (!JEU || JEU.pas || JEU.combat || JEU.revele) return;
+  if (!JEU || JEU.pas || JEU.revele) return;
   JEU.dir = dir; const [dx, dy] = DIRS[dir], x = JEU.x + dx, y = JEU.y + dy, c = tuileJ(JEU.m, x, y);
   if (!libreJ(JEU.m, x, y)) { if (performance.now() - (JEU.tCogne || 0) > 350) { JEU.tCogne = performance.now(); sfx("clic"); } return; }
   if (c === ">" && JEU.m + 1 === FINALE && !enBoss && resteAvantFinale(partie())) {
@@ -243,15 +243,15 @@ function finPas() {
     sauverJ(); arriverJ(); return;
   }
   sauverJ();
-  // tout près d'une cachette : la créature surgit (« ! » au-dessus de sa cachette), puis la rencontre commence
+  // tout près d'une cachette : la créature surgit (« ! » au-dessus de sa cachette) ; A ouvre l'œil magique pour la capturer
   const q = ciblesJ().find(q => Math.abs(q.x - JEU.x) + Math.abs(q.y - JEU.y) <= 1);
   if (JEU.eloigne && Math.abs(JEU.eloigne[0] - JEU.x) + Math.abs(JEU.eloigne[1] - JEU.y) >= 3) JEU.eloigne = null;
   if (q && !JEU.eloigne) { JEU.revele = { q, t0: performance.now() }; sfx("revele"); if (navigator.vibrate) navigator.vibrate([60, 40, 60]);
-    setTimeout(() => rencontre(q.k), 900); }
+    dialogueJ(q.k === "catsith" ? "Sporran est là ! Appuie sur A pour l'attraper !" : "Un cryptide se cache ici ! Appuie sur A pour ouvrir l'œil magique et le capturer.", 60000); }
 }
 function boutonA() {
   if (!JEU) return;
-  if (JEU.combat) return frapperJ();
+  if (JEU.revele) return trouveJ();
   const [dx, dy] = DIRS[JEU.dir];
   if (tuileJ(JEU.m, JEU.x + dx, JEU.y + dy) === "S") { sfx("page"); return dialogueJ(texteSigne(), 6000); }
   sfx("clic"); dialogueJ(["Rien par ici…", "Le détecteur t'aide : plus il s'allume, plus un cryptide est proche !"][Math.random() < .5 ? 0 : 1], 2200);
@@ -264,60 +264,27 @@ function texteSigne() {
 }
 function boutonB() {
   if (!JEU) return;
-  if (JEU.combat) return fuirJ();
+  if (JEU.revele) return fuirJ();
   $("jeuDialogue").hidden = true;
 }
 
-// ---------- rencontre et capture ----------
-function rencontre(k) {
-  if (!JEU || JEU.combat) return;
-  JEU.revele = null;
-  const boss = k === "catsith", t = boss ? null : TRAQUES[k], d = boss ? 4 : (DIFF[t.cle] || 2);
-  JEU.combat = { k, d, jauge: 0, esq: 0, bloque: 0 };
-  $("combatImg").src = pixDe(k); $("combatImg").style.transform = "";
-  $("combatNom").textContent = boss ? GARDIEN.nom : t.nom;
-  $("combatEtoiles").textContent = "★".repeat(d);
-  $("combatTexte").textContent = boss ? "Hé hé ! Tu m'as trouvé… mais m'attraper, c'est une autre histoire !"
-    : "Tu as trouvé " + t.nom.split(",")[0] + " ! Tapote vite le bouton A pour remplir le sceau magique.";
-  $("combatBarre").style.width = "0%"; $("combat").hidden = false; $("combat").classList.remove("pris");
-  sfx("oeil"); if (!boss && audio && !tampons["cri-" + t.membres[0].id]) charger("cri-" + t.membres[0].id, "cri-" + t.membres[0].id + ".m4a");
-}
-function frapperJ() {
-  const c = JEU.combat; if (!c || c.fini || performance.now() < c.bloque) return;
-  c.jauge = Math.min(1, c.jauge + GAIN[c.d]); sfx("tape"); if (navigator.vibrate) navigator.vibrate(15);
-  const img = $("combatImg"); img.classList.remove("touche"); void img.offsetWidth; img.classList.add("touche");
-  if (c.jauge >= 1) return captureJ();
-  const s = ESQUIVES[c.d];
-  if (c.esq < s.length && c.jauge >= s[c.esq]) {
-    c.esq++;
-    if (c.k === "catsith" && bossPhase < 2) return fuiteBoss();
-    c.jauge = Math.max(0, c.jauge - .12); c.bloque = performance.now() + 700; sfx("fuite");
-    img.style.transform = "translateX(" + (Math.random() < .5 ? -1 : 1) * (25 + Math.random() * 15) + "%)";
-    setTimeout(() => { img.style.transform = ""; }, 700);
-    $("combatTexte").textContent = "Oh ! Il esquive ! Continue à tapoter !";
-  }
+// ---------- capture : on repasse à l'œil magique (RA), comme sur la carte GPS ----------
+function trouveJ() {   // appelé depuis un « clic » ou une touche : iOS n'autorise la caméra et les capteurs qu'à ce moment-là
+  const r = JEU && JEU.revele; if (!r) return;
+  const k = r.q.k; JEU.revele = null; $("jeuDialogue").hidden = true;
+  if (k === "catsith" && bossPhase < 2) return fuiteBoss();
+  fermerJeu(); sfx("oeil");
+  bandeau(k === "catsith" ? "Tu as débusqué Sporran ! Ouvre l'œil magique…" : "Débusqué ! Cherche-le autour de toi avec l'œil magique…", 2400);
+  ouvrirOeil(() => k === "catsith" ? demarrerBossAR() : demarrerTraque(k, { gpsFait: true, angleGPS: null }));
 }
 function fuirJ() {
-  const c = JEU.combat; if (!c || c.fini) return;
-  JEU.combat = null; $("combat").hidden = true; JEU.eloigne = [JEU.x, JEU.y]; sfx("clic");
+  JEU.revele = null; JEU.eloigne = [JEU.x, JEU.y]; sfx("clic");
   dialogueJ("Tu t'éloignes sans bruit… Le cryptide reste caché ici. Reviens quand tu veux !", 3000);
 }
 function fuiteBoss() {   // comme sur la carte GPS : Sporran file ailleurs deux fois avant de se laisser attraper
-  bossPhase++; sfx("fuite"); JEU.combat = null; $("combat").hidden = true;
+  bossPhase++; sfx("fuite");
   const p = partie(); cacherBoss(p); ecrire(CLES.partie, p);
   dialogueJ(bossPhase === 1 ? "Hé hé ! Trop lent ! Attrape-moi si tu peux !" : "Encore raté ! Dernière chance, petit humain !", 3400);
-}
-function captureJ() {
-  const c = JEU.combat; c.fini = true; $("combatBarre").style.width = "100%";
-  sfx("sceau"); setTimeout(() => sfx("capture"), 300); if (navigator.vibrate) navigator.vibrate(120);
-  $("combat").classList.add("pris"); $("combatTexte").textContent = "Le sceau magique brille…";
-  setTimeout(() => $("eclair").classList.add("flash"), 1500);
-  setTimeout(() => {
-    $("eclair").classList.remove("flash"); JEU.combat = null; $("combat").hidden = true; fermerJeu();
-    if (c.k === "catsith") return bossVaincu();
-    const t = TRAQUES[c.k]; majPartie(p => { p.membres[c.k] = t.membres.length; });   // les deux lutins sont capturés ensemble
-    traque = Object.assign({ id: c.k }, t); sauve(c.k);
-  }, 2300);
 }
 
 // ---------- dessin ----------
@@ -394,19 +361,15 @@ function boucleJeu(t) {
     const cx = ox + (fx + .5) * T, cy = oy + (fy + .3) * T, l = g.createRadialGradient(cx, cy, 0, cx, cy, T * 3.2);
     l.addColorStop(0, "rgba(255,215,94,.28)"); l.addColorStop(1, "rgba(255,215,94,0)"); g.fillStyle = l; g.fillRect(0, 0, W, H); }
   if (t - (JEU.tDet || 0) > 180) { JEU.tDet = t; detecteurJ(t); }
-  if (JEU.combat && !JEU.combat.fini) {   // la jauge se vide doucement
-    const c = JEU.combat, dt = Math.min(.1, (t - (JEU.t || t)) / 1000); c.jauge = Math.max(0, c.jauge - DRAIN[c.d] * dt);
-    $("combatBarre").style.width = (c.jauge * 100) + "%";
-  }
   JEU.t = t;
 }
 function detecteurJ(t) {
   const l = ciblesJ(); if (!l.length) { allumerJ(0); return; }
   const d = Math.min(...l.map(q => Math.abs(q.x - JEU.x) + Math.abs(q.y - JEU.y)));
-  const n = JEU.combat || JEU.revele ? 5 : d <= 2 ? 5 : d <= 4 ? 4 : d <= 7 ? 3 : d <= 11 ? 2 : 1;
+  const n = JEU.revele ? 5 : d <= 2 ? 5 : d <= 4 ? 4 : d <= 7 ? 3 : d <= 11 ? 2 : 1;
   allumerJ(n);
   const periode = 1600 - n * 260;
-  if (!JEU.combat && t - JEU.dernierBip > periode) { JEU.dernierBip = t; if (audio && sonActif) note(480 + 180 * n, 0, .07, { type: "square", vol: .04, filtre: 2600 }); }
+  if (t - JEU.dernierBip > periode) { JEU.dernierBip = t; if (audio && sonActif) note(480 + 180 * n, 0, .07, { type: "square", vol: .04, filtre: 2600 }); }
 }
 function allumerJ(n) { document.querySelectorAll("#jeuLeds i").forEach((l, i) => l.classList.toggle("on", i < n)); }
 
@@ -416,9 +379,9 @@ document.querySelectorAll("#jeu [data-dir]").forEach(b => {
   const stop = () => { if (JEU && JEU.tenu === b.dataset.dir) JEU.tenu = null; b.classList.remove("enfonce"); };
   b.addEventListener("pointerdown", go); ["pointerup", "pointercancel", "pointerleave"].forEach(ev => b.addEventListener(ev, stop));
 });
-$("jeuA").addEventListener("pointerdown", e => { e.preventDefault(); boutonA(); });
+$("jeuA").addEventListener("pointerdown", e => { e.preventDefault(); if (!(JEU && JEU.revele)) boutonA(); });
+$("jeuA").addEventListener("click", () => { if (JEU && JEU.revele) trouveJ(); });   // ouvrir la caméra demande un vrai clic sur iPhone
 $("jeuB").addEventListener("pointerdown", e => { e.preventDefault(); boutonB(); });
-$("combatImg").addEventListener("pointerdown", e => { e.preventDefault(); if (JEU && JEU.combat) frapperJ(); });
 const TOUCHES = { ArrowUp: "haut", ArrowDown: "bas", ArrowLeft: "gauche", ArrowRight: "droite", z: "haut", s: "bas", q: "gauche", d: "droite", w: "haut", a: "gauche" };
 addEventListener("keydown", e => {
   if (!JEU || $("jeu").hidden) return;
@@ -429,6 +392,6 @@ addEventListener("keydown", e => {
 addEventListener("keyup", e => { if (JEU && TOUCHES[e.key] === JEU.tenu) JEU.tenu = null; });
 $("jeuQuitter").addEventListener("click", () => { fermerJeu(); enBoss = false; majAccueil(); montrer("accueil"); });
 
-window.__jeu = { etat: () => JEU && { m: JEU.m, x: JEU.x, y: JEU.y, dir: JEU.dir, combat: JEU.combat && { k: JEU.combat.k, jauge: JEU.combat.jauge }, cibles: ciblesJ() },
+window.__jeu = { etat: () => JEU && { m: JEU.m, x: JEU.x, y: JEU.y, dir: JEU.dir, revele: JEU.revele && JEU.revele.q.k, cibles: ciblesJ() },
   aller: (m, x, y) => { JEU.m = m; JEU.x = x; JEU.y = y; JEU.pas = null; }, pas: d => essayerPas(d), A: () => boutonA(), B: () => boutonB(),
-  maps: MAPS, accessibles: m => casesAccessibles(m).length, rencontre: k => rencontre(k) };
+  maps: MAPS, accessibles: m => casesAccessibles(m).length, trouver: k => { JEU.revele = { q: { k }, t0: 0 }; trouveJ(); } };

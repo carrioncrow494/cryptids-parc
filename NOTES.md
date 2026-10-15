@@ -65,8 +65,8 @@ La version 1 est dans le dépôt `carrioncrow494/chasse-monstres` et n'est pas m
   - chaque map est une grille de lettres (la légende est au-dessus de `TUILES`). Pour une map dessinée par Sam, on met son fichier dans `image` : l'image remplace le dessin des cases, et la grille sert toujours pour les murs, les sorties et les cachettes. L'image doit faire 16 pixels par case (320 × 352 pour une grille de 20 × 22) ;
   - les créatures de l'aventure sont réparties dans les maps selon leur habitat (`scoreJ`) ; la finale garde les plus difficiles et ne s'ouvre qu'une fois toutes les autres sauvées. Positions enregistrées dans `partie.jeu` ;
   - le détecteur (5 LED) donne la distance à la créature la plus proche de la map ; les panneaux donnent les indices des créatures de la map ;
-  - tout près d'une cachette, la créature surgit, puis la rencontre commence : on tapote A pour remplir le sceau (mêmes réglages `DIFF`, `GAIN`, `DRAIN`, `ESQUIVES` que l'œil magique) ; les deux lutins sont sauvés ensemble ;
-  - le défi de Sporran a lieu dans le cercle de pierres : il s'enfuit deux fois avant de se laisser attraper.
+  - tout près d'une cachette, la créature surgit (« ! ») ; le bouton A ouvre alors l'œil magique (RA, caméra), et la capture se fait comme dans les autres modes. Après « Continuer le sauvetage », on revient dans le jeu à la même place. La caméra et les capteurs sont demandés au moment de ce clic, car iOS l'exige ;
+  - le défi de Sporran a lieu dans le cercle de pierres : il s'enfuit deux fois dans le jeu, puis la capture se fait en RA.
 
 ## Tout le reste vient de la V1 (état au 12/10/2026)
 

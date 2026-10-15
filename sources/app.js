@@ -684,7 +684,7 @@ function bandeau(texte, duree) { $("bandeau").textContent = texte; $("bandeau").
 
 /* ---------- Ouverture de l'œil (caméra, mouvements) ---------- */
 function erreur(msg) { bandeau(msg, 6000); }
-async function ouvrirOeil() {
+async function ouvrirOeil(suite) {   // suite : ce qui démarre une fois l'œil ouvert (par défaut, la prochaine traque)
   initAudio(); sfx("oeil"); taire(); changerAmbiance("chasse");
   let attente = Promise.resolve("granted");
   if (window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission === "function")
@@ -701,7 +701,7 @@ async function ouvrirOeil() {
   if (!gyroOK) bandeau("Capteurs de mouvement non autorisés : fais glisser ton doigt pour regarder autour de toi. (Pour les réactiver : ferme Safari complètement et rouvre l'application.)", 7000);
   if (gyroOK && !orientation.branche) { addEventListener("deviceorientation", orientation); orientation.branche = true; }
   moteur.taille();
-  prochaineTraque();
+  suite ? suite() : prochaineTraque();
 }
 function prochaineTraque() {
   $("viseur").hidden = true; $("radar").hidden = true; $("gauche").hidden = $("droite").hidden = true; $("jauge").hidden = true;

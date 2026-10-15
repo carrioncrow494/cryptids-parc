@@ -296,20 +296,6 @@
   .jeu-titre b { font-size: 1.3rem; font-weight: 400; color: var(--cyan); }
   .jeu-dialogue { position: absolute; left: 10px; right: 10px; bottom: 10px; z-index: 3; padding: 12px 14px; background: #f8f5ea; color: #1b1b22; border: 4px solid #1b1b22;
     border-radius: 6px; box-shadow: inset 0 0 0 2px #f8f5ea, inset 0 0 0 4px #7a7a8a; font-family: var(--texte); font-size: 1.05rem; line-height: 1.35; }
-  #combat { position: absolute; inset: 0; z-index: 4; background: linear-gradient(#a7d8f0 0%, #d8f0f8 48%, #8fd16a 48%, #6fb24f 100%); }
-  .combat-nom { position: absolute; top: 60px; left: 12px; right: 12px; padding: 8px 12px; background: #f8f5ea; border: 3px solid #1b1b22; border-radius: 6px; color: #1b1b22;
-    font-family: var(--nom); font-size: 1.25rem; }
-  .combat-nom .etoiles { font-family: var(--texte); color: #d08a00; font-size: 1rem; }
-  .combat-scene { position: absolute; left: 0; right: 0; top: 20%; bottom: 34%; display: flex; align-items: flex-end; justify-content: center; }
-  .socle { position: absolute; bottom: 4%; width: 62%; height: 14%; border-radius: 50%; background: #5a9a40; box-shadow: inset 0 -6px 0 #3f7a2e; }
-  #combatImg { position: relative; max-width: 66%; max-height: 92%; image-rendering: pixelated; transition: transform .25s steps(3); cursor: pointer; touch-action: none; }
-  #combatImg.touche { animation: touche .15s steps(2); }
-  @keyframes touche { 50% { filter: brightness(1.8); } }
-  #combat.pris #combatImg { animation: aspire 1.4s steps(8) forwards; }
-  @keyframes aspire { to { transform: scale(.05) rotate(540deg); opacity: 0; filter: brightness(3) hue-rotate(90deg); } }
-  .combat-jauge { position: absolute; left: 14%; right: 14%; bottom: calc(10px + 88px); height: 16px; border: 3px solid #1b1b22; border-radius: 999px; background: #f8f5ea; overflow: hidden; }
-  #combatBarre { height: 100%; width: 0; background: linear-gradient(90deg, #00c9a7, #4ff3ff); }
-  #combat .jeu-dialogue { min-height: 78px; }
   .manette { flex: none; height: calc(176px + env(safe-area-inset-bottom, 0px)); padding: 14px 22px env(safe-area-inset-bottom, 0px); display: flex; align-items: center; justify-content: space-between; }
   .croix-dir { display: grid; grid-template: repeat(3, 50px) / repeat(3, 50px); }
   .croix-dir button { border: none; background: #2a2e36; color: #8a909c; font-size: 1rem; box-shadow: 0 4px 0 #0b0d10; touch-action: none; }
