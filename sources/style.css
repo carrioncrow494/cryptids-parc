@@ -277,3 +277,51 @@
   #jaugeEtoiles { color: var(--citrouille); letter-spacing: .1em; }
   .jauge-fond { height: 20px; border-radius: 999px; border: 2px solid var(--cyan); background: rgba(2,10,14,.85); overflow: hidden; box-shadow: 0 0 12px rgba(79,243,255,.4); }
   #jaugeBarre { height: 100%; width: 0; background: linear-gradient(90deg, var(--citrouille), var(--cyan)); transition: width .1s; }
+  /* « Choisir son aventure » */
+  .onglets.genre { width: 100%; justify-content: center; flex-wrap: wrap; }
+  .onglets.genre .planche { flex: 1 1 140px; opacity: .6; }
+  .onglets.genre .planche.actif { opacity: 1; }
+  .onglets.genre .planche.actif { border-color: var(--cyan); box-shadow: 0 0 16px rgba(79,243,255,.45); color: var(--cyan); }
+  /* Aventure virtuelle : écran de jeu façon console portable */
+  #jeu { position: fixed; inset: 0; z-index: 8; display: flex; flex-direction: column; background: #10161c; user-select: none; -webkit-user-select: none; touch-action: none; }
+  .jeu-ecran { position: relative; flex: 1; margin: calc(8px + env(safe-area-inset-top, 0px)) 8px 0; border: 4px solid #2b3540; border-radius: 10px 10px 26px 10px; overflow: hidden; background: #1d3324; }
+  #jeuCanvas { position: absolute; inset: 0; width: 100%; height: 100%; image-rendering: pixelated; }
+  .jeu-haut { position: absolute; top: 8px; left: 58px; right: 8px; display: flex; align-items: center; gap: 10px; z-index: 2; }
+  .jeu-haut .rond { width: 42px; height: 42px; font-size: 1.1rem; flex: none; }
+  .jeu-lieu { flex: 1; font-family: var(--deco); color: #fff; font-size: 1rem; text-shadow: 0 2px 0 #000, 0 0 6px #000; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  #jeuLeds { flex: none; padding: 6px 8px; border-radius: 999px; background: rgba(10,12,16,.75); gap: 5px; }
+  #jeuLeds i { width: 13px; height: 13px; }
+  .jeu-titre { position: absolute; left: 50%; top: 22%; transform: translateX(-50%); z-index: 2; text-align: center; padding: 12px 20px; background: rgba(8,12,16,.82);
+    border: 3px solid #f4efe0; border-radius: 6px; color: #fff; font-family: var(--deco); display: flex; flex-direction: column; gap: 4px; min-width: 60%; }
+  .jeu-titre b { font-size: 1.3rem; font-weight: 400; color: var(--cyan); }
+  .jeu-dialogue { position: absolute; left: 10px; right: 10px; bottom: 10px; z-index: 3; padding: 12px 14px; background: #f8f5ea; color: #1b1b22; border: 4px solid #1b1b22;
+    border-radius: 6px; box-shadow: inset 0 0 0 2px #f8f5ea, inset 0 0 0 4px #7a7a8a; font-family: var(--texte); font-size: 1.05rem; line-height: 1.35; }
+  #combat { position: absolute; inset: 0; z-index: 4; background: linear-gradient(#a7d8f0 0%, #d8f0f8 48%, #8fd16a 48%, #6fb24f 100%); }
+  .combat-nom { position: absolute; top: 60px; left: 12px; right: 12px; padding: 8px 12px; background: #f8f5ea; border: 3px solid #1b1b22; border-radius: 6px; color: #1b1b22;
+    font-family: var(--nom); font-size: 1.25rem; }
+  .combat-nom .etoiles { font-family: var(--texte); color: #d08a00; font-size: 1rem; }
+  .combat-scene { position: absolute; left: 0; right: 0; top: 20%; bottom: 34%; display: flex; align-items: flex-end; justify-content: center; }
+  .socle { position: absolute; bottom: 4%; width: 62%; height: 14%; border-radius: 50%; background: #5a9a40; box-shadow: inset 0 -6px 0 #3f7a2e; }
+  #combatImg { position: relative; max-width: 66%; max-height: 92%; image-rendering: pixelated; transition: transform .25s steps(3); cursor: pointer; touch-action: none; }
+  #combatImg.touche { animation: touche .15s steps(2); }
+  @keyframes touche { 50% { filter: brightness(1.8); } }
+  #combat.pris #combatImg { animation: aspire 1.4s steps(8) forwards; }
+  @keyframes aspire { to { transform: scale(.05) rotate(540deg); opacity: 0; filter: brightness(3) hue-rotate(90deg); } }
+  .combat-jauge { position: absolute; left: 14%; right: 14%; bottom: calc(10px + 88px); height: 16px; border: 3px solid #1b1b22; border-radius: 999px; background: #f8f5ea; overflow: hidden; }
+  #combatBarre { height: 100%; width: 0; background: linear-gradient(90deg, #00c9a7, #4ff3ff); }
+  #combat .jeu-dialogue { min-height: 78px; }
+  .manette { flex: none; height: calc(176px + env(safe-area-inset-bottom, 0px)); padding: 14px 22px env(safe-area-inset-bottom, 0px); display: flex; align-items: center; justify-content: space-between; }
+  .croix-dir { display: grid; grid-template: repeat(3, 50px) / repeat(3, 50px); }
+  .croix-dir button { border: none; background: #2a2e36; color: #8a909c; font-size: 1rem; box-shadow: 0 4px 0 #0b0d10; touch-action: none; }
+  .croix-dir button.enfonce { background: #1d2026; transform: translateY(3px); box-shadow: 0 1px 0 #0b0d10; color: var(--cyan); }
+  .croix-dir span { background: #2a2e36; }
+  .croix-dir [data-dir=haut] { grid-area: 1 / 2; border-radius: 8px 8px 0 0; } .croix-dir [data-dir=bas] { grid-area: 3 / 2; border-radius: 0 0 8px 8px; }
+  .croix-dir [data-dir=gauche] { grid-area: 2 / 1; border-radius: 8px 0 0 8px; } .croix-dir [data-dir=droite] { grid-area: 2 / 3; border-radius: 0 8px 8px 0; }
+  .croix-dir span { grid-area: 2 / 2; }
+  .boutons-ab { display: flex; gap: 16px; transform: rotate(-22deg); align-items: flex-end; }
+  .boutons-ab > div { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+  .boutons-ab > div:last-child { margin-bottom: 34px; }
+  .boutons-ab button { width: 66px; height: 66px; border-radius: 50%; border: none; background: #b0225f; color: #ffd6e6; font-family: var(--deco); font-size: 1.5rem;
+    box-shadow: 0 5px 0 #5c0f31; touch-action: none; }
+  .boutons-ab button:active { transform: translateY(4px); box-shadow: 0 1px 0 #5c0f31; }
+  .boutons-ab small { font-family: var(--deco); color: #8a909c; font-size: .85rem; letter-spacing: .06em; }

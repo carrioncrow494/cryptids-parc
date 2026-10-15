@@ -285,6 +285,54 @@
   #jaugeEtoiles { color: var(--citrouille); letter-spacing: .1em; }
   .jauge-fond { height: 20px; border-radius: 999px; border: 2px solid var(--cyan); background: rgba(2,10,14,.85); overflow: hidden; box-shadow: 0 0 12px rgba(79,243,255,.4); }
   #jaugeBarre { height: 100%; width: 0; background: linear-gradient(90deg, var(--citrouille), var(--cyan)); transition: width .1s; }
+  /* « Choisir son aventure » */
+  .onglets.genre { width: 100%; justify-content: center; flex-wrap: wrap; }
+  .onglets.genre .planche { flex: 1 1 140px; opacity: .6; }
+  .onglets.genre .planche.actif { opacity: 1; }
+  .onglets.genre .planche.actif { border-color: var(--cyan); box-shadow: 0 0 16px rgba(79,243,255,.45); color: var(--cyan); }
+  /* Aventure virtuelle : écran de jeu façon console portable */
+  #jeu { position: fixed; inset: 0; z-index: 8; display: flex; flex-direction: column; background: #10161c; user-select: none; -webkit-user-select: none; touch-action: none; }
+  .jeu-ecran { position: relative; flex: 1; margin: calc(8px + env(safe-area-inset-top, 0px)) 8px 0; border: 4px solid #2b3540; border-radius: 10px 10px 26px 10px; overflow: hidden; background: #1d3324; }
+  #jeuCanvas { position: absolute; inset: 0; width: 100%; height: 100%; image-rendering: pixelated; }
+  .jeu-haut { position: absolute; top: 8px; left: 58px; right: 8px; display: flex; align-items: center; gap: 10px; z-index: 2; }
+  .jeu-haut .rond { width: 42px; height: 42px; font-size: 1.1rem; flex: none; }
+  .jeu-lieu { flex: 1; font-family: var(--deco); color: #fff; font-size: 1rem; text-shadow: 0 2px 0 #000, 0 0 6px #000; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  #jeuLeds { flex: none; padding: 6px 8px; border-radius: 999px; background: rgba(10,12,16,.75); gap: 5px; }
+  #jeuLeds i { width: 13px; height: 13px; }
+  .jeu-titre { position: absolute; left: 50%; top: 22%; transform: translateX(-50%); z-index: 2; text-align: center; padding: 12px 20px; background: rgba(8,12,16,.82);
+    border: 3px solid #f4efe0; border-radius: 6px; color: #fff; font-family: var(--deco); display: flex; flex-direction: column; gap: 4px; min-width: 60%; }
+  .jeu-titre b { font-size: 1.3rem; font-weight: 400; color: var(--cyan); }
+  .jeu-dialogue { position: absolute; left: 10px; right: 10px; bottom: 10px; z-index: 3; padding: 12px 14px; background: #f8f5ea; color: #1b1b22; border: 4px solid #1b1b22;
+    border-radius: 6px; box-shadow: inset 0 0 0 2px #f8f5ea, inset 0 0 0 4px #7a7a8a; font-family: var(--texte); font-size: 1.05rem; line-height: 1.35; }
+  #combat { position: absolute; inset: 0; z-index: 4; background: linear-gradient(#a7d8f0 0%, #d8f0f8 48%, #8fd16a 48%, #6fb24f 100%); }
+  .combat-nom { position: absolute; top: 60px; left: 12px; right: 12px; padding: 8px 12px; background: #f8f5ea; border: 3px solid #1b1b22; border-radius: 6px; color: #1b1b22;
+    font-family: var(--nom); font-size: 1.25rem; }
+  .combat-nom .etoiles { font-family: var(--texte); color: #d08a00; font-size: 1rem; }
+  .combat-scene { position: absolute; left: 0; right: 0; top: 20%; bottom: 34%; display: flex; align-items: flex-end; justify-content: center; }
+  .socle { position: absolute; bottom: 4%; width: 62%; height: 14%; border-radius: 50%; background: #5a9a40; box-shadow: inset 0 -6px 0 #3f7a2e; }
+  #combatImg { position: relative; max-width: 66%; max-height: 92%; image-rendering: pixelated; transition: transform .25s steps(3); cursor: pointer; touch-action: none; }
+  #combatImg.touche { animation: touche .15s steps(2); }
+  @keyframes touche { 50% { filter: brightness(1.8); } }
+  #combat.pris #combatImg { animation: aspire 1.4s steps(8) forwards; }
+  @keyframes aspire { to { transform: scale(.05) rotate(540deg); opacity: 0; filter: brightness(3) hue-rotate(90deg); } }
+  .combat-jauge { position: absolute; left: 14%; right: 14%; bottom: calc(10px + 88px); height: 16px; border: 3px solid #1b1b22; border-radius: 999px; background: #f8f5ea; overflow: hidden; }
+  #combatBarre { height: 100%; width: 0; background: linear-gradient(90deg, #00c9a7, #4ff3ff); }
+  #combat .jeu-dialogue { min-height: 78px; }
+  .manette { flex: none; height: calc(176px + env(safe-area-inset-bottom, 0px)); padding: 14px 22px env(safe-area-inset-bottom, 0px); display: flex; align-items: center; justify-content: space-between; }
+  .croix-dir { display: grid; grid-template: repeat(3, 50px) / repeat(3, 50px); }
+  .croix-dir button { border: none; background: #2a2e36; color: #8a909c; font-size: 1rem; box-shadow: 0 4px 0 #0b0d10; touch-action: none; }
+  .croix-dir button.enfonce { background: #1d2026; transform: translateY(3px); box-shadow: 0 1px 0 #0b0d10; color: var(--cyan); }
+  .croix-dir span { background: #2a2e36; }
+  .croix-dir [data-dir=haut] { grid-area: 1 / 2; border-radius: 8px 8px 0 0; } .croix-dir [data-dir=bas] { grid-area: 3 / 2; border-radius: 0 0 8px 8px; }
+  .croix-dir [data-dir=gauche] { grid-area: 2 / 1; border-radius: 8px 0 0 8px; } .croix-dir [data-dir=droite] { grid-area: 2 / 3; border-radius: 0 8px 8px 0; }
+  .croix-dir span { grid-area: 2 / 2; }
+  .boutons-ab { display: flex; gap: 16px; transform: rotate(-22deg); align-items: flex-end; }
+  .boutons-ab > div { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+  .boutons-ab > div:last-child { margin-bottom: 34px; }
+  .boutons-ab button { width: 66px; height: 66px; border-radius: 50%; border: none; background: #b0225f; color: #ffd6e6; font-family: var(--deco); font-size: 1.5rem;
+    box-shadow: 0 5px 0 #5c0f31; touch-action: none; }
+  .boutons-ab button:active { transform: translateY(4px); box-shadow: 0 1px 0 #5c0f31; }
+  .boutons-ab small { font-family: var(--deco); color: #8a909c; font-size: .85rem; letter-spacing: .06em; }
 </style>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -338,7 +386,7 @@
       <button id="commencer" class="planche principal" type="button">Commencer l'aventure</button>
       <button class="planche petit ouvrir-grimoire avec-picto" type="button"><svg class="picto-livre" viewBox="0 0 48 36" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"><path d="M24 8C18 4 10 3 3 5v26c7-2 15-1 21 3 6-4 14-5 21-3V5c-7-2-15-1-21 3z"/><path d="M24 8v26"/><path d="M8 11c4-.6 8-.2 11.5 1.4M8 16c4-.6 8-.2 11.5 1.4M8 21c4-.6 8-.2 11.5 1.4M40 11c-4-.6-8-.2-11.5 1.4"/></g><path d="M34.5 16.5l1.3 2.8 3 .4-2.2 2 .6 3-2.7-1.5-2.7 1.5.6-3-2.2-2 3-.4z" fill="currentColor"/></svg>Mon grimoire</button>
       <button id="defiAccueil" class="planche petit orange" type="button" hidden>Défi de Sporran</button>
-    <button id="ouvrirParents" class="planche petit orange" type="button">Préparer le sauvetage</button>
+    <button id="ouvrirParents" class="planche petit orange" type="button">Choisir son aventure</button>
     </div>
     <p id="modeActuel" class="etat"></p>
   </div>
@@ -391,26 +439,34 @@
   </div>
 </div>
 
-<!-- Préparer le sauvetage (parents) -->
+<!-- Choisir son aventure : réelle (QR codes, géolocalisation) ou virtuelle (jeu vidéo) -->
 <div id="parents" class="ecran" hidden>
   <button class="croix" type="button" data-ferme="parents" aria-label="Fermer">✕</button>
   <img class="chat-menu" src="menu-catsith-3.webp" alt="">
   <div class="contenu defile">
-    <h2>Préparer le sauvetage</h2>
-    <p>Pour les parents : choisissez comment les créatures seront cachées.</p>
-    <div class="choix carte-mode" data-mode="qr" role="button" tabindex="0">
-      <h3>QR codes à cacher</h3>
-      <p>Imprimez la planche, découpez les cartes et cachez-les où vous voulez. Les enfants les trouvent puis les visent avec l'œil magique.</p>
-      <div class="boutons"><a class="mini cyan" href="qr-codes-cryptids.pdf" target="_blank" rel="noopener">Planche à imprimer</a></div>
+    <h2>Choisir son aventure</h2>
+    <div class="onglets genre">
+      <button id="genreReel" class="planche petit" type="button">Aventure réelle</button>
+      <button id="genreVirtuel" class="planche petit" type="button">Aventure virtuelle</button>
     </div>
-    <div class="choix carte-mode" data-mode="interieur" role="button" tabindex="0">
-      <h3>Géolocalisation · intérieur</h3>
-      <p>Les créatures se cachent à moins de 10 m. L'enfant suit le détecteur sur une carte en pixel art. Dans une maison, le GPS est souvent imprécis : on peut alors avancer en touchant la carte (bouton 👣).</p>
+    <div id="choixReel" class="colonne" hidden>
+      <p>Pour les parents : choisissez comment les créatures seront cachées.</p>
+      <div class="choix carte-mode" data-mode="qr" role="button" tabindex="0">
+        <h3>QR codes à imprimer</h3>
+        <p>Imprimez la planche, découpez les cartes et cachez-les où vous voulez. Les enfants les trouvent puis les visent avec l'œil magique.</p>
+        <div class="boutons"><a class="mini cyan" href="qr-codes-cryptids.pdf" target="_blank" rel="noopener">Planche à imprimer</a></div>
+      </div>
+      <div class="choix carte-mode" data-mode="exterieur" role="button" tabindex="0">
+        <h3>Géolocalisation · extérieur</h3>
+        <p>Placez vous-même les créatures sur la carte d'un parc. L'enfant les cherche avec le détecteur, sur une carte en pixel art de vos alentours.</p>
+        <div class="boutons"><button class="mini cyan" type="button" data-placer="1">Placer les créatures</button></div>
+      </div>
     </div>
-    <div class="choix carte-mode" data-mode="exterieur" role="button" tabindex="0">
-      <h3>Géolocalisation · extérieur</h3>
-      <p>Les créatures se cachent à moins de 20 m, sur une carte en pixel art de vos alentours (arbres, maisons, chemins, eau). Vous pouvez aussi les placer vous-même dans un parc.</p>
-      <div class="boutons"><button class="mini" type="button" data-placer="1">Placer moi-même les créatures</button></div>
+    <div id="choixVirtuel" class="colonne" hidden>
+      <div class="choix carte-mode" data-mode="virtuel" role="button" tabindex="0">
+        <h3>Jeu vidéo</h3>
+        <p>Une aventure en pixel art à l'écran, comme sur une vieille console : explore la forêt, le village et le lac, puis le cercle de pierres. La croix sert à marcher, le bouton A à capturer.</p>
+      </div>
     </div>
     <p id="modeParents" class="etat"></p>
     <button id="fermerParents" class="planche petit" type="button">Retour</button>
@@ -480,6 +536,38 @@
         <path d="M32 12 L49 42 L15 42 Z"/><path d="M32 4v8M32 52v8M4 32h8M52 32h8"/><circle cx="32" cy="33" r="4" fill="#bff9ff"/></g></svg>
     </button><div class="legende">Sceau magique</div></div>
     <div style="width:58px"></div>
+  </div>
+</div>
+<!-- Aventure virtuelle : le jeu vidéo -->
+<div id="jeu" hidden>
+  <div class="jeu-ecran">
+    <canvas id="jeuCanvas"></canvas>
+    <div class="jeu-haut">
+      <button id="jeuQuitter" class="rond" type="button" aria-label="Retour à l'accueil">✕</button>
+      <div id="jeuLieu" class="jeu-lieu"></div>
+      <div id="jeuLeds" class="emf-leds" aria-label="Détecteur"><i></i><i></i><i></i><i></i><i></i></div>
+    </div>
+    <div id="jeuTitre" class="jeu-titre" hidden></div>
+    <div id="jeuDialogue" class="jeu-dialogue" hidden></div>
+    <div id="combat" hidden>
+      <div class="combat-nom"><span id="combatNom"></span> <span id="combatEtoiles" class="etoiles"></span></div>
+      <div class="combat-scene"><div class="socle"></div><img id="combatImg" alt="" draggable="false"></div>
+      <div class="combat-jauge"><div id="combatBarre"></div></div>
+      <div id="combatTexte" class="jeu-dialogue"></div>
+    </div>
+  </div>
+  <div class="manette">
+    <div class="croix-dir">
+      <button data-dir="haut" type="button" aria-label="Haut">▲</button>
+      <button data-dir="gauche" type="button" aria-label="Gauche">◀</button>
+      <span></span>
+      <button data-dir="droite" type="button" aria-label="Droite">▶</button>
+      <button data-dir="bas" type="button" aria-label="Bas">▼</button>
+    </div>
+    <div class="boutons-ab">
+      <div><button id="jeuB" type="button" aria-label="B : fuir ou fermer">B</button><small>Fuir</small></div>
+      <div><button id="jeuA" type="button" aria-label="A : chercher ou capturer">A</button><small>Capturer</small></div>
+    </div>
   </div>
 </div>
 <img id="sigil" alt="" hidden>
@@ -782,12 +870,18 @@ document.addEventListener("pointerdown", e => { const b = e.target.closest("butt
   b.classList.remove("appuye"); void b.offsetWidth; b.classList.add("appuye"); setTimeout(() => b.classList.remove("appuye"), 450); if (navigator.vibrate) navigator.vibrate(12); }, true);
 
 /* ===================== Accueil, parents ===================== */
-const LIBELLES = { qr: "Mode : QR codes cachés", interieur: "Mode : intérieur (10 m)", exterieur: "Mode : extérieur (20 m)" };
+const LIBELLES = { qr: "Mode : QR codes cachés", interieur: "Mode : intérieur (10 m)", exterieur: "Mode : extérieur (20 m)", virtuel: "Mode : aventure virtuelle (jeu vidéo)" };
 function majModes() {
   majAccueil(); $("modeParents").textContent = LIBELLES[mode()];
   document.querySelectorAll(".carte-mode").forEach(c => { c.classList.toggle("actif", c.dataset.mode === mode()); c.classList.toggle("eteint", c.dataset.mode !== mode()); });
 }
-$("ouvrirParents").addEventListener("click", () => { majModes(); montrer("parents"); });
+function genre(virtuel) {   // « Choisir son aventure » : réelle (QR codes, géolocalisation) ou virtuelle (jeu vidéo)
+  $("choixReel").hidden = virtuel; $("choixVirtuel").hidden = !virtuel;
+  $("genreReel").classList.toggle("actif", !virtuel); $("genreVirtuel").classList.toggle("actif", virtuel);
+}
+$("genreReel").addEventListener("click", () => genre(false));
+$("genreVirtuel").addEventListener("click", () => genre(true));
+$("ouvrirParents").addEventListener("click", () => { majModes(); genre(mode() === "virtuel"); montrer("parents"); });
 $("fermerParents").addEventListener("click", () => { majModes(); montrer("accueil"); });
 document.querySelectorAll(".carte-mode").forEach(b => b.addEventListener("click", e => {
   if (e.target.closest("a")) return;   // le lien de la planche reste un lien
@@ -824,7 +918,7 @@ function afficherIntro(i) {
   $("suiteIntro").textContent = i === textesIntro.length - 1 ? (textesIntro === INTRO ? "À l'aventure !" : "Relever le défi !") : "Suite";
   sfx("page");
 }
-function lancerAventure() { initAudio(); ouvrirOeil(); }
+function lancerAventure() { initAudio(); if (mode() === "virtuel") return ouvrirJeu(); ouvrirOeil(); }
 $("commencer").addEventListener("click", () => { initAudio(); pageIntro = 0; textesIntro = INTRO; finIntro = apresIntro; montrer("intro"); afficherIntro(0); });
 function apresIntro() { clearInterval(ecrit); taire(); ecrire(CLES.intro, true); preparerChoix(); montrer("partie"); }
 
@@ -1198,8 +1292,12 @@ function apresCapture() {
     membreIdx++; bandeau(fait + " est sauvé ! Mais " + suivant + " se cache encore… Cherche-le !", 3200);
     sfx("victoire"); setTimeout(lancerMembre, 1500); return;
   }
-  ajouter(CLES.pris, traque.id); majPartie(p => { if (!p.pris.includes(traque.id)) p.pris.push(traque.id); }); sfx("victoire");
-  $("portrait").src = traque.image; $("ficheNom").textContent = traque.nom; $("ficheTexte").textContent = traque.texte;
+  sauve(traque.id);
+}
+function sauve(id) {   // la créature rejoint la collection : écran « Sauvé ! »
+  const t = TRAQUES[id];
+  ajouter(CLES.pris, id); majPartie(p => { if (!p.pris.includes(id)) p.pris.push(id); }); sfx("victoire");
+  $("portrait").src = t.image; $("ficheNom").textContent = t.nom; $("ficheTexte").textContent = t.texte;
   const p = partie() || { liste: ids, pris: pris() }, n = p.pris.length, total = p.liste.length;
   $("compteur").textContent = n >= total ? "" : n + " / " + total + " cryptides sauvés dans cette aventure.";
   $("final").hidden = n < total; $("continuer").hidden = n >= total; $("rejouer").hidden = n < total;
@@ -1232,6 +1330,7 @@ async function ouvrirOeil() {
 }
 function prochaineTraque() {
   $("viseur").hidden = true; $("radar").hidden = true; $("gauche").hidden = $("droite").hidden = true; $("jauge").hidden = true;
+  if (mode() === "virtuel") return ouvrirJeu();
   if (enBoss) return mode() === "qr" ? demarrerBossAR() : ouvrirPixel();
   const demande = new URLSearchParams(location.search).get("m");
   const p = partie() || { liste: ids, pris: [] };
@@ -1449,7 +1548,8 @@ function lancerDefi() {
 }
 function demarrerBoss() {
   clearInterval(ecrit); enBoss = true; bossPhase = 0; textesIntro = INTRO; finIntro = apresIntro;
-  const p = partie(); if (p) { delete p.posBoss; ecrire(CLES.partie, p); }
+  const p = partie(); if (p) { delete p.posBoss; if (p.jeu) delete p.jeu.boss; ecrire(CLES.partie, p); }
+  if (mode() === "virtuel") return ouvrirJeu();
   if (!$("camera").srcObject) return ouvrirOeil();     // l'œil magique n'est pas encore ouvert
   montrer(null); $("scene").hidden = false; changerAmbiance("chasse"); prochaineTraque();
 }
@@ -1796,6 +1896,440 @@ window.__test = { ouvrir: () => { montrer(null); $("scene").hidden = false; init
   aller: (x, y) => { PXC.manuel = true; PXC.vise = { x, y }; }, attraper: () => attraper(), frapper: () => frapper(),
   jauge: () => moteur && moteur.creature && moteur.creature.jauge, figurine: c => ouvrirFigurine(c),
   etat: () => { const c = moteur && moteur.creature; return { angle: c && c.angle, lacet: moteur && lacetCamera(), gyro, gyroOK, trouve: c && c.trouve, consigne: $("consigne").textContent }; } };
+
+/* ===================== Aventure virtuelle : jeu vidéo en pixel art (façon Pokémon / Zelda Game Boy) ===================== */
+// Chaque map est une grille de lettres : une lettre = une case de 16 × 16 pixels (voir TUILES).
+// Maps provisoires en attendant celles de Sam : quand il les fournira, on mettra le nom du fichier dans `image`.
+// L'image remplace alors le dessin des cases, et la grille sert toujours pour les murs, les sorties et les cachettes.
+const CASE = 16;
+const TUILES = {
+  ".": { libre: true }, ",": { libre: true }, "=": { libre: true }, ":": { libre: true }, "*": { libre: true }, "b": { libre: true },
+  "<": { libre: true }, ">": { libre: true }, "P": { libre: true },
+  "T": {}, "~": {}, "#": {}, "f": {}, "R": {}, "H": {}, "D": {}, "L": {}, "S": {}, "o": {}
+};   // . herbe  , hautes herbes  = chemin  : sable  * fleurs  b pont  < > sorties  P départ
+     // T arbre  ~ eau  # rocher  f barrière  R toit  H mur  D porte  L lampadaire  S panneau  o pierre levée
+const MAPS = [
+  { nom: "La forêt des Murmures", image: null, panneau: "Forêt des Murmures. Au nord : le village de Sporran.", grille: [
+    "TTTTTTTTT>>TTTTTTTTT",
+    "TTT,,,...==...,,,TTT",
+    "TT,,,,...==..*.,,,TT",
+    "T,,,..T..==..T...,,T",
+    "T,,..TTT.==.TTT...,T",
+    "T....TTT.==.TTT....T",
+    "T*.......==.......*T",
+    "T..~~~...==...,,,..T",
+    "T.~~~~~..==..,,,,,.T",
+    "T.~~~~~..==..,,,,,.T",
+    "T..~~~...==...,,,..T",
+    "T*.......==S.......T",
+    "TT..TT...==...TT..TT",
+    "T,,.TT...==...TT.,,T",
+    "T,,,.....==.....,,,T",
+    "T,,,..*..==..*..,,,T",
+    "TT,......==......,TT",
+    "TTT..TT..==..TT..TTT",
+    "TT...TT..==..TT...TT",
+    "T.*......==......*.T",
+    "T........P.......*.T",
+    "TTTTTTTTTTTTTTTTTTTT"] },
+  { nom: "Le village de Sporran", image: null, panneau: "Village de Sporran. Au nord : le lac aux Brumes.", grille: [
+    "TTTTTTTTT>>TTTTTTTTT",
+    "T*.......==.......*T",
+    "T.RRRR...==...RRRR.T",
+    "T.RRRR..L==L..RRRR.T",
+    "T.HHDH...==...HDHH.T",
+    "T...=....==....=...T",
+    "Tff.=....==....=.ffT",
+    "T...=....==....=...T",
+    "T==================T",
+    "T..L.....==S....L..T",
+    "T.RRRRR..==..RRRRR.T",
+    "T.RRRRR..==..RRRRR.T",
+    "T.HHDHH..==..HHDHH.T",
+    "T...=....==....=...T",
+    "T*..======.=====..*T",
+    "Tfff.....==.....fffT",
+    "T,,,..L..==..L..,,,T",
+    "T,,,,....==....,,,,T",
+    "T.,,..*..==..*..,,.T",
+    "TT.......==.......TT",
+    "TTT......==......TTT",
+    "TTTTTTTTT<<TTTTTTTTT"] },
+  { nom: "Le lac aux Brumes", image: null, panneau: "Lac aux Brumes. Au nord : le cercle de pierres.", grille: [
+    "TTTTTTTTT>>TTTTTTTTT",
+    "T#.......==.......#T",
+    "T..,,....==....,,..T",
+    "T.,,,::::==::::,,,.T",
+    "T::::~~~~bb~~~~::::T",
+    "T:~~~~~~~bb~~~~~~~:T",
+    "T~~~~~~~~bb~~~~~~~~T",
+    "T~~~~~~~~bb~~~~~~~~T",
+    "T~~~##~~~bb~~~~##~~T",
+    "T~~~~~~~~bb~~~~~~~~T",
+    "T:~~~~~~~bb~~~~~~~:T",
+    "T::~~~~~~bb~~~~~~::T",
+    "T.::~~~~~bb~~~~~::.T",
+    "T.,,:::::==:::::,,.T",
+    "T.,,,....==S....,,.T",
+    "T#.......==.......#T",
+    "T...*....==....*...T",
+    "T..#.....==.....#..T",
+    "T.,,,....==....,,,.T",
+    "TT,,,....==....,,,TT",
+    "TTT......==......TTT",
+    "TTTTTTTTT<<TTTTTTTTT"] },
+  { nom: "Le cercle de pierres", image: null, nuit: true, finale: true, panneau: "Le cercle de pierres. Ici se cachent les derniers cryptides.", grille: [
+    "TTTTTTTTTTTTTTTTTTTT",
+    "TTTTTTT,,,,,,TTTTTTT",
+    "TTTT,,,,....,,,,TTTT",
+    "TTT,,..o....o..,,TTT",
+    "TT,,.o........o.,,TT",
+    "TT,..............,TT",
+    "TT,.o....**....o.,TT",
+    "TT,......**......,TT",
+    "TT,.o..........o.,TT",
+    "TT,,..o......o..,,TT",
+    "TTT,,...o..o...,,TTT",
+    "TTTT,,...==...,,TTTT",
+    "TTTTT,...==...,TTTTT",
+    "TTTTTT..L==L..TTTTTT",
+    "TTTTTT...==...TTTTTT",
+    "TTTTTT,..==..,TTTTTT",
+    "TTTTTT,,.==.,,TTTTTT",
+    "TTTTTTT..==..TTTTTTT",
+    "TTTTTTT..==S.TTTTTTT",
+    "TTTTTTT..==..TTTTTTT",
+    "TTTTTTT..==..TTTTTTT",
+    "TTTTTTTTT<<TTTTTTTTT"] }
+];
+const FINALE = MAPS.findIndex(m => m.finale);
+const DIRS = { haut: [0, -1], bas: [0, 1], gauche: [-1, 0], droite: [1, 0] };
+const DUREE_PAS = 190;   // ms pour avancer d'une case
+let JEU = null;
+
+// ---------- la grille ----------
+const tuileJ = (m, x, y) => (MAPS[m].grille[y] || "")[x] || "T";
+const libreJ = (m, x, y) => !!(TUILES[tuileJ(m, x, y)] || {}).libre;
+function trouverJ(m, ch) { const g = MAPS[m].grille; for (let y = 0; y < g.length; y++) { const x = g[y].indexOf(ch); if (x >= 0) return [x, y]; } return null; }
+function entreeJ(m, porte) {   // la case où l'on arrive : à côté de la sortie `porte`, ou le départ
+  const p = porte && trouverJ(m, porte); if (!p) return trouverJ(m, "P") || [1, 1];
+  for (const [dx, dy] of [[0, -1], [0, 1], [-1, 0], [1, 0]]) { const c = tuileJ(m, p[0] + dx, p[1] + dy); if (TUILES[c] && TUILES[c].libre && c !== "<" && c !== ">") return [p[0] + dx, p[1] + dy]; }
+  return p;
+}
+const accessiblesJ = {};
+function casesAccessibles(m) {   // toutes les cases où l'on peut aller à pied depuis l'entrée de la map
+  if (accessiblesJ[m]) return accessiblesJ[m];
+  const d = entreeJ(m, m ? "<" : null), vu = new Set([d + ""]), file = [d];
+  while (file.length) { const [x, y] = file.shift(); for (const [dx, dy] of Object.values(DIRS)) { const n = [x + dx, y + dy];
+    if (!vu.has(n + "") && libreJ(m, n[0], n[1])) { vu.add(n + ""); file.push(n); } } }
+  return accessiblesJ[m] = [...vu].map(s => s.split(",").map(Number));
+}
+
+// ---------- où se cache chaque créature (son habitat) ----------
+function autour(m, x, y, chars) { let n = 0; for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) if ((dx || dy) && chars.includes(tuileJ(m, x + dx, y + dy))) n++; return n; }
+function scoreJ(cle, m, x, y) {
+  const c = tuileJ(m, x, y), pres = s => autour(m, x, y, s) > 0;
+  switch (cle) {
+    case "mothman": return pres("L") ? 3 : c === "=" ? 1 : 0;
+    case "nessie": case "kraken": return pres("~") ? 3 : 0;
+    case "swamp": return (pres("~") ? 2 : 0) + (c === "," ? 2 : 0);
+    case "thunderbird": return c === "." && autour(m, x, y, "T~#fRHDLSo") === 0 ? 2 : 0;
+    case "barghest": return (pres("T") ? 2 : 0) + (c === "," ? 1 : 0);
+    case "faery": return c === "*" ? 3 : pres("*") ? 1 : 0;
+    case "lutins": return c === "," ? 3 : 0;
+    case "jackalope": return c === "," ? 2 : c === "." ? 1 : 0;
+    case "yeti": return pres("#") ? 3 : c === ":" ? 1 : 0;
+    case "gargouille": return pres("oRH") ? 3 : 0;
+    case "chupacabra": return pres("HD") ? 3 : pres("f") ? 2 : 0;
+  }
+  return 0;
+}
+function cachettesJ(cle, m, prises) {   // les meilleures cases de la map pour cette créature, loin du départ et des autres
+  const dep = [entreeJ(m, m ? "<" : null), trouverJ(m, ">")].filter(Boolean);
+  const ok = casesAccessibles(m).filter(([x, y]) => !"<>Pb".includes(tuileJ(m, x, y))
+    && dep.every(([a, b]) => Math.abs(a - x) + Math.abs(b - y) >= 5) && prises.every(([a, b]) => Math.max(Math.abs(a - x), Math.abs(b - y)) >= 3));
+  let best = 0; ok.forEach(([x, y]) => best = Math.max(best, scoreJ(cle, m, x, y)));
+  return { score: best, cases: ok.filter(([x, y]) => scoreJ(cle, m, x, y) === best) };
+}
+const auHasardJ = l => l[Math.floor(Math.random() * l.length)];
+function placerJeu(p) {   // répartit les créatures de l'aventure dans les maps (la finale garde les plus difficiles)
+  const j = p.jeu, reste = p.liste.filter(k => !p.pris.includes(k) && !j.pos[k]);
+  if (!reste.length) return;
+  const prises = m => Object.values(j.pos).filter(q => q[0] === m).map(q => [q[1], q[2]]);
+  const dejaFinale = Object.values(j.pos).filter(q => q[0] === FINALE).length;
+  const nFinale = Math.max(0, (p.liste.length <= 4 ? 1 : 2) - dejaFinale);
+  const tri = reste.slice().sort((a, b) => (DIFF[TRAQUES[b].cle] || 2) - (DIFF[TRAQUES[a].cle] || 2));
+  const pourFinale = new Set(tri.slice(0, Math.min(nFinale, reste.length - (reste.length > 1 ? 1 : 0))));
+  reste.forEach(k => {
+    const cle = TRAQUES[k].cle, maps = pourFinale.has(k) ? [FINALE] : MAPS.map((_, i) => i).filter(i => i !== FINALE);
+    let choix = null;
+    maps.forEach(m => { const c = cachettesJ(cle, m, prises(m)); if (!c.cases.length) return;
+      const charge = prises(m).length, note = c.score * 10 - charge * 4 + Math.random();
+      if (!choix || note > choix.note) choix = { m, note, c }; });
+    if (choix) { const [x, y] = auHasardJ(choix.c.cases); j.pos[k] = [choix.m, x, y]; }
+  });
+}
+function cacherBoss(p) {
+  const pr = Object.entries(p.jeu.pos).filter(([k, q]) => q[0] === FINALE && !p.pris.includes(k)).map(([, q]) => [q[1], q[2]]);
+  const c = cachettesJ("gargouille", FINALE, pr.concat(JEU ? [[JEU.x, JEU.y]] : []));
+  const l = c.cases.length ? c.cases : casesAccessibles(FINALE);
+  p.jeu.boss = [FINALE].concat(auHasardJ(l));
+}
+const resteAvantFinale = p => p.liste.some(k => !p.pris.includes(k) && p.jeu.pos[k] && p.jeu.pos[k][0] !== FINALE);
+function ciblesJ() {   // les créatures cachées dans la map où l'on est
+  const p = partie(); if (!p || !p.jeu) return [];
+  if (enBoss) return p.jeu.boss && p.jeu.boss[0] === JEU.m ? [{ k: "catsith", x: p.jeu.boss[1], y: p.jeu.boss[2] }] : [];
+  return p.liste.filter(k => !p.pris.includes(k) && p.jeu.pos[k] && p.jeu.pos[k][0] === JEU.m).map(k => ({ k, x: p.jeu.pos[k][1], y: p.jeu.pos[k][2] }));
+}
+
+// ---------- ouverture, sauvegarde ----------
+function ouvrirJeu() {
+  initAudio(); taire(); fermerPixel(); arreterGPS(); montrer(null); $("scene").hidden = true; $("victoire").hidden = true;
+  changerAmbiance("chasse");
+  let p = partie();
+  if (!p) { p = { liste: [], pris: [], membres: {}, debut: Date.now() }; ecrire(CLES.partie, p); }
+  if (!p.jeu) { const d = entreeJ(0, null); p.jeu = { m: 0, x: d[0], y: d[1], dir: "haut", pos: {} }; }
+  placerJeu(p);
+  if (enBoss && !p.jeu.boss) { const d = entreeJ(FINALE, "<"); Object.assign(p.jeu, { m: FINALE, x: d[0], y: d[1], dir: "haut" }); }
+  ecrire(CLES.partie, p);
+  JEU = { m: p.jeu.m, x: p.jeu.x, y: p.jeu.y, dir: p.jeu.dir || "bas", pas: null, tenu: null, combat: null, revele: null, raf: 0, t: 0,
+    dernierBip: 0, eloigne: null, rendu: {} };
+  if (enBoss && !p.jeu.boss) { cacherBoss(p); ecrire(CLES.partie, p); bossPhase = 0; }
+  $("jeu").hidden = false; $("combat").hidden = true; allumerJ(0);
+  arriverJ(true);
+  if (!JEU.raf) JEU.raf = requestAnimationFrame(boucleJeu);
+}
+function sauverJ() { majPartie(p => { if (p.jeu) Object.assign(p.jeu, { m: JEU.m, x: JEU.x, y: JEU.y, dir: JEU.dir }); }); }
+function fermerJeu() {
+  if (JEU) { cancelAnimationFrame(JEU.raf); JEU.raf = 0; JEU.tenu = null; sauverJ(); }
+  $("jeu").hidden = true; $("combat").hidden = true;
+}
+function arriverJ(debut) {   // on entre dans une map : son nom, et combien de cryptides s'y cachent
+  const n = ciblesJ().length, M = MAPS[JEU.m];
+  $("jeuLieu").textContent = M.nom;
+  const txt = enBoss ? (n ? "Sporran se cache quelque part par ici…" : "") : n ? n + (n > 1 ? " cryptides se cachent ici" : " cryptide se cache ici") : "Aucun cryptide ici. Cherche ailleurs !";
+  titreJ(M.nom, txt); if (!debut) sfx("page");
+}
+let minuterieTitre = 0;
+function titreJ(titre, sous) {
+  const el = $("jeuTitre"); el.innerHTML = ""; const h = document.createElement("b"); h.textContent = titre; el.appendChild(h);
+  if (sous) { const s = document.createElement("span"); s.textContent = sous; el.appendChild(s); }
+  el.hidden = false; clearTimeout(minuterieTitre); minuterieTitre = setTimeout(() => el.hidden = true, 2600);
+}
+function dialogueJ(texte, duree) {
+  const el = $("jeuDialogue"); el.textContent = texte; el.hidden = false;
+  clearTimeout(dialogueJ.t); dialogueJ.t = setTimeout(() => el.hidden = true, duree || 3600);
+}
+
+// ---------- déplacement ----------
+function essayerPas(dir) {
+  if (!JEU || JEU.pas || JEU.combat || JEU.revele) return;
+  JEU.dir = dir; const [dx, dy] = DIRS[dir], x = JEU.x + dx, y = JEU.y + dy, c = tuileJ(JEU.m, x, y);
+  if (!libreJ(JEU.m, x, y)) { if (performance.now() - (JEU.tCogne || 0) > 350) { JEU.tCogne = performance.now(); sfx("clic"); } return; }
+  if (c === ">" && JEU.m + 1 === FINALE && !enBoss && resteAvantFinale(partie())) {
+    if (performance.now() - (JEU.tCogne || 0) > 1500) { JEU.tCogne = performance.now(); sfx("rate");
+      dialogueJ("Un sceau magique ferme le passage. Sauve d'abord tous les cryptides cachés avant le cercle de pierres !"); }
+    return;
+  }
+  JEU.pas = { de: [JEU.x, JEU.y], t0: performance.now() }; JEU.x = x; JEU.y = y;
+}
+function finPas() {
+  JEU.pas = null; const c = tuileJ(JEU.m, JEU.x, JEU.y);
+  if (c === ">" || c === "<") {
+    const m = JEU.m + (c === ">" ? 1 : -1); if (!MAPS[m]) return;
+    const d = entreeJ(m, c === ">" ? "<" : ">"); JEU.m = m; JEU.x = d[0]; JEU.y = d[1]; JEU.dir = c === ">" ? "haut" : "bas"; JEU.eloigne = null;
+    sauverJ(); arriverJ(); return;
+  }
+  sauverJ();
+  // tout près d'une cachette : la créature surgit (« ! » au-dessus de sa cachette), puis la rencontre commence
+  const q = ciblesJ().find(q => Math.abs(q.x - JEU.x) + Math.abs(q.y - JEU.y) <= 1);
+  if (JEU.eloigne && Math.abs(JEU.eloigne[0] - JEU.x) + Math.abs(JEU.eloigne[1] - JEU.y) >= 3) JEU.eloigne = null;
+  if (q && !JEU.eloigne) { JEU.revele = { q, t0: performance.now() }; sfx("revele"); if (navigator.vibrate) navigator.vibrate([60, 40, 60]);
+    setTimeout(() => rencontre(q.k), 900); }
+}
+function boutonA() {
+  if (!JEU) return;
+  if (JEU.combat) return frapperJ();
+  const [dx, dy] = DIRS[JEU.dir];
+  if (tuileJ(JEU.m, JEU.x + dx, JEU.y + dy) === "S") { sfx("page"); return dialogueJ(texteSigne(), 6000); }
+  sfx("clic"); dialogueJ(["Rien par ici…", "Le détecteur t'aide : plus il s'allume, plus un cryptide est proche !"][Math.random() < .5 ? 0 : 1], 2200);
+}
+function texteSigne() {
+  const p = partie(), l = enBoss ? [] : ciblesJ().map(q => TRAQUES[q.k].indice);
+  const txt = MAPS[JEU.m].panneau;
+  if (enBoss) return txt + " Sporran rôde autour des pierres levées…";
+  return l.length ? txt + " Indices : " + l.map(s => "« " + s + " »").join(", ") + "." : txt + " Aucun cryptide ne se cache ici.";
+}
+function boutonB() {
+  if (!JEU) return;
+  if (JEU.combat) return fuirJ();
+  $("jeuDialogue").hidden = true;
+}
+
+// ---------- rencontre et capture ----------
+function rencontre(k) {
+  if (!JEU || JEU.combat) return;
+  JEU.revele = null;
+  const boss = k === "catsith", t = boss ? null : TRAQUES[k], d = boss ? 4 : (DIFF[t.cle] || 2);
+  JEU.combat = { k, d, jauge: 0, esq: 0, bloque: 0 };
+  $("combatImg").src = pixDe(k); $("combatImg").style.transform = "";
+  $("combatNom").textContent = boss ? GARDIEN.nom : t.nom;
+  $("combatEtoiles").textContent = "★".repeat(d);
+  $("combatTexte").textContent = boss ? "Hé hé ! Tu m'as trouvé… mais m'attraper, c'est une autre histoire !"
+    : "Tu as trouvé " + t.nom.split(",")[0] + " ! Tapote vite le bouton A pour remplir le sceau magique.";
+  $("combatBarre").style.width = "0%"; $("combat").hidden = false; $("combat").classList.remove("pris");
+  sfx("oeil"); if (!boss && audio && !tampons["cri-" + t.membres[0].id]) charger("cri-" + t.membres[0].id, "cri-" + t.membres[0].id + ".m4a");
+}
+function frapperJ() {
+  const c = JEU.combat; if (!c || c.fini || performance.now() < c.bloque) return;
+  c.jauge = Math.min(1, c.jauge + GAIN[c.d]); sfx("tape"); if (navigator.vibrate) navigator.vibrate(15);
+  const img = $("combatImg"); img.classList.remove("touche"); void img.offsetWidth; img.classList.add("touche");
+  if (c.jauge >= 1) return captureJ();
+  const s = ESQUIVES[c.d];
+  if (c.esq < s.length && c.jauge >= s[c.esq]) {
+    c.esq++;
+    if (c.k === "catsith" && bossPhase < 2) return fuiteBoss();
+    c.jauge = Math.max(0, c.jauge - .12); c.bloque = performance.now() + 700; sfx("fuite");
+    img.style.transform = "translateX(" + (Math.random() < .5 ? -1 : 1) * (25 + Math.random() * 15) + "%)";
+    setTimeout(() => { img.style.transform = ""; }, 700);
+    $("combatTexte").textContent = "Oh ! Il esquive ! Continue à tapoter !";
+  }
+}
+function fuirJ() {
+  const c = JEU.combat; if (!c || c.fini) return;
+  JEU.combat = null; $("combat").hidden = true; JEU.eloigne = [JEU.x, JEU.y]; sfx("clic");
+  dialogueJ("Tu t'éloignes sans bruit… Le cryptide reste caché ici. Reviens quand tu veux !", 3000);
+}
+function fuiteBoss() {   // comme sur la carte GPS : Sporran file ailleurs deux fois avant de se laisser attraper
+  bossPhase++; sfx("fuite"); JEU.combat = null; $("combat").hidden = true;
+  const p = partie(); cacherBoss(p); ecrire(CLES.partie, p);
+  dialogueJ(bossPhase === 1 ? "Hé hé ! Trop lent ! Attrape-moi si tu peux !" : "Encore raté ! Dernière chance, petit humain !", 3400);
+}
+function captureJ() {
+  const c = JEU.combat; c.fini = true; $("combatBarre").style.width = "100%";
+  sfx("sceau"); setTimeout(() => sfx("capture"), 300); if (navigator.vibrate) navigator.vibrate(120);
+  $("combat").classList.add("pris"); $("combatTexte").textContent = "Le sceau magique brille…";
+  setTimeout(() => $("eclair").classList.add("flash"), 1500);
+  setTimeout(() => {
+    $("eclair").classList.remove("flash"); JEU.combat = null; $("combat").hidden = true; fermerJeu();
+    if (c.k === "catsith") return bossVaincu();
+    const t = TRAQUES[c.k]; majPartie(p => { p.membres[c.k] = t.membres.length; });   // les deux lutins sont capturés ensemble
+    traque = Object.assign({ id: c.k }, t); sauve(c.k);
+  }, 2300);
+}
+
+// ---------- dessin ----------
+const PJ = { herbe: "#8fd16a", herbe2: "#7cc25a", herbe3: "#a6dd7d", hautes: "#4f9e45", hautes2: "#3b7f36", chemin: "#e2c48a", chemin2: "#cfae72",
+  sable: "#f0dfa0", sable2: "#e0c985", eau: "#4fa3e0", eau2: "#7fc3f0", eau3: "#3a86c4", arbre: "#2f7a3a", arbre2: "#45a04a", arbre3: "#6cc05e", tronc: "#7a4b2a",
+  contour: "#1d3324", rocher: "#9aa0a8", rocher2: "#6d737c", toit: "#d0564a", toit2: "#a83e36", mur: "#f4e6c6", mur2: "#d8c59c", porte: "#7a4b2a", vitre: "#ffe27a",
+  barriere: "#d9b27a", fleurR: "#ff6b81", fleurB: "#ffffff", fleurJ: "#ffd84a", lampe: "#3a3f4a", lumiere: "#ffe9a0", pierre: "#a7a2b8", pierre2: "#77728a", panneau: "#b07a44" };
+function dessinerMapJ(m, phase) {
+  const g0 = MAPS[m].grille, W = g0[0].length * CASE, H = g0.length * CASE;
+  const cv = document.createElement("canvas"); cv.width = W; cv.height = H; const g = cv.getContext("2d");
+  const r = hasard(1000 + m * 97), px = (x, y, w, h, c) => { g.fillStyle = c; g.fillRect(x, y, w, h); };
+  const sol = (c, x, y) => {   // le fond de chaque case
+    if (c === "~") { px(x, y, CASE, CASE, PJ.eau); for (let i = 0; i < 3; i++) { const a = (r() * 12) | 0, b = (r() * 14) | 0; px(x + ((a + phase * 3) % 13), y + b, 3, 1, (i + phase) % 2 ? PJ.eau2 : PJ.eau3); } return; }
+    if (c === "=" || c === "b") { px(x, y, CASE, CASE, PJ.chemin); for (let i = 0; i < 4; i++) px(x + ((r() * 15) | 0), y + ((r() * 15) | 0), 1, 1, PJ.chemin2); return; }
+    if (c === ":") { px(x, y, CASE, CASE, PJ.sable); for (let i = 0; i < 4; i++) px(x + ((r() * 15) | 0), y + ((r() * 15) | 0), 1, 1, PJ.sable2); return; }
+    px(x, y, CASE, CASE, PJ.herbe); for (let i = 0; i < 5; i++) { const a = (r() * 14) | 0, b = (r() * 14) | 0; px(x + a, y + b, 1, 2, r() < .5 ? PJ.herbe2 : PJ.herbe3); }
+  };
+  g0.forEach((ligne, j) => [...ligne].forEach((c, i) => {
+    const x = i * CASE, y = j * CASE, h = (dx, dy, w, hh, col) => px(x + dx, y + dy, w, hh, col);
+    sol(c === "b" ? "~" : "<>PSLfTo#RHD*,.".includes(c) ? "." : c, x, y);
+    if (c === "b") { h(1, 0, 14, 16, PJ.chemin); h(1, 0, 1, 16, PJ.tronc); h(14, 0, 1, 16, PJ.tronc); for (let k = 2; k < 16; k += 4) h(2, k, 12, 1, PJ.chemin2); }
+    if (c === "<" || c === ">") { h(0, 0, 16, 16, PJ.chemin); h(4, 6, 8, 4, PJ.chemin2); }
+    if (c === ",") { for (let k = 0; k < 4; k++) { const a = (k % 2) * 8, b = (k >> 1) * 8; h(a + 1, b + 3, 6, 5, PJ.hautes2); h(a + 1, b + 1, 1, 4, PJ.hautes); h(a + 3, b, 1, 5, PJ.hautes); h(a + 5, b + 1, 1, 4, PJ.hautes); } }
+    if (c === "*") { [[3, 3, PJ.fleurR], [10, 5, PJ.fleurB], [5, 10, PJ.fleurJ], [12, 12, PJ.fleurR]].forEach(([a, b, col]) => { h(a - 1, b, 3, 1, col); h(a, b - 1, 1, 3, col); h(a, b, 1, 1, PJ.fleurJ === col ? PJ.fleurR : PJ.fleurJ); }); }
+    if (c === "T") { h(2, 13, 12, 2, "rgba(0,0,0,.25)"); h(6, 10, 4, 5, PJ.tronc); h(1, 2, 14, 10, PJ.contour); h(2, 1, 12, 11, PJ.arbre); h(3, 2, 8, 6, PJ.arbre2); h(4, 3, 3, 2, PJ.arbre3); h(1, 11, 14, 1, PJ.contour); }
+    if (c === "#") { h(2, 4, 12, 10, PJ.contour); h(3, 3, 10, 10, PJ.rocher); h(3, 9, 10, 4, PJ.rocher2); h(5, 5, 3, 2, "#c5cad0"); }
+    if (c === "o") { h(4, 13, 9, 2, "rgba(0,0,0,.3)"); h(4, 1, 8, 14, PJ.contour); h(5, 1, 6, 13, PJ.pierre); h(9, 2, 2, 12, PJ.pierre2); h(6, 4, 2, 1, "#c9c4da"); }
+    if (c === "f") { h(0, 6, 16, 2, PJ.barriere); h(0, 11, 16, 2, PJ.barriere); h(2, 4, 2, 11, PJ.tronc); h(12, 4, 2, 11, PJ.tronc); }
+    if (c === "R") { const haut = tuileJ(m, i, j - 1) !== "R"; h(0, 0, 16, 16, PJ.toit); for (let k = 3; k < 16; k += 4) h(0, k, 16, 1, PJ.toit2); if (haut) h(0, 0, 16, 2, PJ.toit2); }
+    if (c === "H" || c === "D") { h(0, 0, 16, 16, PJ.mur); h(0, 14, 16, 2, PJ.mur2); h(0, 0, 16, 2, PJ.toit2);
+      if (c === "D") { h(4, 4, 8, 12, PJ.contour); h(5, 5, 6, 11, PJ.porte); h(9, 10, 1, 1, PJ.vitre); } else { h(4, 5, 8, 6, PJ.contour); h(5, 6, 6, 4, PJ.vitre); h(8, 6, 1, 4, PJ.contour); } }
+    if (c === "L") { h(6, 14, 5, 2, "rgba(0,0,0,.3)"); h(7, 4, 2, 11, PJ.lampe); h(5, 1, 6, 4, PJ.lampe); h(6, 2, 4, 2, PJ.lumiere); }
+    if (c === "S") { h(7, 9, 2, 6, PJ.tronc); h(2, 3, 12, 7, PJ.contour); h(3, 4, 10, 5, PJ.panneau); h(5, 5, 6, 1, PJ.contour); h(5, 7, 4, 1, PJ.contour); }
+  }));
+  return cv;
+}
+function rendreMapJ(m) {
+  const R = JEU.rendu; if (R[m]) return R[m];
+  const M = MAPS[m];
+  R[m] = [dessinerMapJ(m, 0), dessinerMapJ(m, 1)];
+  if (M.image) { const i = new Image(); i.onload = () => { R[m] = [i, i]; }; i.src = M.image; }   // la map dessinée par Sam, si elle existe
+  return R[m];
+}
+const DOS = ["....hhhh....", "...hhhhhhh..", "..hhhhhhhh..", "..hhhhhhhh..", "..hhhhhhhh..", "...hhhhhh...", "..pppppppp.l",
+             ".pppppppppLL", ".pp.pppp.pLL", "....pppp..l.", "....p..p....", "...bb..bb..."];
+function dessinerHeros(g, x, y, s, dir, marche) {
+  const sp = dir === "haut" ? DOS : SPRITE, flip = dir === "gauche", w = 12 * s, h = 12 * s;
+  const x0 = Math.round(x + (CASE * s - w) / 2), y0 = Math.round(y + CASE * s - h - s - (marche ? s : 0));
+  g.fillStyle = "rgba(0,0,0,.28)"; g.fillRect(x0 + 2 * s, y + CASE * s - 2 * s, w - 4 * s, s * 1.5);
+  sp.forEach((ligne, j) => [...ligne].forEach((ch, i) => { if (ch === ".") return; g.fillStyle = SPRITE_C[ch]; g.fillRect(x0 + (flip ? 11 - i : i) * s, y0 + j * s, s, s); }));
+}
+function boucleJeu(t) {
+  JEU.raf = 0; if ($("jeu").hidden) return;
+  JEU.raf = requestAnimationFrame(boucleJeu);
+  const cv = $("jeuCanvas"), dpr = Math.min(devicePixelRatio || 1, 3), W = Math.round(cv.clientWidth * dpr), H = Math.round(cv.clientHeight * dpr);
+  if (cv.width !== W || cv.height !== H) { cv.width = W; cv.height = H; }
+  const g = cv.getContext("2d"); g.imageSmoothingEnabled = false;
+  // un pas en cours ? on avance en douceur, sinon on repart si une flèche est tenue
+  let fx = JEU.x, fy = JEU.y, marche = false;
+  if (JEU.pas) { const k = Math.min(1, (t - JEU.pas.t0) / DUREE_PAS); fx = JEU.pas.de[0] + (JEU.x - JEU.pas.de[0]) * k; fy = JEU.pas.de[1] + (JEU.y - JEU.pas.de[1]) * k; marche = k < .5;
+    if (k >= 1) { finPas(); fx = JEU.x; fy = JEU.y; } }
+  if (!JEU.pas && JEU.tenu) essayerPas(JEU.tenu);
+  const s = Math.max(2, Math.round(W / (CASE * 10))), T = CASE * s, M = MAPS[JEU.m], mw = M.grille[0].length * T, mh = M.grille.length * T;
+  let ox = Math.round(W / 2 - (fx + .5) * T), oy = Math.round(H / 2 - (fy + .5) * T);
+  ox = mw <= W ? Math.round((W - mw) / 2) : Math.min(0, Math.max(W - mw, ox)); oy = mh <= H ? Math.round((H - mh) / 2) : Math.min(0, Math.max(H - mh, oy));
+  g.fillStyle = "#1d3324"; g.fillRect(0, 0, W, H);
+  g.drawImage(rendreMapJ(JEU.m)[Math.floor(t / 600) % 2], ox, oy, mw, mh);
+  if (JEU.revele) {   // le cryptide surgit : herbes qui tremblent et « ! »
+    const q = JEU.revele.q, x = ox + q.x * T, y = oy + q.y * T, b = Math.sin(t / 60) * s;
+    g.fillStyle = "#fff"; g.fillRect(x + 6 * s, y - 9 * s + b, 4 * s, 9 * s); g.fillStyle = "#d0243c"; g.fillRect(x + 7 * s, y - 8 * s + b, 2 * s, 5 * s); g.fillRect(x + 7 * s, y - 2 * s + b, 2 * s, s);
+  }
+  dessinerHeros(g, ox + fx * T, oy + fy * T, s, JEU.dir, marche);
+  if (M.nuit) { g.fillStyle = "rgba(20,10,60,.38)"; g.fillRect(0, 0, W, H);
+    const cx = ox + (fx + .5) * T, cy = oy + (fy + .3) * T, l = g.createRadialGradient(cx, cy, 0, cx, cy, T * 3.2);
+    l.addColorStop(0, "rgba(255,215,94,.28)"); l.addColorStop(1, "rgba(255,215,94,0)"); g.fillStyle = l; g.fillRect(0, 0, W, H); }
+  if (t - (JEU.tDet || 0) > 180) { JEU.tDet = t; detecteurJ(t); }
+  if (JEU.combat && !JEU.combat.fini) {   // la jauge se vide doucement
+    const c = JEU.combat, dt = Math.min(.1, (t - (JEU.t || t)) / 1000); c.jauge = Math.max(0, c.jauge - DRAIN[c.d] * dt);
+    $("combatBarre").style.width = (c.jauge * 100) + "%";
+  }
+  JEU.t = t;
+}
+function detecteurJ(t) {
+  const l = ciblesJ(); if (!l.length) { allumerJ(0); return; }
+  const d = Math.min(...l.map(q => Math.abs(q.x - JEU.x) + Math.abs(q.y - JEU.y)));
+  const n = JEU.combat || JEU.revele ? 5 : d <= 2 ? 5 : d <= 4 ? 4 : d <= 7 ? 3 : d <= 11 ? 2 : 1;
+  allumerJ(n);
+  const periode = 1600 - n * 260;
+  if (!JEU.combat && t - JEU.dernierBip > periode) { JEU.dernierBip = t; if (audio && sonActif) note(480 + 180 * n, 0, .07, { type: "square", vol: .04, filtre: 2600 }); }
+}
+function allumerJ(n) { document.querySelectorAll("#jeuLeds i").forEach((l, i) => l.classList.toggle("on", i < n)); }
+
+// ---------- boutons (croix directionnelle, A, B) et clavier ----------
+document.querySelectorAll("#jeu [data-dir]").forEach(b => {
+  const go = e => { e.preventDefault(); JEU && (JEU.tenu = b.dataset.dir); b.classList.add("enfonce"); essayerPas(b.dataset.dir); };
+  const stop = () => { if (JEU && JEU.tenu === b.dataset.dir) JEU.tenu = null; b.classList.remove("enfonce"); };
+  b.addEventListener("pointerdown", go); ["pointerup", "pointercancel", "pointerleave"].forEach(ev => b.addEventListener(ev, stop));
+});
+$("jeuA").addEventListener("pointerdown", e => { e.preventDefault(); boutonA(); });
+$("jeuB").addEventListener("pointerdown", e => { e.preventDefault(); boutonB(); });
+$("combatImg").addEventListener("pointerdown", e => { e.preventDefault(); if (JEU && JEU.combat) frapperJ(); });
+const TOUCHES = { ArrowUp: "haut", ArrowDown: "bas", ArrowLeft: "gauche", ArrowRight: "droite", z: "haut", s: "bas", q: "gauche", d: "droite", w: "haut", a: "gauche" };
+addEventListener("keydown", e => {
+  if (!JEU || $("jeu").hidden) return;
+  if (TOUCHES[e.key]) { e.preventDefault(); JEU.tenu = TOUCHES[e.key]; essayerPas(JEU.tenu); }
+  else if (!e.repeat && (e.key === " " || e.key === "Enter")) { e.preventDefault(); boutonA(); }
+  else if (!e.repeat && (e.key === "Escape" || e.key === "Backspace")) { e.preventDefault(); boutonB(); }
+});
+addEventListener("keyup", e => { if (JEU && TOUCHES[e.key] === JEU.tenu) JEU.tenu = null; });
+$("jeuQuitter").addEventListener("click", () => { fermerJeu(); enBoss = false; majAccueil(); montrer("accueil"); });
+
+window.__jeu = { etat: () => JEU && { m: JEU.m, x: JEU.x, y: JEU.y, dir: JEU.dir, combat: JEU.combat && { k: JEU.combat.k, jauge: JEU.combat.jauge }, cibles: ciblesJ() },
+  aller: (m, x, y) => { JEU.m = m; JEU.x = x; JEU.y = y; JEU.pas = null; }, pas: d => essayerPas(d), A: () => boutonA(), B: () => boutonB(),
+  maps: MAPS, accessibles: m => casesAccessibles(m).length, rencontre: k => rencontre(k) };
 </script>
 </body>
 </html>

@@ -39,7 +39,7 @@
       <button id="commencer" class="planche principal" type="button">Commencer l'aventure</button>
       <button class="planche petit ouvrir-grimoire avec-picto" type="button"><svg class="picto-livre" viewBox="0 0 48 36" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"><path d="M24 8C18 4 10 3 3 5v26c7-2 15-1 21 3 6-4 14-5 21-3V5c-7-2-15-1-21 3z"/><path d="M24 8v26"/><path d="M8 11c4-.6 8-.2 11.5 1.4M8 16c4-.6 8-.2 11.5 1.4M8 21c4-.6 8-.2 11.5 1.4M40 11c-4-.6-8-.2-11.5 1.4"/></g><path d="M34.5 16.5l1.3 2.8 3 .4-2.2 2 .6 3-2.7-1.5-2.7 1.5.6-3-2.2-2 3-.4z" fill="currentColor"/></svg>Mon grimoire</button>
       <button id="defiAccueil" class="planche petit orange" type="button" hidden>Défi de Sporran</button>
-    <button id="ouvrirParents" class="planche petit orange" type="button">Préparer le sauvetage</button>
+    <button id="ouvrirParents" class="planche petit orange" type="button">Choisir son aventure</button>
     </div>
     <p id="modeActuel" class="etat"></p>
   </div>
@@ -92,26 +92,34 @@
   </div>
 </div>
 
-<!-- Préparer le sauvetage (parents) -->
+<!-- Choisir son aventure : réelle (QR codes, géolocalisation) ou virtuelle (jeu vidéo) -->
 <div id="parents" class="ecran" hidden>
   <button class="croix" type="button" data-ferme="parents" aria-label="Fermer">✕</button>
   <img class="chat-menu" src="menu-catsith-3.webp" alt="">
   <div class="contenu defile">
-    <h2>Préparer le sauvetage</h2>
-    <p>Pour les parents : choisissez comment les créatures seront cachées.</p>
-    <div class="choix carte-mode" data-mode="qr" role="button" tabindex="0">
-      <h3>QR codes à cacher</h3>
-      <p>Imprimez la planche, découpez les cartes et cachez-les où vous voulez. Les enfants les trouvent puis les visent avec l'œil magique.</p>
-      <div class="boutons"><a class="mini cyan" href="qr-codes-cryptids.pdf" target="_blank" rel="noopener">Planche à imprimer</a></div>
+    <h2>Choisir son aventure</h2>
+    <div class="onglets genre">
+      <button id="genreReel" class="planche petit" type="button">Aventure réelle</button>
+      <button id="genreVirtuel" class="planche petit" type="button">Aventure virtuelle</button>
     </div>
-    <div class="choix carte-mode" data-mode="interieur" role="button" tabindex="0">
-      <h3>Géolocalisation · intérieur</h3>
-      <p>Les créatures se cachent à moins de 10 m. L'enfant suit le détecteur sur une carte en pixel art. Dans une maison, le GPS est souvent imprécis : on peut alors avancer en touchant la carte (bouton 👣).</p>
+    <div id="choixReel" class="colonne" hidden>
+      <p>Pour les parents : choisissez comment les créatures seront cachées.</p>
+      <div class="choix carte-mode" data-mode="qr" role="button" tabindex="0">
+        <h3>QR codes à imprimer</h3>
+        <p>Imprimez la planche, découpez les cartes et cachez-les où vous voulez. Les enfants les trouvent puis les visent avec l'œil magique.</p>
+        <div class="boutons"><a class="mini cyan" href="qr-codes-cryptids.pdf" target="_blank" rel="noopener">Planche à imprimer</a></div>
+      </div>
+      <div class="choix carte-mode" data-mode="exterieur" role="button" tabindex="0">
+        <h3>Géolocalisation · extérieur</h3>
+        <p>Placez vous-même les créatures sur la carte d'un parc. L'enfant les cherche avec le détecteur, sur une carte en pixel art de vos alentours.</p>
+        <div class="boutons"><button class="mini cyan" type="button" data-placer="1">Placer les créatures</button></div>
+      </div>
     </div>
-    <div class="choix carte-mode" data-mode="exterieur" role="button" tabindex="0">
-      <h3>Géolocalisation · extérieur</h3>
-      <p>Les créatures se cachent à moins de 20 m, sur une carte en pixel art de vos alentours (arbres, maisons, chemins, eau). Vous pouvez aussi les placer vous-même dans un parc.</p>
-      <div class="boutons"><button class="mini" type="button" data-placer="1">Placer moi-même les créatures</button></div>
+    <div id="choixVirtuel" class="colonne" hidden>
+      <div class="choix carte-mode" data-mode="virtuel" role="button" tabindex="0">
+        <h3>Jeu vidéo</h3>
+        <p>Une aventure en pixel art à l'écran, comme sur une vieille console : explore la forêt, le village et le lac, puis le cercle de pierres. La croix sert à marcher, le bouton A à capturer.</p>
+      </div>
     </div>
     <p id="modeParents" class="etat"></p>
     <button id="fermerParents" class="planche petit" type="button">Retour</button>
@@ -181,6 +189,38 @@
         <path d="M32 12 L49 42 L15 42 Z"/><path d="M32 4v8M32 52v8M4 32h8M52 32h8"/><circle cx="32" cy="33" r="4" fill="#bff9ff"/></g></svg>
     </button><div class="legende">Sceau magique</div></div>
     <div style="width:58px"></div>
+  </div>
+</div>
+<!-- Aventure virtuelle : le jeu vidéo -->
+<div id="jeu" hidden>
+  <div class="jeu-ecran">
+    <canvas id="jeuCanvas"></canvas>
+    <div class="jeu-haut">
+      <button id="jeuQuitter" class="rond" type="button" aria-label="Retour à l'accueil">✕</button>
+      <div id="jeuLieu" class="jeu-lieu"></div>
+      <div id="jeuLeds" class="emf-leds" aria-label="Détecteur"><i></i><i></i><i></i><i></i><i></i></div>
+    </div>
+    <div id="jeuTitre" class="jeu-titre" hidden></div>
+    <div id="jeuDialogue" class="jeu-dialogue" hidden></div>
+    <div id="combat" hidden>
+      <div class="combat-nom"><span id="combatNom"></span> <span id="combatEtoiles" class="etoiles"></span></div>
+      <div class="combat-scene"><div class="socle"></div><img id="combatImg" alt="" draggable="false"></div>
+      <div class="combat-jauge"><div id="combatBarre"></div></div>
+      <div id="combatTexte" class="jeu-dialogue"></div>
+    </div>
+  </div>
+  <div class="manette">
+    <div class="croix-dir">
+      <button data-dir="haut" type="button" aria-label="Haut">▲</button>
+      <button data-dir="gauche" type="button" aria-label="Gauche">◀</button>
+      <span></span>
+      <button data-dir="droite" type="button" aria-label="Droite">▶</button>
+      <button data-dir="bas" type="button" aria-label="Bas">▼</button>
+    </div>
+    <div class="boutons-ab">
+      <div><button id="jeuB" type="button" aria-label="B : fuir ou fermer">B</button><small>Fuir</small></div>
+      <div><button id="jeuA" type="button" aria-label="A : chercher ou capturer">A</button><small>Capturer</small></div>
+    </div>
   </div>
 </div>
 <img id="sigil" alt="" hidden>

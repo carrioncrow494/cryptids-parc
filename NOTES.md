@@ -54,6 +54,20 @@ La version 1 est dans le dépôt `carrioncrow494/chasse-monstres` et n'est pas m
   - Lutins du grimoire refaits sans halo.
   - Nouvelles figurines du Thunderbird, du Barghest et du Jackalope ; Huhuk agrandi (`ECH_FIG`).
 
+## Choisir son aventure (15/10/2026)
+
+- Le bouton de l'accueil « Préparer le sauvetage » devient **« Choisir son aventure »**. L'écran propose deux onglets :
+  - **Aventure réelle** : QR codes à imprimer (mode `qr`), ou géolocalisation en extérieur avec placement des créatures sur la carte du parc (mode `exterieur`). Le choix « intérieur » n'apparaît plus dans le menu, mais son code est gardé (mode `interieur`).
+  - **Aventure virtuelle** : le jeu vidéo (mode `virtuel`).
+- **Le jeu vidéo** (`sources/jeu.js`, ajouté à la suite d'`app.js` par `assemble.py`) :
+  - vue de dessus façon Pokémon / Zelda Game Boy, cases de 16 pixels, croix directionnelle, bouton A (chercher, lire un panneau, capturer) et bouton B (fuir, fermer) ; au clavier : flèches ou ZQSD, Espace et Échap ;
+  - 4 maps **provisoires** dans `MAPS` : la forêt des Murmures, le village de Sporran, le lac aux Brumes, puis la finale, le cercle de pierres (de nuit) ;
+  - chaque map est une grille de lettres (la légende est au-dessus de `TUILES`). Pour une map dessinée par Sam, on met son fichier dans `image` : l'image remplace le dessin des cases, et la grille sert toujours pour les murs, les sorties et les cachettes. L'image doit faire 16 pixels par case (320 × 352 pour une grille de 20 × 22) ;
+  - les créatures de l'aventure sont réparties dans les maps selon leur habitat (`scoreJ`) ; la finale garde les plus difficiles et ne s'ouvre qu'une fois toutes les autres sauvées. Positions enregistrées dans `partie.jeu` ;
+  - le détecteur (5 LED) donne la distance à la créature la plus proche de la map ; les panneaux donnent les indices des créatures de la map ;
+  - tout près d'une cachette, la créature surgit, puis la rencontre commence : on tapote A pour remplir le sceau (mêmes réglages `DIFF`, `GAIN`, `DRAIN`, `ESQUIVES` que l'œil magique) ; les deux lutins sont sauvés ensemble ;
+  - le défi de Sporran a lieu dans le cercle de pierres : il s'enfuit deux fois avant de se laisser attraper.
+
 ## Tout le reste vient de la V1 (état au 12/10/2026)
 
 - **Contenu** : 12 traques et 13 créatures. Kumquat et Kiwi, les lutins, forment une seule traque. Sporran le Cat sìth est le guide.
