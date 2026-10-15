@@ -291,7 +291,9 @@ function afficherIntro(i) {
   sfx("page");
 }
 function lancerAventure() { initAudio(); if (mode() === "virtuel") return ouvrirJeu(); ouvrirOeil(); }
-$("commencer").addEventListener("click", () => { initAudio(); pageIntro = 0; textesIntro = INTRO; finIntro = apresIntro; montrer("intro"); afficherIntro(0); });
+function nouvelleAventure() { initAudio(); pageIntro = 0; textesIntro = INTRO; finIntro = apresIntro; montrer("intro"); afficherIntro(0); }
+$("commencer").addEventListener("click", () => enCours() ? lancerAventure() : nouvelleAventure());   // partie en cours : on reprend où l'on était, sans l'intro
+$("nouvelle").addEventListener("click", nouvelleAventure);
 function apresIntro() { clearInterval(ecrit); taire(); ecrire(CLES.intro, true); preparerChoix(); montrer("partie"); }
 
 /* ===================== Nouvelle partie : combien de cryptides ? ===================== */
@@ -356,6 +358,7 @@ $("cestParti").addEventListener("click", () => {
 });
 function majAccueil() {
   const p = enCours();
+  $("commencer").textContent = p ? "Reprendre l'aventure" : "Commencer l'aventure"; $("nouvelle").hidden = !p;
   $("defiAccueil").hidden = !bossDispo();
   $("modeActuel").textContent = LIBELLES[mode()] + (p ? " · partie en cours " + p.pris.length + " / " + p.liste.length : "");
 }
