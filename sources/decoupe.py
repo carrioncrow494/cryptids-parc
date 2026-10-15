@@ -19,17 +19,18 @@ def nettoie(c):   # garde le personnage (la plus grosse tache) et ce qui le touc
     return Image.fromarray(a,'RGBA')
 def bbox(c):
     a=np.asarray(c)[...,3]>128; ys,xs=np.nonzero(a); return xs.min(),ys.min(),xs.max(),ys.max()
-FW,FH,PIED,HT=256,320,304,280
+FW,FH,PIED,HT=320,320,304,280
+def tete(c):   # centre de la tête (le haut du personnage) : c'est lui qu'on garde immobile d'une image à l'autre
+    a=np.asarray(c)[...,3]>128; ys,xs=np.nonzero(a); y0=ys.min(); h=ys.max()-y0
+    zone=a[y0:y0+int(h*.5)]; _,hx=np.nonzero(zone); return hx.mean()
 def normalise(rows):
     hs=[bbox(c)[3]-bbox(c)[1] for row in rows for c in row]; s=HT/np.median(hs)
     res=[]
     for row in rows:
-        bb=[bbox(c) for c in row]; bas=max(b[3] for b in bb); cx=np.mean([(b[0]+b[2])/2 for b in bb])
-        out=[]
+        bas=max(bbox(c)[3] for c in row); out=[]
         for c in row:
             w,h=c.size; c2=c.resize((round(w*s),round(h*s)),Image.LANCZOS)
-            f=Image.new('RGBA',(FW,FH)); f.alpha_composite(c2,(round(FW/2-cx*s),round(PIED-bas*s)) if False else (0,0)) if False else None
-            f.paste(c2,(round(FW/2-cx*s),round(PIED-bas*s)),c2); out.append(f)
+            f=Image.new('RGBA',(FW,FH)); f.paste(c2,(round(FW/2-tete(c)*s),round(PIED-bas*s)),c2); out.append(f)
         res.append(out)
     return res
 marche=normalise(cellules('afd91521-Sprite_sheet_du_chat_sorcier_lumineux.png',4,4))

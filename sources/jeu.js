@@ -307,7 +307,7 @@ function creerHeros() {   // un enfant en sweat à capuche violet, masque de cha
   m(new THREE.BoxGeometry(.12, .15, .12), COUL.lumiere, .27, .37, .08, 1.2);       // la lanterne
   const lueur = new THREE.PointLight(0xffd27a, 1.2, 3, 1.6); lueur.position.set(.27, .4, .1); g.add(lueur);
   const dessin = new THREE.Sprite(new THREE.SpriteMaterial({ transparent: true, alphaTest: .05 }));
-  dessin.center.set(.5, .05); dessin.scale.set(1.15, 1.44, 1); dessin.position.y = .02; dessin.visible = false; g.add(dessin);
+  dessin.center.set(.5, .05); dessin.scale.set(1.44, 1.44, 1); dessin.position.y = .02; dessin.visible = false; g.add(dessin);
   new THREE.TextureLoader().load(IMG_JEU + "jeu-heros.webp", tex => {
     tex.colorSpace = THREE.SRGBColorSpace; tex.repeat.set(1 / 6, 1 / 4); tex.magFilter = THREE.LinearFilter;
     dessin.material.map = tex; dessin.material.needsUpdate = true; dessin.visible = true; corps.visible = false;
@@ -604,7 +604,7 @@ function boucleJeu(t) {
   lumiereJ(R, zoneJ(Math.round(fx), Math.round(fy)), premier);
   h.position.set(fx, Math.max(0, sol) + bond, fy);
   if (h.userData.dessin.visible) {   // le dessin regarde toujours la caméra : on change seulement d'image
-    imageHeros(h, t, !!(JEU.pas || JEU.tenu)); h.position.y = Math.max(0, sol) + bond * .5;
+    imageHeros(h, t, !!(JEU.pas || JEU.tenu)); h.position.y = Math.max(0, sol);   // pas de petit saut : les images de marche bougent déjà
     h.userData.dessin.material.color.setRGB(1 - .18 * R.nuit, 1 - .22 * R.nuit, 1 - .08 * R.nuit);
   } else {
     const cible = ANGLE[JEU.dir], da = Math.atan2(Math.sin(cible - h.rotation.y), Math.cos(cible - h.rotation.y)); h.rotation.y += da * .35;
