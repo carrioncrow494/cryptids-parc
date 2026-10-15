@@ -72,7 +72,19 @@ let JEU = null;
 
 // ---------- la grille ----------
 const tuileJ = (x, y) => (CARTE[y] || "")[x] || "T";
-const libreJ = (x, y) => !!(TUILES[tuileJ(x, y)] || {}).libre;
+const libreSol = (x, y) => !!(TUILES[tuileJ(x, y)] || {}).libre;   // la case elle-même (pour le plan de l'île)
+const libreJ = (x, y) => libreSol(x, y) && !occupeJ(x, y);           // et personne dessus (habitant, cachette)
+// Un habitant par région : on lui parle avec A, il donne les indices des cryptides cachés chez lui.
+const PNJ = [
+  { x: 23, y: 22, zone: "village", nom: "Le maire Pistache", corps: 0xd99a3c, chapeau: 0x6b569b, bonjour: "Bienvenue au vieux village ! Les routes partent d'ici vers toutes les régions de l'île." },
+  { x: 13, y: 22, zone: "foret", nom: "Lumignon le veilleur", corps: 0x3f8790, chapeau: 0x2a2a3a, bonjour: "Chut… La forêt Sombre est pleine de bruits. Reste près des lampadaires !" },
+  { x: 17, y: 11, zone: "lande", nom: "Bergère Mousse", corps: 0x9a6fb0, chapeau: 0xf3e2c4, bonjour: "Le vent souffle fort sur les Hautes-Terres. Le lac et la neige cachent bien des secrets." },
+  { x: 31, y: 11, zone: "desert", nom: "Papy Coyote", corps: 0xc9573f, chapeau: 0xe2b77c, bonjour: "Fait chaud, hein ? Dans le désert, regarde bien autour des cactus et des rochers rouges." },
+  { x: 33, y: 19, zone: "bayou", nom: "Tante Grenouille", corps: 0x6e8a44, chapeau: 0xff8fa3, bonjour: "Attention où tu mets les pieds, petit ! Le bayou, ça glisse." }
+];
+const pnjEn = (x, y) => PNJ.find(n => n.x === x && n.y === y);
+const cachetteEn = (x, y) => ciblesJ().find(q => q.x === x && q.y === y);
+const occupeJ = (x, y) => !!(pnjEn(x, y) || cachetteEn(x, y));
 function trouverJ(ch) { for (let y = 0; y < HAUT; y++) { const x = CARTE[y].indexOf(ch); if (x >= 0) return [x, y]; } return null; }
 const DEPART = trouverJ("P");
 let accessiblesJ = null;
@@ -80,7 +92,7 @@ function casesAccessibles() {   // toutes les cases où l'on peut aller à pied 
   if (accessiblesJ) return accessiblesJ;
   const vu = new Set([DEPART + ""]), file = [DEPART];
   while (file.length) { const [x, y] = file.shift(); for (const [dx, dy] of Object.values(DIRS)) { const n = [x + dx, y + dy];
-    if (!vu.has(n + "") && libreJ(n[0], n[1])) { vu.add(n + ""); file.push(n); } } }
+    if (!vu.has(n + "") && libreSol(n[0], n[1]) && !pnjEn(n[0], n[1])) { vu.add(n + ""); file.push(n); } } }
   return accessiblesJ = [...vu].map(s => s.split(",").map(Number));
 }
 
@@ -106,7 +118,8 @@ function scoreJ(cle, x, y) {
   return 1;
 }
 function cachettesJ(cle, prises, loinDe) {   // les meilleures cases de sa région, loin du départ (ou du joueur) et des autres créatures
-  const z = HABITAT[cle] || "village", ok = casesAccessibles().filter(([x, y]) => zoneJ(x, y) === z && !"PpbB".includes(tuileJ(x, y))
+  const z = HABITAT[cle] || "village", ok = casesAccessibles().filter(([x, y]) => zoneJ(x, y) === z && !"PpbB=".includes(tuileJ(x, y))
+    && Object.values(DIRS).filter(([dx, dy]) => libreSol(x + dx, y + dy)).length >= 3 && PNJ.every(n => Math.abs(n.x - x) + Math.abs(n.y - y) > 2)
     && Math.abs(loinDe[0] - x) + Math.abs(loinDe[1] - y) >= 5 && prises.every(([a, b]) => Math.max(Math.abs(a - x), Math.abs(b - y)) >= 3));
   let best = 0; ok.forEach(([x, y]) => best = Math.max(best, scoreJ(cle, x, y)));
   return ok.filter(([x, y]) => scoreJ(cle, x, y) === best);
@@ -135,10 +148,11 @@ function ouvrirJeu() {
   changerAmbiance("chasse");
   let p = partie();
   if (!p) { p = { liste: [], pris: [], membres: {}, debut: Date.now() }; ecrire(CLES.partie, p); }
-  if (p.jeu && p.jeu.v !== 2) delete p.jeu;   // une partie de l'ancien jeu (4 petites maps) : on repart du village, les créatures sauvées le restent
-  if (!p.jeu) p.jeu = { v: 2, m: 0, x: DEPART[0], y: DEPART[1], dir: "haut", pos: {} };
+  if (p.jeu && p.jeu.v === 2) { p.jeu.pos = {}; delete p.jeu.boss; p.jeu.v = 3; }   // les cachettes sont devenues des objets à fouiller : on les replace
+  if (p.jeu && p.jeu.v !== 3) delete p.jeu;   // une partie de l'ancien jeu (4 petites maps) : on repart du village, les créatures sauvées le restent
+  if (!p.jeu) p.jeu = { v: 3, m: 0, x: DEPART[0], y: DEPART[1], dir: "haut", pos: {} };
   placerJeu(p);
-  JEU = { x: p.jeu.x, y: p.jeu.y, dir: p.jeu.dir || "bas", pas: null, tenu: null, revele: null, raf: 0, t: 0, dernierBip: 0, eloigne: null, zone: null };
+  JEU = { x: p.jeu.x, y: p.jeu.y, dir: p.jeu.dir || "bas", pas: null, tenu: null, revele: null, raf: 0, t: 0, dernierBip: 0, zone: null };
   if (enBoss && !p.jeu.boss) { cacherBoss(p); bossPhase = 0; }
   ecrire(CLES.partie, p);
   $("jeu").hidden = false; allumerJ(0);
@@ -178,18 +192,25 @@ function essayerPas(dir) {
 function finPas() {
   JEU.pas = null; sauverJ();
   if (zoneJ(JEU.x, JEU.y) !== JEU.zone) arriverJ();
-  // tout près d'une cachette : la créature surgit (« ! » au-dessus de sa cachette) ; A ouvre l'œil magique pour la capturer
-  const q = ciblesJ().find(q => Math.abs(q.x - JEU.x) + Math.abs(q.y - JEU.y) <= 1);
-  if (JEU.eloigne && Math.abs(JEU.eloigne[0] - JEU.x) + Math.abs(JEU.eloigne[1] - JEU.y) >= 3) JEU.eloigne = null;
-  if (q && !JEU.eloigne) { JEU.revele = { q, t0: performance.now() }; sfx("revele"); if (navigator.vibrate) navigator.vibrate([60, 40, 60]);
-    dialogueJ(q.k === "catsith" ? "Sporran est là ! Appuie sur A pour l'attraper !" : "Un cryptide se cache ici ! Appuie sur A pour ouvrir l'œil magique et le capturer.", 60000); }
 }
 function boutonA() {
   if (!JEU) return;
   if (JEU.revele) return trouveJ();
-  const [dx, dy] = DIRS[JEU.dir];
-  if (tuileJ(JEU.x + dx, JEU.y + dy) === "S") { sfx("page"); return dialogueJ(texteSigne(JEU.x + dx, JEU.y + dy), 6000); }
-  sfx("clic"); dialogueJ(["Rien par ici…", "Le détecteur t'aide : plus il s'allume, plus un cryptide est proche !"][Math.random() < .5 ? 0 : 1], 2200);
+  const [dx, dy] = DIRS[JEU.dir], fx = JEU.x + dx, fy = JEU.y + dy;
+  // comme dans Zelda : on fouille ce qu'on a devant soi. Un buisson qui bouge cache un cryptide.
+  const q = cachetteEn(fx, fy);
+  if (q) { JEU.revele = { q, t0: performance.now() }; sfx("revele"); if (navigator.vibrate) navigator.vibrate([60, 40, 60]);
+    return dialogueJ(q.k === "catsith" ? "C'est Sporran ! Appuie encore sur A pour l'attraper !" : "Deux yeux brillent dans la cachette… C'est un cryptide ! Appuie encore sur A pour ouvrir l'œil magique.", 60000); }
+  const n = pnjEn(fx, fy);
+  if (n) { sfx("page"); JEU.parle = n; return dialogueJ(n.nom + " : " + texteHabitant(n), 8000); }
+  if (tuileJ(fx, fy) === "S") { sfx("page"); return dialogueJ(texteSigne(JEU.x + dx, JEU.y + dy), 6000); }
+  sfx("clic"); dialogueJ(["Rien par ici…", "Cherche ce qui bouge ! Mets-toi devant et appuie sur A.", "Le détecteur t'aide : plus il s'allume, plus un cryptide est proche !"][Math.floor(Math.random() * 3)], 2400);
+}
+function texteHabitant(n) {   // ce que dit l'habitant d'une région : bonjour, puis les indices
+  if (enBoss) return "Sporran ? Il est parti vers sa cabane, dans le bois Biscornu, au sud du village !";
+  const l = ciblesJ().filter(q => zoneJ(q.x, q.y) === n.zone).map(q => TRAQUES[q.k].indice);
+  if (!l.length) return n.bonjour + " Ici, tous les cryptides sont sauvés. Bravo !";
+  return n.bonjour + " " + (l.length > 1 ? l.length + " cryptides se cachent par ici. " : "Un cryptide se cache par ici. ") + (l.length > 1 ? "Indices : " : "Un indice : ") + l.map(t => "« " + t + " »").join(", ") + ". Cherche une cachette qui bouge !";
 }
 function texteSigne(x, y) {   // le panneau d'une région donne les indices des créatures qui s'y cachent
   const z = zoneJ(x, y), txt = ZONES[z].panneau;
@@ -213,8 +234,8 @@ function trouveJ() {   // appelé depuis un « clic » ou une touche : iOS n'aut
   ouvrirOeil(() => k === "catsith" ? demarrerBossAR() : demarrerTraque(k, { gpsFait: true, angleGPS: null }));
 }
 function fuirJ() {
-  JEU.revele = null; JEU.eloigne = [JEU.x, JEU.y]; sfx("clic");
-  dialogueJ("Tu t'éloignes sans bruit… Le cryptide reste caché ici. Reviens quand tu veux !", 3000);
+  JEU.revele = null; sfx("clic");
+  dialogueJ("Tu laisses le cryptide tranquille… Il reste caché ici. Reviens quand tu veux !", 3000);
 }
 function fuiteBoss() {   // comme sur la carte GPS : Sporran file ailleurs deux fois avant de se laisser attraper
   bossPhase++; sfx("fuite");
@@ -509,6 +530,41 @@ function fusionnerJ(groupe) {   // les objets immobiles de même couleur fondus 
   vieux.forEach(o => o.parent.remove(o));
   lots.forEach(({ mat, g, ombre }) => { const m = new THREE.Mesh(mergeGeometries(g), mat); m.castShadow = ombre; m.receiveShadow = true; groupe.add(m); });
 }
+// ---------- les habitants et les cachettes, posés sur l'île (ils bougent, ils ne sont pas fondus avec le décor) ----------
+function habitantsJ(R) {
+  if (R.pnj) return R.pnj;
+  R.pnj = PNJ.map(n => {   // un petit personnage tout rond, avec un chapeau à sa couleur
+    const g = new THREE.Group(), c = new THREE.Group(), o = (geo, col, x, y, z) => { const m = new THREE.Mesh(geo, mat3(col)); m.position.set(x, y, z); m.castShadow = true; c.add(m); return m; };
+    o(new THREE.CapsuleGeometry(.24, .2, 6, 12), n.corps, 0, .38, 0);
+    o(new THREE.SphereGeometry(.22, 14, 10), COUL.peau, 0, .8, 0);
+    o(new THREE.SphereGeometry(.035, 8, 6), COUL.yeux, -.08, .83, .2); o(new THREE.SphereGeometry(.035, 8, 6), COUL.yeux, .08, .83, .2);
+    o(new THREE.CylinderGeometry(.34, .34, .04, 16), n.chapeau, 0, .98, 0); o(new THREE.ConeGeometry(.2, .32, 12), n.chapeau, 0, 1.15, 0).rotation.z = .15;
+    g.add(c); g.position.set(n.x, 0, n.y); R.scene.add(g); return { n, g, c };
+  });
+  return R.pnj;
+}
+const STYLE_CACHETTE = { foret: [0x2a5c4a, 0x1f4a3e], lande: [0x9a6fb0, 0x87a05a], village: [0x5e9a4e, 0x79a85f], desert: [0xb08850, 0x9a7444], bayou: [0x8a9a4a, 0x6e8a44], cabane: [0xd9822b, 0xc9573f] };
+function cachettesJ3D(R, t) {   // un buisson par créature encore cachée : il frémit quand on approche, et deux yeux brillent de temps en temps
+  const l = ciblesJ(), cle = l.map(q => q.k + q.x + "," + q.y).join("|");
+  if (R.cleCach !== cle) {
+    (R.cach || []).forEach(c => R.scene.remove(c.g)); R.cleCach = cle;
+    R.cach = l.map(q => {
+      const z = zoneJ(q.x, q.y), neige = tuileJ(q.x, q.y) === "n", [c1, c2] = neige ? [COUL.neige, COUL.neige2] : STYLE_CACHETTE[z], g = new THREE.Group(), b = new THREE.Group();
+      [[.36, 0, .3, 0, c1], [.28, -.24, .24, .12, c2], [.27, .24, .25, -.08, c2], [.22, .05, .55, .05, c1]].forEach(([r, x, y, zz, c]) => { const m = new THREE.Mesh(new THREE.SphereGeometry(r, 12, 9), mat3(c)); m.position.set(x, y, zz); m.castShadow = true; b.add(m); });
+      if (z === "bayou") for (let i = 0; i < 5; i++) { const m = new THREE.Mesh(new THREE.ConeGeometry(.04, .6, 4), mat3(0xb8a46a)); m.position.set(-.25 + i * .12, .45, -.1); m.rotation.z = (i - 2) * .12; b.add(m); }
+      const yeux = new THREE.Group(); [-.09, .09].forEach(x => { const m = new THREE.Mesh(new THREE.SphereGeometry(.055, 10, 8), mat3(0xffe14a, 1.6)); m.position.set(x, .36, .33); yeux.add(m); }); b.add(yeux);
+      const etincelles = [0, 1, 2].map(i => { const m = new THREE.Mesh(new THREE.OctahedronGeometry(.045), mat3(0xfff3a0, 1.4)); g.add(m); return m; });
+      b.scale.setScalar(1.2); g.add(b); g.position.set(q.x, 0, q.y); R.scene.add(g);
+      return { q, g, b, yeux, etincelles, phase: Math.random() * 6 };
+    });
+  }
+  R.cach.forEach(c => {   // tout près : le buisson tremble ; les yeux clignent ; de petites étincelles tournent autour
+    const d = Math.abs(c.q.x - JEU.x) + Math.abs(c.q.y - JEU.y), fort = JEU.revele && JEU.revele.q === c.q || (JEU.revele && JEU.revele.q.k === c.q.k);
+    c.b.rotation.z = Math.sin(t / 70 + c.phase) * (fort ? .12 : d <= 3 ? .07 : .025);
+    c.yeux.visible = fort || Math.sin(t / 900 + c.phase) > .75;
+    c.etincelles.forEach((e, i) => { const a = t / 600 + i * 2.1 + c.phase; e.position.set(Math.cos(a) * .45, .5 + Math.sin(t / 300 + i) * .15, Math.sin(a) * .45); e.rotation.y = t / 300; });
+  });
+}
 const ANGLE = { bas: 0, droite: Math.PI / 2, haut: Math.PI, gauche: -Math.PI / 2 };
 const _c = new THREE.Color();
 function lumiereJ(R, zone, vite) {   // la lumière glisse doucement vers celle de la région où l'on marche
@@ -546,6 +602,11 @@ function boucleJeu(t) {
   }
   R.lampes.forEach(l => l.intensity = l.userData.ok ? .4 + 2.8 * R.nuit : 0);
   d.anim.forEach(f => f(t));
+  cachettesJ3D(R, t);
+  habitantsJ(R).forEach(({ n, g, c }) => {   // les habitants respirent, et se tournent vers toi quand tu approches
+    c.position.y = Math.abs(Math.sin(t / 500 + n.x)) * .04;
+    if (Math.abs(n.x - fx) + Math.abs(n.y - fy) <= 3) { const a = Math.atan2(fx - n.x, fy - n.y), da = Math.atan2(Math.sin(a - g.rotation.y), Math.cos(a - g.rotation.y)); g.rotation.y += da * .15; }
+  });
   const rv = JEU.revele; R.signe.visible = !!rv;
   if (rv) R.signe.position.set(rv.q.x, 1.25 + Math.abs(Math.sin(t / 220)) * .2, rv.q.y);
   R.rendu.render(R.scene, R.camera);
@@ -582,7 +643,7 @@ stick.addEventListener("pointerdown", e => { e.preventDefault(); doigtStick = e.
 stick.addEventListener("pointermove", e => { if (e.pointerId === doigtStick) bougerStick(e); });
 ["pointerup", "pointercancel", "lostpointercapture"].forEach(ev => stick.addEventListener(ev, e => { if (e.pointerId === doigtStick) lacherStick(); }));
 $("jeuA").addEventListener("pointerdown", e => { e.preventDefault(); if (!(JEU && JEU.revele)) boutonA(); });
-$("jeuA").addEventListener("click", () => { if (JEU && JEU.revele) trouveJ(); });   // ouvrir la caméra demande un vrai clic sur iPhone
+$("jeuA").addEventListener("click", () => { if (JEU && JEU.revele && performance.now() - JEU.revele.t0 > 350) trouveJ(); });   // ouvrir la caméra demande un vrai clic sur iPhone
 $("jeuB").addEventListener("pointerdown", e => { e.preventDefault(); boutonB(); });
 const TOUCHES = { ArrowUp: "haut", ArrowDown: "bas", ArrowLeft: "gauche", ArrowRight: "droite", z: "haut", s: "bas", q: "gauche", d: "droite", w: "haut", a: "gauche" };
 addEventListener("keydown", e => {
@@ -595,5 +656,5 @@ addEventListener("keyup", e => { if (JEU && TOUCHES[e.key] === JEU.tenu) JEU.ten
 $("jeuQuitter").addEventListener("click", () => { fermerJeu(); enBoss = false; majAccueil(); montrer("accueil"); });
 
 window.__jeu = { etat: () => JEU && { x: JEU.x, y: JEU.y, dir: JEU.dir, zone: zoneJ(JEU.x, JEU.y), revele: JEU.revele && JEU.revele.q.k, cibles: ciblesJ() },
-  aller: (x, y) => { JEU.x = x; JEU.y = y; JEU.pas = null; arriverJ(true); }, pas: d => essayerPas(d), A: () => boutonA(), B: () => boutonB(),
+  aller: (x, y, dir) => { JEU.x = x; JEU.y = y; JEU.pas = null; if (dir) JEU.dir = dir; arriverJ(true); }, pnj: PNJ, libreSol, pas: d => essayerPas(d), A: () => boutonA(), B: () => boutonB(),
   carte: CARTE, zone: zoneJ, accessibles: () => casesAccessibles().length, trouver: k => { JEU.revele = { q: { k }, t0: 0 }; trouveJ(); } };
