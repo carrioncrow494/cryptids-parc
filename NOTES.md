@@ -104,3 +104,9 @@ Ensuite, on publie avec git : commit puis push sur `main`. GitHub Pages est serv
 - Lisibilité de la carte sombre en plein jour.
 - Réseau mobile nécessaire pour charger les tuiles de la carte.
 - Tuiles OpenStreetMap : usage gratuit pour un petit volume, avec la mention « © OpenStreetMap » (affichée en bas de la carte).
+
+### Images dessinées du jeu (15/10/2026)
+- `jeu-heros.webp` : le héros au masque de chat, 6 colonnes (4 pas de marche, 2 images d'attente) × 4 lignes (bas, droite, haut, gauche). Les lignes bas et gauche sont des miroirs : ChatGPT n'a dessiné que 2 directions.
+- `jeu-detecteur.webp` : le détecteur éteint (à gauche) et allumé (à droite) ; les voyants sont découpés dans l'image allumée (`VOYANTS` dans jeu.js).
+- Fabriqués depuis les planches de Sam sur fond vert avec `sources/decoupe.py` et `sources/detecteur.py` (chemins des images à adapter).
+- `IMG_JEU` dans jeu.js : vide dans index.html. Pour test.html, on le remplace par l'adresse raw de la branche, pour ne pas ajouter d'images sur main.
