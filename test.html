@@ -300,6 +300,9 @@
   .jeu-lieu { flex: 1; font-family: var(--deco); color: #fff; font-size: 1rem; text-shadow: 0 2px 0 #000, 0 0 6px #000; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   #jeuLeds { flex: none; padding: 6px 8px; border-radius: 999px; background: rgba(10,12,16,.75); gap: 5px; }
   #jeuLeds i { width: 13px; height: 13px; }
+  #jeuLeds.dessine { position: relative; display: block; width: 74px; height: 78px; padding: 0; margin: -4px 0 -36px; border-radius: 0; background: var(--img) 0 0 / 200% 100% no-repeat; filter: drop-shadow(0 3px 3px rgba(0,0,0,.6)); }
+  #jeuLeds.dessine i { position: absolute; border: 0; border-radius: 50%; box-shadow: none; background-image: var(--img); background-repeat: no-repeat; opacity: 0; transition: opacity .12s; }
+  #jeuLeds.dessine i.on { opacity: 1; background-color: transparent; box-shadow: none; filter: brightness(1.15); }
   .jeu-titre { position: absolute; left: 50%; top: 22%; transform: translateX(-50%); z-index: 2; text-align: center; padding: 12px 20px; background: rgba(8,12,16,.82);
     border: 3px solid #f4efe0; border-radius: 6px; color: #fff; font-family: var(--deco); display: flex; flex-direction: column; gap: 4px; min-width: 60%; }
   .jeu-titre b { font-size: 1.3rem; font-weight: 400; color: var(--cyan); }
@@ -2171,9 +2174,13 @@ function texteSprite(ch) {
   g.fillStyle = "#e0453a"; g.font = "bold 84px Georgia, serif"; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText(ch, 64, 68);
   const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
 }
-function creerHeros() {   // un enfant tout rond en ciré à capuche violet, avec sa lanterne
+const IMG_JEU = "https://raw.githubusercontent.com/carrioncrow494/cryptids-parc/choisir-aventure/";   // dossier des images dessinées du jeu (la page de test les prend sur la branche)
+// Le héros dessiné : une planche de 6 colonnes (4 pas de marche, 2 images d'attente) sur 4 lignes (bas, droite, haut, gauche).
+const LIGNE_HEROS = { bas: 0, droite: 1, haut: 2, gauche: 3 };
+function creerHeros() {   // un enfant en sweat à capuche violet, masque de chat en bois, avec sa lanterne
   const g = new THREE.Group(), corps = new THREE.Group(); g.add(corps);
   const m = (geo, c, x, y, z, e) => { const o = new THREE.Mesh(geo, mat3(c, e)); o.position.set(x, y, z); o.castShadow = true; corps.add(o); return o; };
+  // la version en volumes, gardée tant que l'image n'est pas chargée (ou si elle ne se charge pas)
   m(new THREE.CapsuleGeometry(.2, .22, 6, 14), COUL.capuche, 0, .36, 0);
   m(new THREE.SphereGeometry(.25, 18, 14), COUL.capuche2, 0, .74, -.04);          // la capuche
   m(new THREE.SphereGeometry(.2, 18, 14), COUL.peau, 0, .73, .06);               // le visage
@@ -2181,9 +2188,20 @@ function creerHeros() {   // un enfant tout rond en ciré à capuche violet, ave
   m(new THREE.SphereGeometry(.07, 10, 8), COUL.botte, -.09, .06, .02); m(new THREE.SphereGeometry(.07, 10, 8), COUL.botte, .09, .06, .02);
   m(new THREE.CylinderGeometry(.01, .01, .14, 4), COUL.lampe, .27, .5, .08);
   m(new THREE.BoxGeometry(.12, .15, .12), COUL.lumiere, .27, .37, .08, 1.2);       // la lanterne
-  const lueur = new THREE.PointLight(0xffd27a, 1.2, 3, 1.6); lueur.position.set(.27, .4, .1); corps.add(lueur);
-  g.userData = { corps, lueur };
+  const lueur = new THREE.PointLight(0xffd27a, 1.2, 3, 1.6); lueur.position.set(.27, .4, .1); g.add(lueur);
+  const dessin = new THREE.Sprite(new THREE.SpriteMaterial({ transparent: true, alphaTest: .05 }));
+  dessin.center.set(.5, .05); dessin.scale.set(1.15, 1.44, 1); dessin.position.y = .02; dessin.visible = false; g.add(dessin);
+  new THREE.TextureLoader().load(IMG_JEU + "jeu-heros.webp", tex => {
+    tex.colorSpace = THREE.SRGBColorSpace; tex.repeat.set(1 / 6, 1 / 4); tex.magFilter = THREE.LinearFilter;
+    dessin.material.map = tex; dessin.material.needsUpdate = true; dessin.visible = true; corps.visible = false;
+  });
+  g.userData = { corps, lueur, dessin };
   return g;
+}
+function imageHeros(h, t, marche) {   // choisit l'image de la planche : direction, et pas de marche ou respiration
+  const d = h.userData.dessin, tex = d.material.map; if (!tex) return;
+  const col = marche ? Math.floor(t / 140) % 4 : 4 + Math.floor(t / 650) % 2;
+  tex.offset.set(col / 6, 1 - (LIGNE_HEROS[JEU.dir] + 1) / 4);
 }
 function prisme(w, d, h) {   // un toit à deux pentes, faîtage le long de x
   const x = w / 2, z = d / 2, p = [-x, 0, -z, x, 0, -z, x, h, 0, -x, h, 0, -x, 0, z, x, 0, z];
@@ -2468,8 +2486,13 @@ function boucleJeu(t) {
   const d = dioramaJ(), h = R.heros, sol = hautSol(tuileJ(Math.round(fx), Math.round(fy)));
   lumiereJ(R, zoneJ(Math.round(fx), Math.round(fy)), premier);
   h.position.set(fx, Math.max(0, sol) + bond, fy);
-  const cible = ANGLE[JEU.dir], da = Math.atan2(Math.sin(cible - h.rotation.y), Math.cos(cible - h.rotation.y)); h.rotation.y += da * .35;
-  h.userData.corps.scale.y = 1 + Math.sin(t / 260) * .015;
+  if (h.userData.dessin.visible) {   // le dessin regarde toujours la caméra : on change seulement d'image
+    imageHeros(h, t, !!(JEU.pas || JEU.tenu)); h.position.y = Math.max(0, sol) + bond * .5;
+    h.userData.dessin.material.color.setRGB(1 - .18 * R.nuit, 1 - .22 * R.nuit, 1 - .08 * R.nuit);
+  } else {
+    const cible = ANGLE[JEU.dir], da = Math.atan2(Math.sin(cible - h.rotation.y), Math.cos(cible - h.rotation.y)); h.rotation.y += da * .35;
+    h.userData.corps.scale.y = 1 + Math.sin(t / 260) * .015;
+  }
   // caméra isométrique qui suit le héros
   const demi = 4.2, ratio = W / Math.max(1, H);
   Object.assign(R.camera, { left: -demi, right: demi, top: demi / ratio, bottom: -demi / ratio }); R.camera.updateProjectionMatrix();
@@ -2501,7 +2524,19 @@ function detecteurJ(t) {
   const periode = 1600 - n * 260;
   if (t - JEU.dernierBip > periode) { JEU.dernierBip = t; if (audio && sonActif) note(480 + 180 * n, 0, .07, { type: "square", vol: .04, filtre: 2600 }); }
 }
-function allumerJ(n) { document.querySelectorAll("#jeuLeds i").forEach((l, i) => l.classList.toggle("on", i < n)); }
+function allumerJ(n) { document.querySelectorAll("#jeuLeds i").forEach((l, i) => l.classList.toggle("on", i < 5 ? i < n : n >= 5)); }
+// Le détecteur dessiné : l'image éteinte en fond, et chaque voyant découpé dans l'image allumée (position et taille en fraction de l'image).
+const VOYANTS = [[0.1326, 0.6553, 0.1627, 0.155], [0.2689, 0.6545, 0.1627, 0.155], [0.4182, 0.6521, 0.1644, 0.1567], [0.5612, 0.6562, 0.1539, 0.1467], [0.7072, 0.6561, 0.1627, 0.155], [0.6327, 0.0278, 0.1749, 0.1667]];
+(function detecteurDessine() {
+  const img = new Image(); img.onload = () => {
+    const boite = $("jeuLeds"); boite.classList.add("dessine"); boite.style.setProperty("--img", `url("${img.src}")`);
+    if (boite.children.length < 6) boite.appendChild(document.createElement("i"));
+    [...boite.children].forEach((l, i) => { const [x, y, w, h] = VOYANTS[i];
+      Object.assign(l.style, { left: x * 100 + "%", top: y * 100 + "%", width: w * 100 + "%", height: h * 100 + "%",
+        backgroundSize: `${200 / w}% ${100 / h}%`, backgroundPosition: `${(1 + x) / (2 - w) * 100}% ${y / (1 - h) * 100}%` }); });
+  };
+  img.src = IMG_JEU + "jeu-detecteur.webp";
+})();
 
 // ---------- joystick, boutons A et B, clavier ----------
 // La vue est en biais : les 4 directions de marche sont les 4 diagonales de l'écran. Le joystick choisit la plus proche
