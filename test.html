@@ -1880,56 +1880,57 @@ window.__test = { ouvrir: () => { montrer(null); $("scene").hidden = false; init
   etat: () => { const c = moteur && moteur.creature; return { angle: c && c.angle, lacet: moteur && lacetCamera(), gyro, gyroOK, trouve: c && c.trouve, consigne: $("consigne").textContent }; } };
 
 /* ===================== Aventure virtuelle : jeu vidéo en 3D isométrique (vue de dessus en biais, façon Dofus) ===================== */
-// Une seule grande île ouverte, découpée en régions (ZONES). La carte est une grille de lettres : une lettre = une case (voir TUILES).
+// Une seule grande île, découpée en régions (ZONES) séparées par des frontières (arbres, rochers, falaises) ; on passe de l'une à l'autre
+// par quelques passages marqués d'une arche (p). La carte est une grille de lettres : une lettre = une case (voir TUILES).
 // Le décor en 3D est construit à partir de la grille (dioramaJ). Pour changer la carte, un plan dessiné à la main suffit : on le recopie en lettres.
 const TUILES = {
   ".": { libre: true }, ",": { libre: true }, "=": { libre: true }, ":": { libre: true }, "*": { libre: true }, "b": { libre: true },
-  "B": { libre: true }, "n": { libre: true }, "P": { libre: true },
+  "B": { libre: true }, "n": { libre: true }, "P": { libre: true }, "p": { libre: true },
   "T": {}, "~": {}, "#": {}, "f": {}, "R": {}, "H": {}, "D": {}, "L": {}, "S": {}, "o": {},
   "E": {}, "G": {}, "K": {}, "k": {}, "M": {}, "A": {}, "c": {}, "t": {}, "u": {}
-};   // . sol  , hautes herbes (bruyère, fougères, roseaux)  = chemin  : sable  * fleurs  b passerelle  B pont couvert  n neige  P départ
+};   // . sol  , hautes herbes (bruyère, fougères, roseaux)  = chemin  : sable  * fleurs  b passerelle  B pont couvert  n neige  P départ  p passage (arche)
      // T arbre  ~ eau  # rocher  f barrière  R toit  H mur  D porte  L lampadaire  S panneau  o pierre levée
      // E cathédrale  G sa porte  K cabane biscornue  k sa porte  M mesa  A montagne  c cactus  t tombe  u citrouille
 const CARTE = [
   "AAAAAAAAAAAAAAAAAAAAAAMMMMMMMMMMMMMMMMMMMMMM",
-  "AAAAAnAAAAnTTnnnnn.T..:::MMM,,:#:#MMMM:::::M",
-  "AAnnnnn#nnnnTnnnnn....,::MMM::::::MMMM:::::M",
-  "Annnnnnnnnnnnn==..o...:c::c:::#:::MMMM,:c::M",
-  "Annnnnnnnnnnnn#====.o.::::,:::#c:========::M",
-  "Annn.,....~~~..,o.=...:::,::,:c::=:::::c:c:M",
-  "ATnn.,..~~~~~~~,..=.o.:::,:::::MM=:::::MMMMM",
-  "AnTn.T.~~~~~~~~~..=...::c,#:::#MM=:::::MMMMM",
-  "A..=.T.~~~~~~~~~,.=..#::fffffff:c=::::cMMMMM",
-  "A..=..#~~~~~~~~~..=,T##:f:RRR:f::=:::,:MMMMM",
-  "A..=...~~~~~~~,,..=S..c:f:HDH:f::=:::::c,:,M",
-  "A..====bb====..,,,=.,.::f:::::f::=::MMM#:::M",
-  "A...,,.~~...=,#T#.=.,.::fff:fff,:=S:MMMc#::M",
-  "A......~~,.,=.,...=...:::::=======::::::::,M",
-  "T..T.TT~~TTT=T,T..=.EEEEET.=..TT...,,T..,.*T",
-  "TT.,TT.~~.TT=,,TRR=REEEEE.R=RR.~.,.T.,,T.T.T",
-  "T,T....T~~.L=,T.HH=HEEEEE.H=HH.~.TT....T,,~T",
-  "TT.T,.T.~~..=TTf..=.EEEEE..=...~T...~~~T.~~T",
-  "TTTTTT..~~.T=T,.**=,EEGEE.,=**.~.*.*~~~~~~~T",
-  "T,TTTT.,~~T,=T.T.==L=====L==..T~,T,T~~~~~~~T",
-  "TTTT....~~.T=S=================b====bb~~,.~T",
-  "TT.TT.T.~~T.=.T..===========..T.S.,.~b~*..,T",
-  "T.TTT.T.~~.T=,...L...SP....L....,.T,~b,...,T",
-  "T,,T,.T.~~TT=L,.RRRR..=...RRRR.,,...~b..*..T",
-  "TTT..,T.~~.T=TT.HHDH..=...HDHHT*..,~Lb,.T.TT",
-  "TT,,T.T.~~,T=,TT..,.*.=.*..,...~T.,~~bTTT..T",
-  "Tfffffff~~,T=T.T**.,.T=TT.,.**T~~~~~~b~.T.,T",
-  "T......f~~.L=,TTTT,TT.=T,T..T,T~~~~~~b...T~T",
-  "T.t.Tt.f~~.T=.TTTT..,.=...T....~~..~~b.T,T~T",
-  "T......f~~.T=T.T,T.,..=ST.T.T,.~T....=.,TT~T",
-  "T.t..tL.~~L.=T.,...====....TT.T~.,,*T=L,.,,T",
-  "T.......BB===TTTT..=KKKKK...T,.....T,=*.,..T",
-  "T.t..tL.~~L.=T.,T.u=KKKKK*...,.,.T.TT=,..T.T",
-  "T......f~~,.=,TTT..=KKkKK....,...T.,.=,.,,.T",
-  "T.t..t.fT~~,=,T....====..u...,..T.T.~b~~..~T",
-  "T......f.~~,=L,T....u...u...T.,.,,,~~b~~.T~T",
-  "Tfffffff.~~T=TT..TT..*..........T,,~~b~~..~T",
-  "TT,,.,.,.~~.=.T.,.,TT...,T..,,T,.,*~~~~~...T",
-  "TTT,,,.T.~~.T.,..TT..TT,TTT,,,T.,,T~~~~...TT",
+  "Ann#nAAAAAnTTnnnnn.T.TM::MMM,,:#:#MMMM:::::M",
+  "AAnnnnn#nnnnTnnnnn...#M::MMM::::::MMMM:::::M",
+  "Annnnnnnnnnnnn==..o..TMc::c:::#:::MMMM,:c::M",
+  "Annnnnnnnnnnnn#======p===================::M",
+  "Annn.,....~~~..,o.=..#M::,::,:c::=:::::c:c:M",
+  "ATnn.,..~~~~~~~,..=.oTM::,:::::MM=:::::MMMMM",
+  "AnTn.T.~~~~~~~~~..=..#M:fffffffMM=:::::MMMMM",
+  "A..=.T.~~~~~~~~~,.=..TM:f:RRR:f:c=::::cMMMMM",
+  "A..=..#~~~~~~~~~..=,TTM:f:HDH:f::=:::,:MMMMM",
+  "A..=...~~~~~~~,,..=S.#M:f:::::f::=:::::c,:,M",
+  "A..====bb====..,,,=.,#M:fff:fff::=::MMM#:::M",
+  "A...,,.~~...=,#T#.=.,TM::::=======S:MMMc#::M",
+  "ATTT##T~~TT#=TTTT#=#T#MMMMM=MMMMMMMMMMMMMMMM",
+  "TTTTTTT~~TTTpTTTTTpTEEEEETTpTTTTTTTTTTTTTTTT",
+  "TT.,TT.~~TTT=,TTRR=REEEEE.R=RRT~..,.*..,.T.T",
+  "T,T.....~~TL=,TTHH=HEEEEE.H=HHT~,,T.T..TT.~T",
+  "TT.T,.TT~~..=TTf..=.EEEEE..=..T~...T~~~,,~~T",
+  "TTTTTT..~~TT=TTT**=,EEGEE.,=**T~T...~~~~~~~T",
+  "T,TTTT.,~~.,=TTT.==L=====L==..T~T..*~~~~~~~T",
+  "TTTT....~~.T=S=p==============p=====bb~~.*~T",
+  "TT.TT.T.~~..=.TT.===========..TTS,T,~b~....T",
+  "T.TTT.T.~~TT=,TT.L...SP....L..TT*..,~b..,.TT",
+  "T,,T,.T.~~.T=LTTRRRR..=...RRRRTT...,~b.,,..T",
+  "TTT..,T.~~TT=TTTHHDH..=...HDHHTT.*.~Lb..*..T",
+  "TT,,T.T.~~,T=,TT..,.*.=.*..,..T~,.T~~b.TTT.T",
+  "Tfffffff~~,T=TTTTTTTTTpTTTTTTTT~~~~~~b~TTT.T",
+  "T......f~~.L=,TTTTTTTT=TTTTTTTT~~~~~~b...T~T",
+  "T.t.Tt.f~~.T=.TTT..T,T=TTT..,.T~~.,~~b...T~T",
+  "T......f~~.T=TTT.T....=S,T.,..T~...T,=TT..~T",
+  "T.t..tL.~~L.=TTT.T.====....,.,T~...,T=L.,,*T",
+  "T.......BB===TTTTT.=KKKKK...T.TT,,.,,=....TT",
+  "T.t..tL.~~L.=TTT..u=KKKKK....TTT*.,..=,.T.TT",
+  "T......f~~,.=,TTT..=KKkKK.....TT,..T.=..T.,T",
+  "T.t..t.f.~~,=,TTT..====..u=..,TT,.,,~b~~..~T",
+  "T......f.~~,=LTT.T.=u..*u.=====p===bbb~~T.~T",
+  "Tfffffff.~~.===p====.........,TT...~~b~~.,~T",
+  "TTTT,,.,.~~.=TTTT.,..TTT.,.,TTTT,.T~~~~~.T,T",
+  "TT.TT,,,.~~,TTTT....,.,TT...,TTT..,~~~~.,*.T",
   "TTTTTTTTT~~TTTTTTTTTTTTTTTTTTTTTTTTT~~TTTTTT"
 ];
 const LARG = CARTE[0].length, HAUT = CARTE.length;
@@ -1985,7 +1986,7 @@ function scoreJ(cle, x, y) {
   return 1;
 }
 function cachettesJ(cle, prises, loinDe) {   // les meilleures cases de sa région, loin du départ (ou du joueur) et des autres créatures
-  const z = HABITAT[cle] || "village", ok = casesAccessibles().filter(([x, y]) => zoneJ(x, y) === z && !"PbB".includes(tuileJ(x, y))
+  const z = HABITAT[cle] || "village", ok = casesAccessibles().filter(([x, y]) => zoneJ(x, y) === z && !"PpbB".includes(tuileJ(x, y))
     && Math.abs(loinDe[0] - x) + Math.abs(loinDe[1] - y) >= 5 && prises.every(([a, b]) => Math.max(Math.abs(a - x), Math.abs(b - y)) >= 3));
   let best = 0; ok.forEach(([x, y]) => best = Math.max(best, scoreJ(cle, x, y)));
   return ok.filter(([x, y]) => scoreJ(cle, x, y) === best);
@@ -2191,7 +2192,7 @@ function dioramaJ() {   // construit l'île en 3D, une seule fois
   const quad = (a, b, c, d, hex) => { c3.setHex(hex); for (const p of [a, b, c, a, c, d]) { pos.push(...p); col.push(c3.r, c3.g, c3.b); } };
   for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
     const ch = G[y][x], h = hautSol(ch), Z = ZC[zoneJ(x, y)], x0 = x - .5, x1 = x + .5, z0 = y - .5, z1 = y + .5, r = rnd() < .5;
-    const dessus = h < 0 ? Z.fond : ch === "=" ? Z.chemin : ch === ":" ? (r ? COUL.sable : COUL.sable2)
+    const dessus = h < 0 ? Z.fond : "=p".includes(ch) ? Z.chemin : ch === ":" ? (r ? COUL.sable : COUL.sable2)
       : neigeux(x, y) ? (r ? COUL.neige : COUL.neige2) : Z.sol[r ? 0 : 1];
     quad([x0, h, z0], [x0, h, z1], [x1, h, z1], [x1, h, z0], dessus);
     [[0, -1, [x0, z0], [x1, z0]], [0, 1, [x1, z1], [x0, z1]], [-1, 0, [x0, z1], [x0, z0]], [1, 0, [x1, z0], [x1, z1]]].forEach(([dx, dy, a, b]) => {
@@ -2346,6 +2347,14 @@ function dioramaJ() {   // construit l'île en 3D, une seule fois
       boite(.08, 1.35, .08, COUL.lampe, x, .67, y);
       ajoute(new THREE.Mesh(new THREE.SphereGeometry(.14, 12, 10), mat3(COUL.lumiere, 1.6)), x, 1.42, y, false);
       lampes.push([x, y]);
+    }
+    if (ch === "p") {   // un passage entre deux régions : une arche de bois avec deux lanternes
+      const g = new THREE.Group(), bois = 0x6e4a32, o = (geo, c, px, py, e) => { const m = new THREE.Mesh(geo, mat3(c, e)); m.position.set(px, py, 0); m.castShadow = !e; g.add(m); return m; };
+      [-.46, .46].forEach(px => { o(new THREE.BoxGeometry(.12, 1.35, .12), bois, px, .67); o(new THREE.BoxGeometry(.13, .18, .13), COUL.lumiere, px * .82, 1.02, 1.4); });
+      o(new THREE.BoxGeometry(1.2, .12, .16), bois, 0, 1.38);
+      const t = o(prisme(1.35, .5, .3), 0x5b3f78, 0, 1.44); t.castShadow = true;
+      if (!libreJ(x - 1, y) && !libreJ(x + 1, y)) g.rotation.y = 0; else g.rotation.y = Math.PI / 2;
+      ajoute(g, x, 0, y, false);
     }
     if (ch === "S") {
       boite(.08, .6, .08, COUL.tronc, x, .3, y);
