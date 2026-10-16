@@ -12,6 +12,7 @@ const TUILES = {
 };   // . sol  , hautes herbes (bruyère, fougères, roseaux)  = chemin  : sable  * fleurs  b passerelle  B pont couvert  n neige  P départ  p passage (arche)
      // T arbre  ~ eau  # rocher  f barrière  R toit  H mur  D porte  L lampadaire  S panneau  o pierre levée
      // E cathédrale  G sa porte  K cabane biscornue  k sa porte  M mesa  A montagne  c cactus  t tombe  u citrouille
+     // (espace) hors de l'île
      // X Excalibook  Q Chez Bergamotte  N Ninamoto  Y supérette  W Chupa la sopa  F ferme  C chalet en A  j jeu du parc
 const CARTE = [
   "AAAAAAAAAAAAAAAAAAAAAAMMMMMMMMMMMMMMMMMMMMMM",
@@ -29,9 +30,9 @@ const CARTE = [
   "A...,,.~~...=,#T#.=.,TM::::=======S:MMMc#::M",
   "ATTT##T~~TT#=TTTT#=#T#MMMMM=MMMMMMMMMMMMMMMM",
   "TTTTTTT~~TTTpTTTTTpTEEEEETTpTTTTTTTTTTTTTTTT",
-  "TT.,CCC~~TTT=,TXXX=REEEEE.R=QQQ~..,.*..,.T.T",
-  "T,T.CCC.~~TL=,TXXX=HEEEEE.H=QQQ~,,T.T..TT.~T",
-  "TT.TCCCT~~..=TTf..=.EEEEE..=..T~...T~~~,,~~T",
+  "TT.,.T.~~TTT=,TXXX=REEEEE.R=QQQ~..,.*..,.T.T",
+  "T,T..,..~~TL=,TXXX=HEEEEE.H=QQQ~,,T.T..TT.~T",
+  "TT.T.T.T~~..=TTf..=.EEEEE..=..T~...T~~~,,~~T",
   "TTTTTT..~~TT=TTT**=,EEGEE.,=**T~T...~~~~~~~T",
   "T,TTTT.,~~.,=TTT.==L=====L==..T~T..*~~~~~~~T",
   "TTTT....~~.T=S=p==============p=====bb~~.*~T",
@@ -52,14 +53,26 @@ const CARTE = [
   "T......f.~~,=LTT.T.=u..*u.=====p===bbb~~T.~T",
   "Tfffffff.~~.===p====.........,TT...~~b~~.,~T",
   "TTTT,,.,.~~.=TTTT.,..TTT.,.,TTTT,.T~~~~~.T,T",
-  "TT.TT,,,.~~,TTTT....,.,TT...,TTT..,~~~~.,*.T",
-  "TTTTTTTTT~~TTTTTTTTTTTTTTTTTTTTTTTTT~~TTTTTT"
+  "TT.TT,,,.~~,=TTT....,.,TT...,TTT..,~~~~.,*.T",
+  "TT.,..T.,~~.=.,TTTTTTTTTTTTTTTTTTTTT~~TTTTTT",
+  "T..T.,..~~~.==.T.,..TT.TT                   ",
+  "T.,..~~~~~~~.=,..,..T.,.T                   ",
+  "TT.~~~~~~~~~~=..CCC..T..T                   ",
+  "T.~~~~~~~~~~~=..CCC.,..TT                   ",
+  "T.~~~~~~~~~bb=..CCC..T..T                   ",
+  "T,.~~~~~~~~~~=====..,.T.T                   ",
+  "T..~~~~~~~~~~=.L..#..,.TT                   ",
+  "TT.,~~~~~~~~.=,..T..T...T                   ",
+  "T.#..~~~~~,..S..,...#.,.T                   ",
+  "T..T..,..T..,..T.,..T..TT                   ",
+  "TTT.T..TT.,.T..TT..T.T..T                   ",
+  "TTTTTTTTTTTTTTTTTTTTTTTTT                   "
 ];
 const LARG = CARTE[0].length, HAUT = CARTE.length;
 // Les régions de l'île : la première qui contient la case gagne. Chaque créature a la sienne (HABITAT).
 const ZONES = {
-  cabane: { dans: (x, y) => x >= 15 && x <= 30 && y >= 29, nom: "Le bois Biscornu", panneau: "Le bois Biscornu. Dans la cabane de travers vit… Sporran !" },
-  foret: { dans: (x, y) => x <= 14 && y >= 14, nom: "La forêt Sombre", panneau: "La forêt Sombre : le pont couvert, puis le vieux cimetière." },
+  cabane: { dans: (x, y) => x >= 15 && x <= 30 && y >= 29 && y <= 39, nom: "Le bois Biscornu", panneau: "Le bois Biscornu. Dans la cabane de travers vit… Sporran !" },
+  foret: { dans: (x, y) => (x <= 14 && y >= 14) || y >= 40, nom: "La forêt du Lac", panneau: "La forêt du Lac : le pont couvert, le vieux cimetière, et tout au sud le grand lac et son chalet." },
   bayou: { dans: (x, y) => x >= 31 && y >= 14, nom: "Le bayou", panneau: "Le bayou : passerelles, cyprès et eaux boueuses." },
   village: { dans: (x, y) => y >= 14, nom: "Le vieux village", panneau: "Le vieux village et sa cathédrale. Toutes les routes partent d'ici." },
   lande: { dans: (x, y) => x <= 21, nom: "Les Hautes-Terres", panneau: "Les Hautes-Terres : la lande, le grand lac et les neiges du nord." },
@@ -111,7 +124,7 @@ const libreJ = (x, y) => libreSol(x, y) && !occupeJ(x, y);           // et perso
 // Un habitant par région : on lui parle avec A, il donne les indices des cryptides cachés chez lui.
 const PNJ = [
   { x: 23, y: 22, zone: "village", nom: "Le maire Pistache", corps: 0xd99a3c, chapeau: 0x6b569b, bonjour: "Bienvenue au vieux village ! Les routes partent d'ici vers toutes les régions de l'île." },
-  { x: 13, y: 22, zone: "foret", nom: "Lumignon le veilleur", corps: 0x3f8790, chapeau: 0x2a2a3a, bonjour: "Chut… La forêt Sombre est pleine de bruits. Reste près des lampadaires !" },
+  { x: 13, y: 22, zone: "foret", nom: "Lumignon le veilleur", corps: 0x3f8790, chapeau: 0x2a2a3a, bonjour: "Bienvenue dans la forêt du Lac ! Suis le chemin vers le sud : le lac est immense." },
   { x: 17, y: 11, zone: "lande", nom: "Bergère Mousse", corps: 0x9a6fb0, chapeau: 0xf3e2c4, bonjour: "Le vent souffle fort sur les Hautes-Terres. Le lac et la neige cachent bien des secrets." },
   { x: 31, y: 11, zone: "desert", nom: "Papy Coyote", corps: 0xc9573f, chapeau: 0xe2b77c, bonjour: "Fait chaud, hein ? Dans le désert, regarde bien autour des cactus et des rochers rouges." },
   { x: 33, y: 19, zone: "bayou", nom: "Tante Grenouille", corps: 0x6e8a44, chapeau: 0xff8fa3, bonjour: "Attention où tu mets les pieds, petit ! Le bayou, ça glisse." }
@@ -317,9 +330,9 @@ const AMB = {   // lumière de chaque région : ciel, sol, intensité ; soleil ;
   lande: { ciel: [0xdfeaf5, 0x6a6a5a, 1.5], soleil: [0xf4f1ff, 1.9], fond: 0xbcd3dc, nuit: .1 },
   desert: { ciel: [0xffe9c8, 0xa0603a, 1.7], soleil: [0xffe0a8, 2.5], fond: 0xf3c98e, nuit: 0 },
   village: { ciel: [0xd8ecff, 0x7a5a40, 1.6], soleil: [0xfff0d6, 2.2], fond: 0xf3d9ae, nuit: 0 },
-  foret: { ciel: [0x7f74c8, 0x241c40, .85], soleil: [0x9fb0ff, .5], fond: 0x241d40, nuit: 1 },
+  foret: { ciel: [0xdcefe8, 0x4a6a46, 1.6], soleil: [0xfff3da, 2.1], fond: 0xcfe3d6, nuit: 0 },
   bayou: { ciel: [0xcfe0a8, 0x45532c, 1.25], soleil: [0xffdf9a, 1.5], fond: 0x8a9a6a, nuit: .45 },
-  cabane: { ciel: [0xe6a8c4, 0x35284a, 1.05], soleil: [0xff9a6a, 1.25], fond: 0x5a3f6a, nuit: .7 }
+  cabane: { ciel: [0x6f5cc8, 0x161236, .8], soleil: [0x8fa8ff, .45], fond: 0x1a1536, nuit: 1.4 }   // plus que la nuit : le bois est encore plus sombre
 };
 const M3 = {};   // matériaux partagés, mats et doux (pas de reflets)
 const mat3 = (c, e) => M3[c + "/" + (e || 0)] || (M3[c + "/" + (e || 0)] = new THREE.MeshLambertMaterial({ color: c, emissive: e ? c : 0x000000, emissiveIntensity: e || 0 }));
@@ -428,12 +441,13 @@ function dioramaVolumes() {   // l'ancienne île en volumes : gardée si les pla
   const pos = [], col = [], c3 = new THREE.Color();
   const quad = (a, b, c, d, hex) => { c3.setHex(hex); for (const p of [a, b, c, a, c, d]) { pos.push(...p); col.push(c3.r, c3.g, c3.b); } };
   for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+    if (G[y][x] === " ") continue;
     const ch = G[y][x], h = hautSol(ch), Z = ZC[zoneJ(x, y)], x0 = x - .5, x1 = x + .5, z0 = y - .5, z1 = y + .5, r = rnd() < .5;
     const dessus = h < 0 ? Z.fond : "=p".includes(ch) ? Z.chemin : ch === ":" ? (r ? COUL.sable : COUL.sable2)
       : neigeux(x, y) ? (r ? COUL.neige : COUL.neige2) : Z.sol[r ? 0 : 1];
     quad([x0, h, z0], [x0, h, z1], [x1, h, z1], [x1, h, z0], dessus);
     [[0, -1, [x0, z0], [x1, z0]], [0, 1, [x1, z1], [x0, z1]], [-1, 0, [x0, z1], [x0, z0]], [1, 0, [x1, z0], [x1, z1]]].forEach(([dx, dy, a, b]) => {
-      const n = G[y + dy] && G[y + dy][x + dx], nh = n === undefined ? -1.1 : hautSol(n);
+      const n = G[y + dy] && G[y + dy][x + dx] !== " " ? G[y + dy][x + dx] : undefined, nh = n === undefined ? -1.1 : hautSol(n);
       if (nh < h) { quad([a[0], nh, a[1]], [b[0], nh, b[1]], [b[0], h, b[1]], [a[0], h, a[1]], COUL.terre); if (h === 0 && n !== undefined) quad([a[0], h - .06, a[1]], [b[0], h - .06, b[1]], [b[0], h, b[1]], [a[0], h, a[1]], dessus); }
       else if (n === undefined) quad([a[0], -1.1, a[1]], [b[0], -1.1, b[1]], [b[0], h, b[1]], [a[0], h, a[1]], COUL.terre);
     });
@@ -631,7 +645,7 @@ function fusionnerJ(groupe) {   // les objets immobiles de même couleur fondus 
 // La caméra est inclinée comme sur les dessins (le losange d'une tuile est 0,675 fois moins haut que large).
 const HAUT_CAM = { flat: 12.9, volumes: 10.5 };
 const SOL_FLAT = ["vertdeau", "mousse", "sarcelle", "bayou", "feuilles", "sable", "neige", "chemin", "paves", "eau", "marais", "planches"];
-const SOL_ZONE = { lande: "vertdeau", village: "mousse", foret: "sarcelle", bayou: "bayou", cabane: "feuilles", desert: "sable" };
+const SOL_ZONE = { lande: "vertdeau", village: "mousse", foret: "mousse", bayou: "bayou", cabane: "sarcelle", desert: "sable" };
 // chaque objet : sa hauteur (en cases) et, s'il le faut, de combien son pied descend sous le centre de la case
 const TAILLE_DECOR = { sapin: 2.4, sapinneige: 2.4, bouleau: 2.2, automne: 2.2, mort: 1.9, cypres: 2.5, fleuri: .8, rocher: .85, rune: 1.1, bruyere: .5, champignons: .5,
   montagne: 2.3, tronc: .6, roseaux: .65, nenuphar: .35, cactus: 1.3, petitcactus: .7, falaise: 1.25, tombe: .75, croix: .85, grille: .9, citrouille: .55, lampadaire: 1.6,
@@ -668,7 +682,7 @@ function dioramaFlat() {
   // le sol : un carré par case, rangés du fond vers l'avant (on les dessine dans cet ordre, sans profondeur)
   const pos = [], uv = [], e = .004;
   const sol = (x, y) => { const ch = G[y][x], z = zoneJ(x, y);
-    if (ch === "~") return z === "bayou" || z === "foret" ? "marais" : "eau";
+    if (ch === "~") return z === "bayou" || z === "cabane" ? "marais" : "eau";
     if ("bB".includes(ch)) return "planches";
     if ("=pPGk".includes(ch)) return z === "village" ? "paves" : "chemin";
     if (ch === ":" || (z === "desert" && ch !== "*")) return "sable";
@@ -677,7 +691,7 @@ function dioramaFlat() {
     if ("EGRHD".includes(ch) && z === "village") return "paves";
     if (z === "bayou") return rnd() < .35 ? "bayou" : "mousse";
     return SOL_ZONE[z]; };
-  const cases = []; for (let y = 0; y < HAUT; y++) for (let x = 0; x < LARG; x++) cases.push([x, y]);
+  const cases = []; for (let y = 0; y < HAUT; y++) for (let x = 0; x < LARG; x++) if (G[y][x] !== " ") cases.push([x, y]);
   cases.sort((a, b) => a[0] + a[1] - b[0] - b[1]);
   cases.forEach(([x, y]) => {
     const i = SOL_FLAT.indexOf(sol(x, y)), u0 = (i % 4) / 4 + e, u1 = (i % 4 + 1) / 4 - e, v0 = Math.floor(i / 4) / 3 + e, v1 = (Math.floor(i / 4) + 1) / 3 - e;
@@ -689,8 +703,11 @@ function dioramaFlat() {
   const ms = new THREE.MeshBasicMaterial({ map: R.texSol, depthWrite: false, depthTest: false }); R.matsFlat.push(ms);
   const msol = new THREE.Mesh(gs, ms); msol.renderOrder = -10; msol.frustumCulled = false; groupe.add(msol);
   // le bord de l'île : une tranche de terre sous les côtés qu'on voit
-  const bp = [], W = LARG - .5, Hh = HAUT - .5, P = -1.6;
-  bp.push(W, 0, -.5, W, P, -.5, W, P, Hh, W, 0, -.5, W, P, Hh, W, 0, Hh, -.5, 0, Hh, W, P, Hh, -.5, P, Hh, -.5, 0, Hh, W, 0, Hh, W, P, Hh);
+  const bp = [], P = -1.6, vide = (x, y) => (G[y] || "")[x] === undefined || G[y][x] === " ";
+  cases.forEach(([x, y]) => {
+    if (vide(x + 1, y)) bp.push(x + .5, 0, y - .5, x + .5, P, y - .5, x + .5, P, y + .5, x + .5, 0, y - .5, x + .5, P, y + .5, x + .5, 0, y + .5);
+    if (vide(x, y + 1)) bp.push(x - .5, 0, y + .5, x + .5, P, y + .5, x - .5, P, y + .5, x - .5, 0, y + .5, x + .5, 0, y + .5, x + .5, P, y + .5);
+  });
   const gb = new THREE.BufferGeometry(); gb.setAttribute("position", new THREE.Float32BufferAttribute(bp, 3));
   const mb = new THREE.MeshBasicMaterial({ color: 0x5a2f35, side: THREE.DoubleSide, depthWrite: false, depthTest: false }); const bord = new THREE.Mesh(gb, mb); bord.renderOrder = -11; groupe.add(bord);
   // les objets
@@ -700,8 +717,8 @@ function dioramaFlat() {
     const ch = G[y][x], z = zoneJ(x, y), r = rnd(), m = rnd() < .5;
     if (ch === "T") {
       if (z === "village" && r < .22 && autour(x, y, "=.,*") >= 3) pose(PROPS_VILLAGE[Math.floor(rnd() * PROPS_VILLAGE.length)], x, y, { miroir: m });
-      else pose(z === "foret" ? (r < .8 ? "sapin" : r < .93 ? "mort" : "souche") : z === "bayou" ? (r < .7 ? "cypres" : r < .85 ? "mort" : "souche")
-        : z === "cabane" ? (r < .55 ? "automne" : r < .85 ? "mort" : "sapin") : z === "lande" ? (neigeux(x, y) || autour(x, y, "nA") ? "sapinneige" : r < .5 ? "bouleau" : "sapin")
+      else pose(z === "foret" ? (r < .6 ? "sapin" : r < .82 ? "bouleau" : r < .94 ? "automne" : "souche") : z === "bayou" ? (r < .7 ? "cypres" : r < .85 ? "mort" : "souche")
+        : z === "cabane" ? (r < .55 ? "mort" : r < .9 ? "sapin" : "automne") : z === "lande" ? (neigeux(x, y) || autour(x, y, "nA") ? "sapinneige" : r < .5 ? "bouleau" : "sapin")
         : z === "desert" ? "cactus" : (r < .5 ? "automne" : r < .8 ? "bouleau" : "sapin"), x + (rnd() - .5) * .15, y + (rnd() - .5) * .15, { miroir: m, varie: .85 + rnd() * .3 });
     }
     else if (ch === "A") pose("montagne", x, y, { miroir: m, haut: 2 + rnd() * .6 });
@@ -728,8 +745,23 @@ function dioramaFlat() {
   });
   // la nuit, les lampadaires brillent
   const halo = halosJ(); lampes.forEach(l => { const s = new THREE.Sprite(halo); s.scale.set(1.6, 1.6, 1); s.position.set(l.x, l.h, l.z); s.renderOrder = 2; groupe.add(s); });
+  // le bois Biscornu brille : des lueurs turquoise, violettes et roses (champignons, mousses, lucioles) qui respirent doucement
+  const lueurs = [0x4ff3e0, 0x9a7bff, 0xff7ad9].map(c => lueurJ(c));
+  for (let y = 0; y < HAUT; y++) for (let x = 0; x < LARG; x++) if (zoneJ(x, y) === "cabane" && rnd() < ((TUILES[G[y][x]] || {}).libre ? .16 : .1)) {
+    const m = lueurs[Math.floor(rnd() * 3)].clone(), s = new THREE.Sprite(m), t = .8 + rnd() * .7, ph = rnd() * 7, h = rnd() < .5 ? .08 : .4 + rnd() * .9;
+    s.scale.set(t, t, 1); s.position.set(x + (rnd() - .5) * .8, h, y + (rnd() - .5) * .8); s.renderOrder = 3; groupe.add(s);
+    anim.push(tt => { m.opacity = Math.min(1, moteurJeu().nuit || 0) * (.6 + .4 * Math.sin(tt / 900 + ph)); });
+  }
   R.scene.add(groupe);
   return R.ile = { groupe, anim, lampes: [], devant, flat: true };
+}
+function lueurJ(c) {   // un petit rond de lumière colorée, qui s'ajoute à l'image
+  const R = moteurJeu(), k = "lueur" + c; if (R[k]) return R[k];
+  const cv = document.createElement("canvas"); cv.width = cv.height = 64; const g = cv.getContext("2d"), d = g.createRadialGradient(32, 32, 0, 32, 32, 32), o = new THREE.Color(c);
+  const rgb = `${Math.round(o.r * 255)},${Math.round(o.g * 255)},${Math.round(o.b * 255)}`;
+  d.addColorStop(0, `rgba(255,255,255,.95)`); d.addColorStop(.18, `rgba(${rgb},.8)`); d.addColorStop(1, `rgba(${rgb},0)`); g.fillStyle = d; g.fillRect(0, 0, 64, 64);
+  const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace;
+  return R[k] = new THREE.SpriteMaterial({ map: t, blending: THREE.AdditiveBlending, depthWrite: false, depthTest: false, transparent: true, opacity: 0 });
 }
 function halosJ() {   // un rond de lumière jaune, doux, qui s'ajoute à l'image (la nuit seulement)
   const R = moteurJeu(); if (R.halo) return R.halo;
@@ -873,7 +905,7 @@ function lumiereJ(R, zone, vite) {   // la lumière glisse doucement vers celle 
   R.rendu.setClearColor(0, 0);   // hors de l'île, on voit le fond sombre de l'app (CSS de #jeu)
   R.nuit += (A.nuit - R.nuit) * k; R.heros.userData.lueur.intensity = 1.2 + 2 * R.nuit;
   if (R.matsFlat && Math.abs((R.nuitFlat ?? -1) - R.nuit) > .01) {   // le décor dessiné se teinte de bleu la nuit, les lampadaires s'allument
-    R.nuitFlat = R.nuit; R.matsFlat.forEach(m => m.color.setRGB(1 - .36 * R.nuit, 1 - .32 * R.nuit, 1 - .12 * R.nuit)); halosJ().opacity = .95 * R.nuit;
+    R.nuitFlat = R.nuit; R.matsFlat.forEach(m => m.color.setRGB(1 - .36 * R.nuit, 1 - .32 * R.nuit, 1 - .12 * R.nuit)); halosJ().opacity = Math.min(.95, .95 * R.nuit);
   }
   $("jeu").classList.toggle("nuit", R.nuit > .5);
 }

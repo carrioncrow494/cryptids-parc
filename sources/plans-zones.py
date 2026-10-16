@@ -5,20 +5,20 @@ from PIL import Image, ImageDraw, ImageFont
 src = open('sources/jeu.js').read()
 G = re.findall(r'"([^"]+)"', re.search(r'const CARTE = \[(.*?)\];', src, re.S).group(1))
 def zone(x, y):   # comme ZONES dans jeu.js
-    if 15 <= x <= 30 and y >= 29: return 'cabane'
-    if x <= 14 and y >= 14: return 'foret'
+    if 15 <= x <= 30 and 29 <= y <= 39: return "cabane"
+    if (x <= 14 and y >= 14) or y >= 40: return 'foret'
     if x >= 31 and y >= 14: return 'bayou'
     if y >= 14: return 'village'
     if x <= 21: return 'lande'
     return 'desert'
-SOL = {'village': (126, 170, 96), 'foret': (46, 104, 100), 'bayou': (110, 130, 70), 'lande': (140, 160, 120), 'desert': (232, 190, 130), 'cabane': (230, 130, 50)}
+SOL = {'village': (126, 170, 96), 'foret': (108, 160, 90), 'bayou': (110, 130, 70), 'lande': (140, 160, 120), 'desert': (232, 190, 130), 'cabane': (46, 70, 110)}
 CH = {'=': (196, 170, 220), 'p': (196, 170, 220), 'P': (255, 220, 120), ':': (232, 190, 130), '~': (80, 170, 210), 'b': (170, 110, 70), 'B': (170, 110, 70), 'n': (240, 244, 250), 'j': (236, 206, 150), '*': (200, 220, 140)}
 BATI = 'RHDEGKkXQNYWFC'
 NOMS = {'X': 'Excalibook', 'Q': 'Bergamotte', 'N': 'Ninamoto', 'Y': 'Supérette', 'E': 'Cathédrale', 'K': 'Cabane biscornue', 'W': 'Chupa la sopa', 'F': 'Ferme', 'C': 'Chalet', 'B': 'Pont couvert'}
 F = ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf', 26)
 W = 110; H = W * .675
 for z in SOL:
-    cs = [(x, y) for y in range(len(G)) for x in range(len(G[0])) if zone(x, y) == z]
+    cs = [(x, y) for y in range(len(G)) for x in range(len(G[0])) if zone(x, y) == z and G[y][x] != ' ']
     X0 = max(0, min(x for x, y in cs) - 1); X1 = min(len(G[0]) - 1, max(x for x, y in cs) + 1); Y0 = max(0, min(y for x, y in cs) - 1); Y1 = min(len(G) - 1, max(y for x, y in cs) + 1)
     P = lambda x, y: (((x - X0) - (y - Y0)) * W / 2 + (Y1 - Y0 + 1) * W / 2 + 20, ((x - X0) + (y - Y0)) * H / 2 + 20)
     w = int((X1 - X0 + 1 + Y1 - Y0 + 1) * W / 2 + 40); h = int((X1 - X0 + Y1 - Y0 + 2) * H / 2 + 40)
@@ -27,7 +27,7 @@ for z in SOL:
         im = Image.new('RGB', (w, h), (0, 255, 0)); d = ImageDraw.Draw(im)
         for y in range(Y0, Y1 + 1):
             for x in range(X0, X1 + 1):
-                if zone(x, y) != z: continue   # seulement la zone : les voisines sont peintes avec leur propre plan
+                if zone(x, y) != z or G[y][x] == ' ': continue   # seulement la zone : les voisines sont peintes avec leur propre plan
                 ch = G[y][x]; ax, ay = P(x, y); poly = [(ax, ay), (ax + W / 2, ay + H / 2), (ax, ay + H), (ax - W / 2, ay + H / 2)]
                 c = (150, 145, 160) if ch in BATI else CH.get(ch, SOL[z])
                 if ch == 'n' and z != 'lande': c = SOL[z]
