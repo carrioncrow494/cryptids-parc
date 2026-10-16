@@ -185,11 +185,20 @@ function dialogueJ(texte, duree) {
 }
 
 // ---------- déplacement ----------
-function essayerPas(dir) {
-  if (!JEU || JEU.pas || JEU.revele) return;
-  JEU.dir = dir; const [dx, dy] = DIRS[dir], x = JEU.x + dx, y = JEU.y + dy;
-  if (!libreJ(x, y)) { if (performance.now() - (JEU.tCogne || 0) > 350) { JEU.tCogne = performance.now(); sfx("clic"); } return; }
-  JEU.pas = { de: [JEU.x, JEU.y], t0: performance.now() }; JEU.x = x; JEU.y = y; JEU.action = null;
+function essayerPas(dir, essai) {   // essai : on regarde seulement si ça passe (sans se tourner ni cogner)
+  if (!JEU || JEU.pas || JEU.revele) return false;
+  const [dx, dy] = DIRS[dir], x = JEU.x + dx, y = JEU.y + dy;
+  if (!libreJ(x, y)) { if (essai) return false; JEU.dir = dir; if (performance.now() - (JEU.tCogne || 0) > 350) { JEU.tCogne = performance.now(); sfx("clic"); } return false; }
+  JEU.dir = dir; JEU.pas = { de: [JEU.x, JEU.y], t0: performance.now() }; JEU.x = x; JEU.y = y; JEU.action = null; return true;
+}
+// Le joystick : pousser tout droit vers le haut (ou le bas, la gauche, la droite de l'écran) fait marcher en zigzag sur les 2 diagonales voisines,
+// et si la diagonale choisie est bouchée, on glisse sur la voisine. Comme ça on monte même quand un arbre est devant.
+function pasTenu() {
+  if (!JEU || !JEU.tenu) return;
+  const a = JEU.tenu, b = JEU.tenu2;
+  const ordre = !b ? [a] : JEU.zigzag && JEU.dernierDir === a ? [b, a] : [a, b];
+  for (const d of ordre) if (essayerPas(d, true)) { JEU.dernierDir = d; return; }
+  essayerPas(ordre[0]);
 }
 function finPas() {
   JEU.pas = null; sauverJ();
@@ -830,8 +839,8 @@ function boucleJeu(t) {
   let fx = JEU.x, fy = JEU.y, bond = 0;
   if (JEU.pas) { const k = Math.min(1, (t - JEU.pas.t0) / DUREE_PAS); fx = JEU.pas.de[0] + (JEU.x - JEU.pas.de[0]) * k; fy = JEU.pas.de[1] + (JEU.y - JEU.pas.de[1]) * k; bond = Math.sin(k * Math.PI) * .12;
     if (k >= 1) { const t0 = JEU.pas.t0; finPas(); fx = JEU.x; fy = JEU.y; bond = 0;
-      if (JEU.tenu) { essayerPas(JEU.tenu); if (JEU.pas) JEU.pas.t0 = Math.max(t0 + DUREE_PAS, t - DUREE_PAS * .5); } } }   // le pas suivant part sans temps mort
-  if (!JEU.pas && JEU.tenu) essayerPas(JEU.tenu);
+      if (JEU.tenu) { pasTenu(); if (JEU.pas) JEU.pas.t0 = Math.max(t0 + DUREE_PAS, t - DUREE_PAS * .5); } } }   // le pas suivant part sans temps mort
+  if (!JEU.pas && JEU.tenu) pasTenu();
   const d = dioramaJ(), h = R.heros, sol = d && d.flat ? 0 : hautSol(tuileJ(Math.round(fx), Math.round(fy)));
   if (!d) { R.rendu.setClearColor(R.fond, 1); R.rendu.clear(); return; }   // les planches du décor arrivent
   lumiereJ(R, zoneJ(Math.round(fx), Math.round(fy)), premier);
@@ -901,13 +910,14 @@ function bougerStick(e) {
   const r = stick.getBoundingClientRect(), dx = e.clientX - (r.left + r.width / 2), dy = e.clientY - (r.top + r.height / 2), d = Math.hypot(dx, dy), max = r.width * .3, k = d > max ? max / d : 1;
   pommeau.style.transform = `translate(${dx * k}px, ${dy * k}px)`;
   if (!JEU) return;
-  if (d < r.width * .12) { JEU.tenu = null; return; }
+  if (d < r.width * .12) { JEU.tenu = JEU.tenu2 = null; return; }
   const a = (Math.atan2(-dy, dx) * 180 / Math.PI + 360) % 360, ecart = c => Math.abs(((a - c + 540) % 360) - 180);
-  let dir = JEU.tenu && ecart(CAP[JEU.tenu]) < 60 ? JEU.tenu : null;   // un peu de marge : on ne change pas de direction au moindre tremblement
-  if (!dir) dir = Object.keys(CAP).reduce((m, k) => ecart(CAP[k]) < ecart(CAP[m]) ? k : m);
-  if (dir !== JEU.tenu) { JEU.tenu = dir; essayerPas(dir); }
+  const [p, q] = Object.keys(CAP).sort((k, l) => ecart(CAP[k]) - ecart(CAP[l]));   // la diagonale la plus proche, puis sa voisine
+  const zigzag = ecart(CAP[p]) > 28, change = p !== JEU.tenu || zigzag !== !!JEU.zigzag;
+  JEU.tenu = p; JEU.tenu2 = ecart(CAP[q]) <= 90 ? q : null; JEU.zigzag = zigzag;
+  if (change) pasTenu();
 }
-function lacherStick() { doigtStick = null; stick.classList.remove("actif"); pommeau.style.transform = ""; if (JEU) JEU.tenu = null; }
+function lacherStick() { doigtStick = null; stick.classList.remove("actif"); pommeau.style.transform = ""; if (JEU) JEU.tenu = JEU.tenu2 = null; }
 stick.addEventListener("pointerdown", e => { e.preventDefault(); doigtStick = e.pointerId; stick.setPointerCapture(e.pointerId); stick.classList.add("actif"); bougerStick(e); });
 stick.addEventListener("pointermove", e => { if (e.pointerId === doigtStick) bougerStick(e); });
 ["pointerup", "pointercancel", "lostpointercapture"].forEach(ev => stick.addEventListener(ev, e => { if (e.pointerId === doigtStick) lacherStick(); }));
@@ -917,7 +927,7 @@ $("jeuB").addEventListener("pointerdown", e => { e.preventDefault(); boutonB(); 
 const TOUCHES = { ArrowUp: "haut", ArrowDown: "bas", ArrowLeft: "gauche", ArrowRight: "droite", z: "haut", s: "bas", q: "gauche", d: "droite", w: "haut", a: "gauche" };
 addEventListener("keydown", e => {
   if (!JEU || $("jeu").hidden) return;
-  if (TOUCHES[e.key]) { e.preventDefault(); JEU.tenu = TOUCHES[e.key]; essayerPas(JEU.tenu); }
+  if (TOUCHES[e.key]) { e.preventDefault(); JEU.tenu = TOUCHES[e.key]; JEU.tenu2 = null; JEU.zigzag = false; pasTenu(); }
   else if (!e.repeat && (e.key === " " || e.key === "Enter")) { e.preventDefault(); boutonA(); }
   else if (!e.repeat && (e.key === "Escape" || e.key === "Backspace")) { e.preventDefault(); boutonB(); }
 });
