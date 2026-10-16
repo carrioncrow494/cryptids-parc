@@ -1880,6 +1880,9 @@ window.__test = { ouvrir: () => { montrer(null); $("scene").hidden = false; init
   etat: () => { const c = moteur && moteur.creature; return { angle: c && c.angle, lacet: moteur && lacetCamera(), gyro, gyroOK, trouve: c && c.trouve, consigne: $("consigne").textContent }; } };
 // fabriqué par sources/decoupe-decor.py : la place de chaque objet dans jeu-decor.webp [x, y, largeur, hauteur], en pixels
 const ATLAS_DECOR = { taille: [2048, 2826], arche: [505, 1697, 256, 255], automne: [1472, 1074, 235, 256], banc: [1310, 1959, 256, 223], barriere: [1553, 1697, 256, 243], boite: [1675, 1435, 166, 256], bouleau: [1247, 1074, 219, 256], bruyere: [1291, 1697, 256, 244], cabane: [619, 0, 488, 560], cach_bayou: [262, 2203, 256, 219], cach_cabane: [1048, 2428, 256, 198], cach_desert: [1572, 2203, 256, 214], cach_feuilles: [1572, 2428, 256, 187], cach_foret: [0, 2428, 256, 211], cach_lande: [1310, 2203, 256, 215], cach_neige: [524, 2428, 256, 210], cach_village: [786, 2203, 256, 217], cactus: [433, 1435, 205, 256], caisse: [0, 1959, 256, 238], cathedrale: [0, 0, 613, 640], champignons: [1029, 1697, 256, 246], citrouille: [262, 2428, 256, 210], croix: [644, 1435, 211, 256], cypres: [0, 1435, 208, 256], epouvantail: [0, 1697, 248, 256], falaise: [786, 1959, 256, 230], fleuri: [0, 2203, 256, 219], fontaine: [262, 1959, 256, 235], grille: [861, 1435, 213, 256], lampadaire: [1080, 1435, 133, 256], lanterne: [254, 1697, 245, 256], maison1: [1288, 646, 400, 355], maison2: [406, 1074, 400, 354], maison3: [0, 1074, 400, 355], maison4: [882, 646, 400, 356], montagne: [518, 646, 358, 360], mort: [767, 1697, 256, 249], nenuphar: [1310, 2428, 256, 188], panier: [1572, 1959, 256, 222], panneau: [1219, 1435, 200, 256], petitcactus: [524, 2203, 256, 217], pont: [1113, 0, 512, 474], puits: [1425, 1435, 244, 256], rocher: [1048, 2203, 256, 216], roseaux: [214, 1435, 213, 256], rune: [1713, 1074, 239, 256], saloon: [0, 646, 512, 422], sapin: [812, 1074, 218, 256], sapinneige: [1036, 1074, 205, 256], souche: [0, 2645, 256, 181], tombe: [1048, 1959, 256, 229], tonneau: [524, 1959, 256, 234], tronc: [786, 2428, 256, 198] };
+// fabriqué par sources/decoupe-nature.py : la place de chaque plante dans jeu-nature.webp [x, y, largeur, hauteur, 1], en pixels
+ATLAS_DECOR.taille2 = [2048, 2522];
+Object.assign(ATLAS_DECOR, { bayou_a1: [0, 918, 259, 300, 1], bayou_a2: [265, 918, 201, 300, 1], bayou_a3: [472, 918, 290, 300, 1], bayou_a4: [768, 918, 253, 300, 1], bayou_a5: [612, 1836, 300, 246, 1], bayou_a6: [1027, 918, 273, 300, 1], bayou_a7: [1415, 1530, 300, 288, 1], bayou_a8: [1306, 918, 282, 300, 1], bayou_p1: [1530, 1836, 200, 167, 1], bayou_p2: [824, 2123, 200, 138, 1], bayou_p3: [412, 2273, 200, 127, 1], bayou_p4: [412, 2409, 200, 111, 1], cabane_a1: [0, 0, 265, 300, 1], cabane_a2: [271, 0, 234, 300, 1], cabane_a3: [511, 0, 287, 300, 1], cabane_a4: [804, 0, 235, 300, 1], cabane_a5: [1045, 0, 298, 300, 1], cabane_a6: [1349, 0, 283, 300, 1], cabane_a7: [1638, 0, 287, 300, 1], cabane_a8: [0, 306, 287, 300, 1], cabane_p1: [1236, 2123, 200, 132, 1], cabane_p2: [412, 2123, 200, 141, 1], cabane_p3: [824, 2273, 200, 120, 1], cabane_p4: [1648, 2123, 200, 130, 1], desert_a1: [293, 306, 219, 300, 1], desert_a2: [518, 306, 234, 300, 1], desert_a3: [758, 306, 288, 300, 1], desert_a4: [1052, 306, 212, 300, 1], desert_a5: [1270, 306, 265, 300, 1], desert_a6: [0, 1836, 300, 281, 1], desert_a7: [1541, 306, 263, 300, 1], desert_a8: [1109, 1530, 300, 297, 1], desert_p1: [1030, 2123, 200, 137, 1], desert_p2: [618, 2123, 200, 141, 1], desert_p3: [1442, 2273, 200, 114, 1], desert_p4: [206, 2273, 200, 129, 1], foret_a1: [1594, 918, 242, 300, 1], foret_a2: [0, 1224, 239, 300, 1], foret_a3: [245, 1224, 257, 300, 1], foret_a4: [508, 1224, 235, 300, 1], foret_a5: [749, 1224, 274, 300, 1], foret_a6: [1029, 1224, 210, 300, 1], foret_a7: [1245, 1224, 241, 300, 1], foret_a8: [1492, 1224, 243, 300, 1], foret_p1: [0, 2273, 200, 130, 1], foret_p2: [0, 2123, 200, 144, 1], foret_p3: [618, 2409, 200, 111, 1], foret_p4: [0, 2409, 200, 113, 1], lande_a1: [0, 612, 253, 300, 1], lande_a2: [259, 612, 240, 300, 1], lande_a3: [505, 612, 226, 300, 1], lande_a4: [737, 612, 291, 300, 1], lande_a5: [1034, 612, 283, 300, 1], lande_a6: [1323, 612, 242, 300, 1], lande_a7: [1571, 612, 247, 300, 1], lande_a8: [306, 1836, 300, 279, 1], lande_p1: [1442, 2123, 200, 132, 1], lande_p2: [618, 2273, 200, 125, 1], lande_p3: [1648, 2273, 200, 114, 1], lande_p4: [1030, 2273, 200, 119, 1], village_a1: [1741, 1224, 277, 300, 1], village_a2: [803, 1530, 300, 298, 1], village_a3: [0, 1530, 205, 300, 1], village_a4: [211, 1530, 288, 300, 1], village_a5: [505, 1530, 292, 300, 1], village_a6: [1721, 1530, 300, 287, 1], village_a7: [918, 1836, 300, 216, 1], village_a8: [1224, 1836, 300, 211, 1], village_p1: [206, 2123, 200, 142, 1], village_p2: [206, 2409, 200, 112, 1], village_p3: [1236, 2273, 200, 115, 1], village_p4: [1736, 1836, 200, 148, 1] });
 
 /* ===================== Aventure virtuelle : jeu vidéo en 3D isométrique (vue de dessus en biais, façon Dofus) ===================== */
 // Une seule grande île, découpée en régions (ZONES) séparées par des frontières (arbres, rochers, falaises) ; on passe de l'une à l'autre
@@ -2523,11 +2526,12 @@ function fusionnerJ(groupe) {   // les objets immobiles de même couleur fondus 
   lots.forEach(({ mat, g, ombre }) => { const m = new THREE.Mesh(mergeGeometries(g), mat); m.castShadow = ombre; m.receiveShadow = true; groupe.add(m); });
 }
 // ---------- le décor dessiné (flat design) : le sol en tuiles, et chaque objet est une image posée debout, face à la caméra ----------
-// Les images viennent de 2 planches : jeu-sol.webp (12 tuiles déroulées en carrés) et jeu-decor.webp (les objets, voir ATLAS_DECOR).
+// Les images viennent de 3 planches : jeu-sols.webp (les tuiles de sol de chaque zone, voir SOLS), jeu-decor.webp (les objets, voir ATLAS_DECOR)
+// et jeu-nature.webp (les arbres et plantes de chaque zone : <zone>_a1…a8 grands, <zone>_p1…p4 petits).
 // La caméra est inclinée comme sur les dessins (le losange d'une tuile est 0,675 fois moins haut que large).
 const HAUT_CAM = { flat: 12.9, volumes: 10.5 };
-const SOL_FLAT = ["vertdeau", "mousse", "sarcelle", "bayou", "feuilles", "sable", "neige", "chemin", "paves", "eau", "marais", "planches"];
-const SOL_ZONE = { lande: "vertdeau", village: "mousse", foret: "mousse", bayou: "bayou", cabane: "sarcelle", desert: "sable" };
+// jeu-sols.webp : une ligne par zone (tirée de son terrain peint), 7 tuiles par ligne
+const SOLS_ZONE = ["village", "foret", "cabane", "desert", "lande", "bayou"], SOLS = ["sol", "sol2", "chemin", "paves", "eau", "planches", "neige"];
 // chaque objet : sa hauteur (en cases) et, s'il le faut, de combien son pied descend sous le centre de la case
 const TAILLE_DECOR = { sapin: 2.4, sapinneige: 2.4, bouleau: 2.2, automne: 2.2, mort: 1.9, cypres: 2.5, fleuri: .8, rocher: .85, rune: 1.1, bruyere: .5, champignons: .5,
   montagne: 2.3, tronc: .6, roseaux: .65, nenuphar: .35, cactus: 1.3, petitcactus: .7, falaise: 1.25, tombe: .75, croix: .85, grille: .9, citrouille: .55, lampadaire: 1.6,
@@ -2535,25 +2539,35 @@ const TAILLE_DECOR = { sapin: 2.4, sapinneige: 2.4, bouleau: 2.2, automne: 2.2, 
 const JEUX_PARC = ["toboggan", "balancoire", "tourniquet", "bacasable", "cheval", "tour", "tapecul", "dome"];   // quand la planche du parc sera là
 const PROPS_VILLAGE = ["puits", "fontaine", "tonneau", "caisse", "banc", "boite", "epouvantail", "lanterne", "panier"];
 const CACHETTE_FLAT = { foret: "cach_foret", lande: "cach_lande", village: "cach_village", desert: "cach_desert", bayou: "cach_bayou", cabane: "cach_cabane" };
+// les arbres d'une zone : surtout ses grands arbres, parfois un petit (buisson, rocher, souche)
+const ARBRES = { cabane: [1, 2, 3, 4, 5, 6, 7, 8], desert: [2, 3, 6, 8], lande: [2, 4, 5, 7, 8], bayou: [1, 2, 3, 4, 5, 6, 7, 8], foret: [1, 2, 3, 4, 5, 6, 7, 8], village: [1, 2, 3, 4, 5, 6] };
+const NEIGE_LANDE = [1, 3, 6];
+function arbreJ(z, neige, r, r2) {
+  if (typeof ATLAS_DECOR === "undefined" || !ATLAS_DECOR[z + "_a1"]) return z === "desert" ? "cactus" : "sapin";
+  if (r < .14) return z + "_p" + (1 + Math.floor(r2 * 4));
+  const l = z === "lande" && neige ? NEIGE_LANDE : ARBRES[z]; return z + "_a" + l[Math.floor(r2 * l.length)];
+}
+const CACTUS_DESERT = ["desert_a1", "desert_a4", "desert_a5", "desert_a7"];
 const SIN_CAM = .675;   // un écart au sol (dx + dz) / √2 se voit SIN_CAM fois plus court à l'écran, en hauteur
-function chargerFlat(R) {   // les 2 planches du décor ; si l'une manque, on garde l'île en volumes
+function chargerFlat(R) {   // les 3 planches du décor ; si l'une manque, on garde l'île en volumes
   R.flat = "attente"; R.tFlat = performance.now(); let n = 0;
-  const L = new THREE.TextureLoader(), ok = () => { if (++n === 2 && R.flat === "attente") R.flat = "ok"; }, non = () => { R.flat = "non"; };
-  R.texSol = L.load(IMG_JEU + "jeu-sol.webp", t => { t.colorSpace = THREE.SRGBColorSpace; t.flipY = false; t.anisotropy = 4; t.needsUpdate = true; ok(); }, undefined, non);
+  const L = new THREE.TextureLoader(), ok = () => { if (++n === 3 && R.flat === "attente") R.flat = "ok"; }, non = () => { R.flat = "non"; };
+  R.texSol = L.load(IMG_JEU + "jeu-sols.webp", t => { t.colorSpace = THREE.SRGBColorSpace; t.flipY = false; t.anisotropy = 4; t.needsUpdate = true; ok(); }, undefined, non);
   R.texDecor = L.load(IMG_JEU + "jeu-decor.webp", t => { t.colorSpace = THREE.SRGBColorSpace; ok(); }, undefined, non);
+  R.texNature = L.load(IMG_JEU + "jeu-nature.webp", t => { t.colorSpace = THREE.SRGBColorSpace; ok(); }, undefined, non);   // les arbres de chaque zone
   R.matsFlat = [];   // tous les matériaux dessinés : on les teinte la nuit
 }
 function matDecor(R, nom, miroir, fondu) {   // un matériau par objet (et par sens, et estompé quand il cache le héros)
   const cle = nom + (miroir ? "/m" : "") + (fondu ? "/f" : ""); R.mats = R.mats || {};
   if (R.mats[cle]) return R.mats[cle];
-  const [x, y, w, h] = ATLAS_DECOR[nom], [W, H] = ATLAS_DECOR.taille, t = R.texDecor.clone();
+  const [x, y, w, h, nat] = ATLAS_DECOR[nom], [W, H] = nat ? ATLAS_DECOR.taille2 : ATLAS_DECOR.taille, t = (nat ? R.texNature : R.texDecor).clone();
   t.repeat.set((miroir ? -w : w) / W, h / H); t.offset.set((miroir ? x + w : x) / W, 1 - (y + h) / H); t.needsUpdate = true;
   const m = new THREE.SpriteMaterial({ map: t, transparent: true, alphaTest: .04, depthWrite: false, opacity: fondu ? .4 : 1 });
   R.matsFlat.push(m); return R.mats[cle] = m;
 }
 function poserDecor(R, groupe, nom, x, z, o = {}) {   // une image debout ; o.haut = hauteur (cases), o.large = largeur, o.pied = descente du pied
   const [, , w, h] = ATLAS_DECOR[nom], s = new THREE.Sprite(matDecor(R, nom, o.miroir));
-  const H = o.large ? o.large * h / w : (o.haut || TAILLE_DECOR[nom] || 1) * (o.varie || 1), Wd = H * w / h, pied = o.pied === undefined ? .18 : o.pied;
+  const H = o.large ? o.large * h / w : (o.haut || TAILLE_DECOR[nom] || (/_a\d$/.test(nom) ? 2.3 : 1)) * (o.varie || 1), Wd = H * w / h, pied = o.pied === undefined ? .18 : o.pied;
   s.scale.set(Wd, H, 1); s.center.set(.5, pied * SIN_CAM / H); s.position.set(x, 0, z);   // le bas de l'image descend de « pied » sous le centre de la case
   s.userData = { nom, miroir: !!o.miroir, x, z, haut: H }; groupe.add(s); return s;
 }
@@ -2563,20 +2577,17 @@ function dioramaFlat() {
   const neigeux = (x, y) => G[y][x] === "n" || autour(x, y, "n") >= 3;
   // le sol : un carré par case, rangés du fond vers l'avant (on les dessine dans cet ordre, sans profondeur)
   const pos = [], uv = [], e = .004;
-  const sol = (x, y) => { const ch = G[y][x], z = zoneJ(x, y);
-    if (ch === "~") return z === "bayou" || z === "cabane" ? "marais" : "eau";
-    if ("bB".includes(ch)) return "planches";
-    if ("=pPGk".includes(ch)) return z === "village" ? "paves" : "chemin";
-    if (ch === ":" || (z === "desert" && ch !== "*")) return "sable";
-    if (neigeux(x, y)) return "neige";
-    if (ch === "*") return "vertdeau";
-    if ("EGRHD".includes(ch) && z === "village") return "paves";
-    if (z === "bayou") return rnd() < .35 ? "bayou" : "mousse";
-    return SOL_ZONE[z]; };
+  const sol = (x, y) => { const ch = G[y][x], z = zoneJ(x, y), Z = SOLS_ZONE.indexOf(z), c = k => [Z, SOLS.indexOf(k)];   // [ligne de la zone, tuile]
+    if (ch === "~") return c("eau");
+    if ("bB".includes(ch)) return c("planches");
+    if ("=pPGk".includes(ch)) return z === "village" ? c("paves") : c("chemin");
+    if ("EGRHD".includes(ch) && z === "village") return c("paves");
+    if (neigeux(x, y)) return [SOLS_ZONE.indexOf("lande"), SOLS.indexOf("neige")];
+    return c(ch === "*" || rnd() < .3 ? "sol2" : "sol"); };
   const cases = []; for (let y = 0; y < HAUT; y++) for (let x = 0; x < LARG; x++) if (G[y][x] !== " ") cases.push([x, y]);
   cases.sort((a, b) => a[0] + a[1] - b[0] - b[1]);
   cases.forEach(([x, y]) => {
-    const i = SOL_FLAT.indexOf(sol(x, y)), u0 = (i % 4) / 4 + e, u1 = (i % 4 + 1) / 4 - e, v0 = Math.floor(i / 4) / 3 + e, v1 = (Math.floor(i / 4) + 1) / 3 - e;
+    const [l, k] = sol(x, y), nc = SOLS.length, nl = SOLS_ZONE.length, u0 = k / nc + e, u1 = (k + 1) / nc - e, v0 = l / nl + e, v1 = (l + 1) / nl - e;
     const c = [[u0, v0], [u1, v0], [u1, v1], [u0, v1]], r = Math.floor(rnd() * 4), q = k => c[(k + r) % 4];   // tournée au hasard : moins de répétitions
     const P = [[x - .5, 0, y - .5], [x + .5, 0, y - .5], [x + .5, 0, y + .5], [x - .5, 0, y + .5]];
     [0, 2, 1, 0, 3, 2].forEach(k => { pos.push(...P[k]); uv.push(...q(k)); });
@@ -2599,15 +2610,14 @@ function dioramaFlat() {
     const ch = G[y][x], z = zoneJ(x, y), r = rnd(), m = rnd() < .5;
     if (ch === "T") {
       if (z === "village" && r < .22 && autour(x, y, "=.,*") >= 3) pose(PROPS_VILLAGE[Math.floor(rnd() * PROPS_VILLAGE.length)], x, y, { miroir: m });
-      else pose(z === "foret" ? (r < .6 ? "sapin" : r < .82 ? "bouleau" : r < .94 ? "automne" : "souche") : z === "bayou" ? (r < .7 ? "cypres" : r < .85 ? "mort" : "souche")
-        : z === "cabane" ? (r < .55 ? "mort" : r < .9 ? "sapin" : "automne") : z === "lande" ? (neigeux(x, y) || autour(x, y, "nA") ? "sapinneige" : r < .5 ? "bouleau" : "sapin")
-        : z === "desert" ? "cactus" : (r < .5 ? "automne" : r < .8 ? "bouleau" : "sapin"), x + (rnd() - .5) * .15, y + (rnd() - .5) * .15, { miroir: m, varie: .85 + rnd() * .3 });
+      else { const n = arbreJ(z, neigeux(x, y) || autour(x, y, "nA"), r, rnd()), pt = n.includes("_p");
+        pose(n, x + (rnd() - .5) * .15, y + (rnd() - .5) * .15, { miroir: m, varie: .85 + rnd() * .3, haut: pt ? .75 : undefined }); }
     }
     else if (ch === "A") pose("montagne", x, y, { miroir: m, haut: 2 + rnd() * .6 });
     else if (ch === "M") pose("falaise", x, y, { miroir: m, haut: 1.1 + rnd() * .3 });
     else if (ch === "#") pose(z === "desert" ? "falaise" : "rocher", x, y, { miroir: m, haut: z === "desert" ? .8 : .85 });
     else if (ch === "o") pose("rune", x, y, { miroir: m });
-    else if (ch === "c") pose(r < .6 ? "cactus" : "petitcactus", x, y, { miroir: m });
+    else if (ch === "c") pose(ATLAS_DECOR.desert_a1 ? (r < .75 ? CACTUS_DESERT[Math.floor(rnd() * 4)] : "desert_p" + (1 + Math.floor(rnd() * 4))) : r < .6 ? "cactus" : "petitcactus", x, y, { miroir: m, haut: ATLAS_DECOR.desert_a1 ? (r < .75 ? 1.5 : .7) : undefined });
     else if (ch === "t") pose(r < .6 ? "tombe" : "croix", x, y, { miroir: m });
     else if (ch === "u") pose("citrouille", x, y, { miroir: m });
     else if (ch === "j") { const l = JEUX_PARC.filter(n => ATLAS_DECOR[n]); pose(l.length ? l[Math.floor(rnd() * l.length)] : ["banc", "tonneau", "lanterne"][Math.floor(rnd() * 3)], x, y, { miroir: m }); }
