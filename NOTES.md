@@ -129,3 +129,4 @@ Ensuite, on publie avec git : commit puis push sur `main`. GitHub Pages est serv
 ### Choisir son aventure (16/10/2026)
 - Deux choix seulement. **Aventure réelle** : explique les QR codes, bouton pour télécharger `qr-codes-cryptids.pdf`, puis « Commencer l'aventure réelle » (intro, choix des cryptides, QR codes à cacher). **Aventure virtuelle** : reprend la partie en cours, sinon passe directement au choix du nombre de cryptides (sans l'intro), puis le jeu vidéo.
 - La géolocalisation est retirée de l'écran pour l'instant (demande de Sam) : `mode()` ramène les anciens réglages `exterieur`/`interieur` aux QR codes. Le code de la carte pixel art et du GPS reste en place pour plus tard.
+- Hors de l'île, l'écran du jeu montre le fond sombre de l'app (dégradé lagon → abysse sur .jeu-ecran, toile WebGL transparente), le jour comme la nuit.
