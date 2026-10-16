@@ -2774,7 +2774,7 @@ function boucleJeu(t) {
     h.userData.corps.scale.y = 1 + Math.sin(t / 260) * .015;
   }
   // caméra isométrique qui suit le héros
-  const demi = d.flat ? 6 : 4.2, ratio = W / Math.max(1, H);   // la moitié de la largeur vue, en cases (taille A choisie par Sam)
+  const demi = d.flat ? ZOOM.demi : 4.2, ratio = W / Math.max(1, H);   // la moitié de la largeur vue, en cases (on la change en pinçant l'écran)
   Object.assign(R.camera, { left: -demi, right: demi, top: demi / ratio, bottom: -demi / ratio }); R.camera.updateProjectionMatrix();
   const dt = premier || !R.cam ? 1e9 : t - JEU.t, kc = 1 - Math.exp(-dt / 110);   // la caméra rattrape le héros en douceur
   R.cam = premier || !R.cam ? [fx, fy] : [R.cam[0] + (fx - R.cam[0]) * kc, R.cam[1] + (fy - R.cam[1]) * kc];
@@ -2840,6 +2840,18 @@ function bougerStick(e) {
   if (change) pasTenu();
 }
 function lacherStick() { doigtStick = null; stick.classList.remove("actif"); pommeau.style.transform = ""; if (JEU) JEU.tenu = JEU.tenu2 = null; }
+// Le zoom : on pince l'écran à deux doigts (ou la molette) pour rapprocher ou éloigner la caméra. Le choix est gardé.
+const ZOOM = { demi: 5, min: 3.2, max: 8, doigts: new Map(), d0: 0, z0: 0 };
+try { const z = parseFloat(localStorage.getItem("cryptids-zoom")); if (z >= ZOOM.min && z <= ZOOM.max) ZOOM.demi = z; } catch (e) {}
+function zoomer(z) { ZOOM.demi = Math.min(ZOOM.max, Math.max(ZOOM.min, z)); try { localStorage.setItem("cryptids-zoom", ZOOM.demi.toFixed(2)); } catch (e) {} }
+const ecranJeu = $("jeuCanvas").parentElement, ecartDoigts = () => { const [a, b] = [...ZOOM.doigts.values()]; return Math.hypot(a[0] - b[0], a[1] - b[1]); };
+ecranJeu.addEventListener("pointerdown", e => { if (e.target.closest("button, .joystick, #jeuLeds")) return; ZOOM.doigts.set(e.pointerId, [e.clientX, e.clientY]);
+  if (ZOOM.doigts.size === 2) { ZOOM.d0 = ecartDoigts(); ZOOM.z0 = ZOOM.demi; } });
+ecranJeu.addEventListener("pointermove", e => { if (!ZOOM.doigts.has(e.pointerId)) return; ZOOM.doigts.set(e.pointerId, [e.clientX, e.clientY]);
+  if (ZOOM.doigts.size === 2 && ZOOM.d0 > 20) { e.preventDefault(); zoomer(ZOOM.z0 * ZOOM.d0 / Math.max(20, ecartDoigts())); } });
+["pointerup", "pointercancel", "pointerleave"].forEach(t => ecranJeu.addEventListener(t, e => ZOOM.doigts.delete(e.pointerId)));
+ecranJeu.addEventListener("wheel", e => { e.preventDefault(); zoomer(ZOOM.demi * Math.exp(e.deltaY * .0015)); }, { passive: false });
+["gesturestart", "gesturechange"].forEach(t => document.addEventListener(t, e => { if (!$("jeu").hidden) e.preventDefault(); }));   // Safari : pas de zoom de la page pendant le jeu
 stick.addEventListener("pointerdown", e => { e.preventDefault(); doigtStick = e.pointerId; stick.setPointerCapture(e.pointerId); stick.classList.add("actif"); bougerStick(e); });
 stick.addEventListener("pointermove", e => { if (e.pointerId === doigtStick) bougerStick(e); });
 ["pointerup", "pointercancel", "lostpointercapture"].forEach(ev => stick.addEventListener(ev, e => { if (e.pointerId === doigtStick) lacherStick(); }));
@@ -2856,7 +2868,7 @@ addEventListener("keydown", e => {
 addEventListener("keyup", e => { if (JEU && TOUCHES[e.key] === JEU.tenu) JEU.tenu = null; });
 $("jeuQuitter").addEventListener("click", () => { fermerJeu(); enBoss = false; majAccueil(); montrer("accueil"); });
 
-window.__jeu = { etat: () => JEU && { x: JEU.x, y: JEU.y, dir: JEU.dir, zone: zoneJ(JEU.x, JEU.y), revele: JEU.revele && JEU.revele.q.k, cibles: ciblesJ() },
+window.__jeu = { zoom: () => ZOOM.demi, etat: () => JEU && { x: JEU.x, y: JEU.y, dir: JEU.dir, zone: zoneJ(JEU.x, JEU.y), revele: JEU.revele && JEU.revele.q.k, cibles: ciblesJ() },
   aller: (x, y, dir) => { JEU.x = x; JEU.y = y; JEU.pas = null; if (dir) JEU.dir = dir; arriverJ(true); }, pnj: PNJ, libreSol, pas: d => essayerPas(d), A: () => boutonA(), B: () => boutonB(),
   sousBati: () => { sousBatiment(0, 0); return [...SOUS_BATI].filter(k => { const [x, y] = k.split(",").map(Number); return !!(TUILES[tuileJ(x, y)] || {}).libre; }); },
   decor: () => R3 && R3.ile && R3.ile.flat ? { objets: R3.ile.groupe.children.length, dessins: R3.rendu.info.render.calls } : null,
