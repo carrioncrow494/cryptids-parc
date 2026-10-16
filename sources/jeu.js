@@ -8,77 +8,25 @@ const TUILES = {
   "B": { libre: true }, "n": { libre: true }, "P": { libre: true }, "p": { libre: true },
   "T": {}, "~": {}, "#": {}, "f": {}, "R": {}, "H": {}, "D": {}, "L": {}, "S": {}, "o": {},
   "E": {}, "G": {}, "K": {}, "k": {}, "M": {}, "A": {}, "c": {}, "t": {}, "u": {},
-  "X": {}, "Q": {}, "N": {}, "Y": {}, "W": {}, "F": {}, "C": {}, "j": {}
+  "X": {}, "Q": {}, "N": {}, "Y": {}, "W": {}, "F": {}, "C": {}, "j": {}, "x": {}
 };   // . sol  , hautes herbes (bruyère, fougères, roseaux)  = chemin  : sable  * fleurs  b passerelle  B pont couvert  n neige  P départ  p passage (arche)
      // T arbre  ~ eau  # rocher  f barrière  R toit  H mur  D porte  L lampadaire  S panneau  o pierre levée
      // E cathédrale  G sa porte  K cabane biscornue  k sa porte  M mesa  A montagne  c cactus  t tombe  u citrouille
-     // (espace) hors de l'île
+     // (espace) hors de l'île   x bord peint de l'île (on n'y marche pas)
      // X Excalibook  Q Chez Bergamotte  N Ninamoto  Y supérette  W Chupa la sopa  F ferme  C chalet en A  j jeu du parc
-const CARTE = [
-  "AAAAAAAAAAAAAAAAAAAAAAMMMMMMMMMMMMMMMMMMMMMM",
-  "Ann#nAAAAAnTTnnnnn.T.TM::MMM,,:#:#MMMM:::::M",
-  "AAnnnnn#nnnnTnnnnn...#M::MMM::::::MMMM:::::M",
-  "Annnnnnnnnnnnn==..o..TMc::c:::#:::MMMM,:c::M",
-  "Annnnnnnnnnnnn#======p===================::M",
-  "Annn.,....~~~..,o.=FFFM::,::,:c::=:::::c:c:M",
-  "ATnn.,..~~~~~~~,..=FFFM::,:::::MM=:WWW:MMMMM",
-  "AnTn.T.~~~~~~~~~..=FFFM:fffffffMM=:WWW:MMMMM",
-  "A..=.T.~~~~~~~~~,.=..TM:f:RRR:f:c=::::cMMMMM",
-  "A..=..#~~~~~~~~~..=,TTM:f:HDH:f::=:::,:MMMMM",
-  "A..=...~~~~~~~,,..=S.#M:f:::::f::=:::::c,:,M",
-  "A..====bb====..,,,=.,#M:fff:fff::=::MMM#:::M",
-  "A...,,.~~...=,#T#.=.,TM::::=======S:MMMc#::M",
-  "ATTT##T~~TT#=TTTT#=#T#MMMMM=MMMMMMMMMMMMMMMM",
-  "TTTTTTT~~TTTpTTTTTpTEEEEETTpTTTTTTTTTTTTTTTT",
-  "TT.,.T.~~TTT=,TXXX=REEEEE.R=QQQ~..,.*..,.T.T",
-  "T,T..,..~~TL=,TXXX=HEEEEE.H=QQQ~,,T.T..TT.~T",
-  "TT.T.T.T~~..=TTf..=.EEEEE..=..T~...T~~~,,~~T",
-  "TTTTTT..~~TT=TTT**=,EEGEE.,=**T~T...~~~~~~~T",
-  "T,TTTT.,~~.,=TTT.==L=====L==..T~T..*~~~~~~~T",
-  "TTTT....~~.T=S=p==============p=====bb~~.*~T",
-  "TT.TT.T.~~..=.TT.===========..TTS,T,~b~....T",
-  "T.TTT.T.~~TT=,TT.L...SP....L..TT*..,~b..,.TT",
-  "T,,T,.T.~~.T=LTTNNNN..=...YYY.TT...,~b.,,..T",
-  "TTT..,T.~~TT=TTTNNNN..=...YYY.TT.*.~Lb..*..T",
-  "TT,,T.T.~~,T=,TT.,..*.=..*....T~,.T~~b.TTT.T",
-  "Tfffffff~~,T=TTT.T..j.=.j..j.TT~~~~~~b~TTT.T",
-  "T......f~~.L=,TTT...j.=..j...TT~~~~~~b...T~T",
-  "T.t.Tt.f~~.T=.TTTTTTTTpTTTTTTTT~~.,~~b...T~T",
-  "T......f~~.T=TTT.T....=S,T.,..T~...T,=TT..~T",
-  "T.t..tL.~~L.=TTT.T.====....,.,T~...,T=L.,,*T",
-  "T.......BB===TTTTT.=KKKKK...T.TT,,.,,=....TT",
-  "T.t..tL.~~L.=TTT..u=KKKKK....TTT*.,..=,.T.TT",
-  "T......f~~,.=,TTT..=KKkKK.....TT,..T.=..T.,T",
-  "T.t..t.f.~~,=,TTT..====..u=..,TT,.,,~b~~..~T",
-  "T......f.~~,=LTT.T.=u..*u.=====p===bbb~~T.~T",
-  "Tfffffff.~~.===p====.........,TT...~~b~~.,~T",
-  "TTTT,,.,.~~.=TTTT.,..TTT.,.,TTTT,.T~~~~~.T,T",
-  "TT.TT,,,.~~,=TTT....,.,TT...,TTT..,~~~~.,*.T",
-  "TT.,..T.,~~.=.,TTTTTTTTTTTTTTTTTTTTT~~TTTTTT",
-  "T..T.,..~~~.==.T.,..TT.TT                   ",
-  "T.,..~~~~~~~.=,..,..T.,.T                   ",
-  "TT.~~~~~~~~~~=..CCC..T..T                   ",
-  "T.~~~~~~~~~~~=..CCC.,..TT                   ",
-  "T.~~~~~~~~~bb=..CCC..T..T                   ",
-  "T,.~~~~~~~~~~=====..,.T.T                   ",
-  "T..~~~~~~~~~~=.L..#..,.TT                   ",
-  "TT.,~~~~~~~~.=,..T..T...T                   ",
-  "T.#..~~~~~,..S..,...#.,.T                   ",
-  "T..T..,..T..,..T.,..T..TT                   ",
-  "TTT.T..TT.,.T..TT..T.T..T                   ",
-  "TTTTTTTTTTTTTTTTTTTTTTTTT                   "
-];
+const CARTE = MONDE.carte;   // fabriquée par sources/monde.py : 6 îles peintes reliées par des ponts
 const LARG = CARTE[0].length, HAUT = CARTE.length;
 // Les régions de l'île : la première qui contient la case gagne. Chaque créature a la sienne (HABITAT).
 const ZONES = {
-  cabane: { dans: (x, y) => x >= 15 && x <= 30 && y >= 29 && y <= 39, nom: "Le bois Biscornu", panneau: "Le bois Biscornu. Dans la cabane de travers vit… Sporran !" },
-  foret: { dans: (x, y) => (x <= 14 && y >= 14) || y >= 40, nom: "La forêt du Lac", panneau: "La forêt du Lac : le pont couvert, le vieux cimetière, et tout au sud le grand lac et son chalet." },
-  bayou: { dans: (x, y) => x >= 31 && y >= 14, nom: "Le bayou", panneau: "Le bayou : passerelles, cyprès et eaux boueuses." },
-  village: { dans: (x, y) => y >= 14, nom: "Le vieux village", panneau: "Le vieux village et sa cathédrale. Toutes les routes partent d'ici." },
-  lande: { dans: (x, y) => x <= 21, nom: "Les Hautes-Terres", panneau: "Les Hautes-Terres : la lande, le grand lac et les neiges du nord." },
-  desert: { dans: () => true, nom: "Le désert des Mesas", panneau: "Le désert des Mesas : cactus, rochers rouges et le vieux ranch." }
+  cabane: { nom: "Le bois Biscornu", panneau: "Le bois Biscornu. Dans la cabane de travers vit… Sporran !" },
+  foret: { nom: "La forêt du Lac", panneau: "La forêt du Lac : le grand lac, le chalet et le vieux cimetière." },
+  bayou: { nom: "Le bayou", panneau: "Le bayou : passerelles, cyprès et eaux boueuses." },
+  village: { nom: "Le vieux village", panneau: "Le vieux village et sa cathédrale. Un pont part vers chaque région." },
+  lande: { nom: "Les Hautes-Terres", panneau: "Les Hautes-Terres : la lande, le lac et la ferme." },
+  desert: { nom: "Le désert des Mesas", panneau: "Le désert des Mesas : cactus, rochers rouges et le vieux ranch." }
 };
-const zoneJ = (x, y) => Object.keys(ZONES).find(z => ZONES[z].dans(x, y));
+const CODE_ZONE = { V: "village", F: "foret", K: "cabane", D: "desert", L: "lande", B: "bayou" };   // MONDE.zones : la région de chaque case
+const zoneJ = (x, y) => CODE_ZONE[(MONDE.zones[y] || "")[x]] || "village";
 const HABITAT = { barghest: "foret", mothman: "foret", nessie: "lande", kraken: "lande", yeti: "lande", swamp: "bayou", faery: "bayou",
   gargouille: "village", lutins: "village", chupacabra: "desert", thunderbird: "desert", jackalope: "desert", catsith: "cabane" };
 const DIRS = { haut: [0, -1], bas: [0, 1], gauche: [-1, 0], droite: [1, 0] };
@@ -123,11 +71,11 @@ function sousBatiment(x, y) {
 const libreJ = (x, y) => libreSol(x, y) && !occupeJ(x, y);           // et personne dessus (habitant, cachette)
 // Un habitant par région : on lui parle avec A, il donne les indices des cryptides cachés chez lui.
 const PNJ = [
-  { x: 23, y: 22, zone: "village", nom: "Le maire Pistache", corps: 0xd99a3c, chapeau: 0x6b569b, bonjour: "Bienvenue au vieux village ! Les routes partent d'ici vers toutes les régions de l'île." },
-  { x: 13, y: 22, zone: "foret", nom: "Lumignon le veilleur", corps: 0x3f8790, chapeau: 0x2a2a3a, bonjour: "Bienvenue dans la forêt du Lac ! Suis le chemin vers le sud : le lac est immense." },
-  { x: 17, y: 11, zone: "lande", nom: "Bergère Mousse", corps: 0x9a6fb0, chapeau: 0xf3e2c4, bonjour: "Le vent souffle fort sur les Hautes-Terres. Le lac et la neige cachent bien des secrets." },
-  { x: 31, y: 11, zone: "desert", nom: "Papy Coyote", corps: 0xc9573f, chapeau: 0xe2b77c, bonjour: "Fait chaud, hein ? Dans le désert, regarde bien autour des cactus et des rochers rouges." },
-  { x: 33, y: 19, zone: "bayou", nom: "Tante Grenouille", corps: 0x6e8a44, chapeau: 0xff8fa3, bonjour: "Attention où tu mets les pieds, petit ! Le bayou, ça glisse." }
+  { x: MONDE.pnj.village[0], y: MONDE.pnj.village[1], zone: "village", nom: "Le maire Pistache", corps: 0xd99a3c, chapeau: 0x6b569b, bonjour: "Bienvenue au vieux village ! Un pont part d'ici vers chaque région." },
+  { x: MONDE.pnj.foret[0], y: MONDE.pnj.foret[1], zone: "foret", nom: "Lumignon le veilleur", corps: 0x3f8790, chapeau: 0x2a2a3a, bonjour: "Bienvenue dans la forêt du Lac ! Le lac est immense, et le bois Biscornu est juste après." },
+  { x: MONDE.pnj.lande[0], y: MONDE.pnj.lande[1], zone: "lande", nom: "Bergère Mousse", corps: 0x9a6fb0, chapeau: 0xf3e2c4, bonjour: "Le vent souffle fort sur les Hautes-Terres. Le lac cache bien des secrets." },
+  { x: MONDE.pnj.desert[0], y: MONDE.pnj.desert[1], zone: "desert", nom: "Papy Coyote", corps: 0xc9573f, chapeau: 0xe2b77c, bonjour: "Fait chaud, hein ? Dans le désert, regarde bien autour des cactus et des rochers rouges." },
+  { x: MONDE.pnj.bayou[0], y: MONDE.pnj.bayou[1], zone: "bayou", nom: "Tante Grenouille", corps: 0x6e8a44, chapeau: 0xff8fa3, bonjour: "Attention où tu mets les pieds, petit ! Le bayou, ça glisse." }
 ];
 const pnjEn = (x, y) => PNJ.find(n => n.x === x && n.y === y);
 const cachetteEn = (x, y) => ciblesJ().find(q => q.x === x && q.y === y);
@@ -204,9 +152,8 @@ function ouvrirJeu() {
   changerAmbiance("chasse");
   let p = partie();
   if (!p) { p = { liste: [], pris: [], membres: {}, debut: Date.now() }; ecrire(CLES.partie, p); }
-  if (p.jeu && p.jeu.v === 2) { p.jeu.pos = {}; delete p.jeu.boss; p.jeu.v = 3; }   // les cachettes sont devenues des objets à fouiller : on les replace
-  if (p.jeu && p.jeu.v !== 3) delete p.jeu;   // une partie de l'ancien jeu (4 petites maps) : on repart du village, les créatures sauvées le restent
-  if (!p.jeu) p.jeu = { v: 3, m: 0, x: DEPART[0], y: DEPART[1], dir: "haut", pos: {} };
+    if (p.jeu && p.jeu.v !== 4) delete p.jeu;   // une partie de l'ancien jeu (4 petites maps) : on repart du village, les créatures sauvées le restent
+  if (!p.jeu) p.jeu = { v: 4, m: 0, x: DEPART[0], y: DEPART[1], dir: "haut", pos: {} };
   placerJeu(p);
   JEU = { x: p.jeu.x, y: p.jeu.y, dir: p.jeu.dir || "bas", pas: null, tenu: null, revele: null, raf: 0, t: 0, dernierBip: 0, zone: null };
   if (p.jeu.nPris !== undefined && p.pris.length > p.jeu.nPris) JEU.action = { ligne: 3, t0: performance.now() + 300, duree: 1900, vitesse: 120 };   // un cryptide de plus : on saute de joie
@@ -226,7 +173,7 @@ function arriverJ(debut) {   // on entre dans une région : son nom, et combien 
   const z = JEU.zone = zoneJ(JEU.x, JEU.y), Z = ZONES[z], n = ciblesJ().filter(q => zoneJ(q.x, q.y) === z).length;
   $("jeuLieu").textContent = Z.nom;
   let txt = n ? n + (n > 1 ? " cryptides se cachent ici" : " cryptide se cache ici") : "Aucun cryptide ici. Cherche ailleurs !";
-  if (enBoss) txt = z === "cabane" ? "Sporran rôde autour de sa cabane…" : "Sporran t'attend dans le bois Biscornu, au sud du village !";
+  if (enBoss) txt = z === "cabane" ? "Sporran rôde autour de sa cabane…" : "Sporran t'attend dans le bois Biscornu, après la forêt du Lac !";
   titreJ(Z.nom, txt); if (!debut) sfx("page");
 }
 let minuterieTitre = 0;
@@ -644,7 +591,7 @@ function fusionnerJ(groupe) {   // les objets immobiles de même couleur fondus 
 // Les images viennent de 3 planches : jeu-sols.webp (les tuiles de sol de chaque zone, voir SOLS), jeu-decor.webp (les objets, voir ATLAS_DECOR)
 // et jeu-nature.webp (les arbres et plantes de chaque zone : <zone>_a1…a8 grands, <zone>_p1…p4 petits).
 // La caméra est inclinée comme sur les dessins (le losange d'une tuile est 0,675 fois moins haut que large).
-const HAUT_CAM = { flat: 12.9, volumes: 10.5 };
+const HAUT_CAM = { flat: 9.15, volumes: 10.5 };   // flat : la pente des terrains peints (losange 0,543)
 // jeu-sols.webp : une ligne par zone (tirée de son terrain peint), 7 tuiles par ligne
 const SOLS_ZONE = ["village", "foret", "cabane", "desert", "lande", "bayou"], SOLS = ["sol", "sol2", "chemin", "paves", "eau", "planches", "neige"];
 // chaque objet : sa hauteur (en cases) et, s'il le faut, de combien son pied descend sous le centre de la case
@@ -663,12 +610,13 @@ function arbreJ(z, neige, r, r2) {
   const l = z === "lande" && neige ? NEIGE_LANDE : ARBRES[z]; return z + "_a" + l[Math.floor(r2 * l.length)];
 }
 const CACTUS_DESERT = ["desert_a1", "desert_a4", "desert_a5", "desert_a7"];
-const SIN_CAM = .675;   // un écart au sol (dx + dz) / √2 se voit SIN_CAM fois plus court à l'écran, en hauteur
+const SIN_CAM = .543;   // un écart au sol (dx + dz) / √2 se voit SIN_CAM fois plus court à l'écran, en hauteur
 function chargerFlat(R) {   // les 3 planches du décor ; si l'une manque, on garde l'île en volumes
   R.flat = "attente"; R.tFlat = performance.now(); let n = 0;
-  const L = new THREE.TextureLoader(), ok = () => { if (++n === 3 && R.flat === "attente") R.flat = "ok"; }, non = () => { R.flat = "non"; };
+  const L = new THREE.TextureLoader(), ok = () => { if (++n === 3 + MONDE.iles.length && R.flat === "attente") R.flat = "ok"; }, non = () => { R.flat = "non"; };
   R.texSol = L.load(IMG_JEU + "jeu-sols.webp", t => { t.colorSpace = THREE.SRGBColorSpace; t.flipY = false; t.anisotropy = 4; t.needsUpdate = true; ok(); }, undefined, non);
   R.texDecor = L.load(IMG_JEU + "jeu-decor.webp", t => { t.colorSpace = THREE.SRGBColorSpace; ok(); }, undefined, non);
+  R.texIles = MONDE.iles.map(d => L.load(IMG_JEU + d.image, t => { t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4; ok(); }, undefined, non));
   R.texNature = L.load(IMG_JEU + "jeu-nature.webp", t => { t.colorSpace = THREE.SRGBColorSpace; ok(); }, undefined, non);   // les arbres de chaque zone
   R.matsFlat = [];   // tous les matériaux dessinés : on les teinte la nuit
 }
@@ -699,25 +647,25 @@ function dioramaFlat() {
     if ("EGRHD".includes(ch) && z === "village") return c("paves");
     if (neigeux(x, y)) return [SOLS_ZONE.indexOf("lande"), SOLS.indexOf("neige")];
     return c(ch === "*" || rnd() < .3 ? "sol2" : "sol"); };
-  const cases = []; for (let y = 0; y < HAUT; y++) for (let x = 0; x < LARG; x++) if (G[y][x] !== " ") cases.push([x, y]);
+  MONDE.iles.forEach((d, n) => {   // l'image entière de l'île, posée à plat : chaque pixel retombe sur sa case
+    const m = (px, py) => { const a = (px - d.X0) / d.hw, b = (py - d.Y0) / d.hh - 1; return [(a + b) / 2 - d.i0 + d.ox, 0, (b - a) / 2 - d.j0 + d.oy]; };
+    const C = [m(0, 0), m(d.W, 0), m(d.W, d.H), m(0, d.H)], U = [[0, 1], [1, 1], [1, 0], [0, 0]], pos = [], uv = [];
+    [0, 2, 1, 0, 3, 2].forEach(k => { pos.push(...C[k]); uv.push(...U[k]); });
+    const g = new THREE.BufferGeometry(); g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute("uv", new THREE.Float32BufferAttribute(uv, 2));
+    const mt = new THREE.MeshBasicMaterial({ map: R.texIles[n], transparent: true, depthWrite: false, depthTest: false, side: THREE.DoubleSide }); R.matsFlat.push(mt);
+    const ms = new THREE.Mesh(g, mt); ms.renderOrder = -11; ms.frustumCulled = false; groupe.add(ms);
+  });
+  const cases = []; for (let y = 0; y < HAUT; y++) for (let x = 0; x < LARG; x++) if (G[y][x] === "b") cases.push([x, y]);
   cases.sort((a, b) => a[0] + a[1] - b[0] - b[1]);
   cases.forEach(([x, y]) => {
     const [l, k] = sol(x, y), nc = SOLS.length, nl = SOLS_ZONE.length, u0 = k / nc + e, u1 = (k + 1) / nc - e, v0 = l / nl + e, v1 = (l + 1) / nl - e;
-    const c = [[u0, v0], [u1, v0], [u1, v1], [u0, v1]], r = Math.floor(rnd() * 4), q = k => c[(k + r) % 4];   // tournée au hasard : moins de répétitions
+    const vert = "b".includes(tuileJ(x, y - 1)) || "b".includes(tuileJ(x, y + 1)), c = [[u0, v0], [u1, v0], [u1, v1], [u0, v1]], q = k => c[(k + (vert ? 1 : 0)) % 4];   // les planches en travers du pont
     const P = [[x - .5, 0, y - .5], [x + .5, 0, y - .5], [x + .5, 0, y + .5], [x - .5, 0, y + .5]];
     [0, 2, 1, 0, 3, 2].forEach(k => { pos.push(...P[k]); uv.push(...q(k)); });
   });
   const gs = new THREE.BufferGeometry(); gs.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3)); gs.setAttribute("uv", new THREE.Float32BufferAttribute(uv, 2));
   const ms = new THREE.MeshBasicMaterial({ map: R.texSol, depthWrite: false, depthTest: false }); R.matsFlat.push(ms);
   const msol = new THREE.Mesh(gs, ms); msol.renderOrder = -10; msol.frustumCulled = false; groupe.add(msol);
-  // le bord de l'île : une tranche de terre sous les côtés qu'on voit
-  const bp = [], P = -1.6, vide = (x, y) => (G[y] || "")[x] === undefined || G[y][x] === " ";
-  cases.forEach(([x, y]) => {
-    if (vide(x + 1, y)) bp.push(x + .5, 0, y - .5, x + .5, P, y - .5, x + .5, P, y + .5, x + .5, 0, y - .5, x + .5, P, y + .5, x + .5, 0, y + .5);
-    if (vide(x, y + 1)) bp.push(x - .5, 0, y + .5, x + .5, P, y + .5, x - .5, P, y + .5, x - .5, 0, y + .5, x + .5, 0, y + .5, x + .5, P, y + .5);
-  });
-  const gb = new THREE.BufferGeometry(); gb.setAttribute("position", new THREE.Float32BufferAttribute(bp, 3));
-  const mb = new THREE.MeshBasicMaterial({ color: 0x5a2f35, side: THREE.DoubleSide, depthWrite: false, depthTest: false }); const bord = new THREE.Mesh(gb, mb); bord.renderOrder = -11; groupe.add(bord);
   // les objets
   const pose = (nom, x, z, o) => { const s = poserDecor(R, groupe, nom, x, z, o); if (s.userData.haut > 1.1) devant.push(s); return s; };
   const lampes = [], lueur = (x, z, h) => lampes.push({ x, z, h });
@@ -726,7 +674,7 @@ function dioramaFlat() {
     if (ch === "T") {
       if (z === "village" && r < .22 && autour(x, y, "=.,*") >= 3) pose(PROPS_VILLAGE[Math.floor(rnd() * PROPS_VILLAGE.length)], x, y, { miroir: m });
       else { const n = arbreJ(z, neigeux(x, y) || autour(x, y, "nA"), r, rnd()), pt = n.includes("_p");
-        pose(n, x + (rnd() - .5) * .15, y + (rnd() - .5) * .15, { miroir: m, varie: .85 + rnd() * .3, haut: pt ? .75 : undefined }); }
+        pose(n, x + (rnd() - .5) * .3, y + (rnd() - .5) * .3, { miroir: m, varie: (.85 + rnd() * .3) * 1.3, haut: pt ? .9 : undefined }); }
     }
     else if (ch === "A") pose("montagne", x, y, { miroir: m, haut: 2 + rnd() * .6 });
     else if (ch === "M") pose("falaise", x, y, { miroir: m, haut: 1.1 + rnd() * .3 });
@@ -754,7 +702,7 @@ function dioramaFlat() {
   const halo = halosJ(); lampes.forEach(l => { const s = new THREE.Sprite(halo); s.scale.set(1.6, 1.6, 1); s.position.set(l.x, l.h, l.z); s.renderOrder = 2; groupe.add(s); });
   // le bois Biscornu brille : des lueurs turquoise, violettes et roses (champignons, mousses, lucioles) qui respirent doucement
   const lueurs = [0x4ff3e0, 0x9a7bff, 0xff7ad9].map(c => lueurJ(c));
-  for (let y = 0; y < HAUT; y++) for (let x = 0; x < LARG; x++) if (zoneJ(x, y) === "cabane" && rnd() < ((TUILES[G[y][x]] || {}).libre ? .16 : .1)) {
+  for (let y = 0; y < HAUT; y++) for (let x = 0; x < LARG; x++) if (zoneJ(x, y) === "cabane" && G[y][x] !== " " && rnd() < ((TUILES[G[y][x]] || {}).libre ? .045 : .03)) {
     const m = lueurs[Math.floor(rnd() * 3)].clone(), s = new THREE.Sprite(m), t = .8 + rnd() * .7, ph = rnd() * 7, h = rnd() < .5 ? .08 : .4 + rnd() * .9;
     s.scale.set(t, t, 1); s.position.set(x + (rnd() - .5) * .8, h, y + (rnd() - .5) * .8); s.renderOrder = 3; groupe.add(s);
     anim.push(tt => { m.opacity = Math.min(1, moteurJeu().nuit || 0) * (.6 + .4 * Math.sin(tt / 900 + ph)); });
@@ -939,7 +887,7 @@ function boucleJeu(t) {
     h.userData.corps.scale.y = 1 + Math.sin(t / 260) * .015;
   }
   // caméra isométrique qui suit le héros
-  const demi = 4.2, ratio = W / Math.max(1, H);
+  const demi = d.flat ? 6 : 4.2, ratio = W / Math.max(1, H);   // la moitié de la largeur vue, en cases (taille A choisie par Sam)
   Object.assign(R.camera, { left: -demi, right: demi, top: demi / ratio, bottom: -demi / ratio }); R.camera.updateProjectionMatrix();
   const dt = premier || !R.cam ? 1e9 : t - JEU.t, kc = 1 - Math.exp(-dt / 110);   // la caméra rattrape le héros en douceur
   R.cam = premier || !R.cam ? [fx, fy] : [R.cam[0] + (fx - R.cam[0]) * kc, R.cam[1] + (fy - R.cam[1]) * kc];
