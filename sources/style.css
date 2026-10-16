@@ -300,6 +300,11 @@
   #jeuLeds.dessine i.on { opacity: 1; background-color: transparent; box-shadow: none; filter: brightness(1.15); }
   .jeu-titre { position: absolute; left: 50%; top: 22%; transform: translateX(-50%); z-index: 2; text-align: center; padding: 12px 20px; background: rgba(8,12,16,.82);
     border: 3px solid #f4efe0; border-radius: 6px; color: #fff; font-family: var(--deco); display: flex; flex-direction: column; gap: 4px; min-width: 60%; }
+  .jeu-titre:not([hidden]) { animation: jeuTitreArrive .45s cubic-bezier(.2,.9,.3,1.2); }
+  @keyframes jeuTitreArrive { from { opacity: 0; transform: translate(-50%, -14px) scale(.92); } }
+  .jeu-dialogue:not([hidden]) { animation: jeuDialogueArrive .3s ease-out; }
+  @keyframes jeuDialogueArrive { from { opacity: 0; transform: translateY(16px); } }
+  #jeuLeds.dessine i { transition: opacity .25s ease-out; }
   .jeu-titre b { font-size: 1.3rem; font-weight: 400; color: var(--cyan); }
   .jeu-dialogue { position: absolute; left: 10px; right: 10px; bottom: 10px; z-index: 3; padding: 12px 14px; background: #f8f5ea; color: #1b1b22; border: 4px solid #1b1b22;
     border-radius: 6px; box-shadow: inset 0 0 0 2px #f8f5ea, inset 0 0 0 4px #7a7a8a; font-family: var(--texte); font-size: 1.05rem; line-height: 1.35; }

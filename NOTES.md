@@ -121,6 +121,7 @@ Ensuite, on publie avec git : commit puis push sur `main`. GitHub Pages est serv
 - La nuit (forêt, cabane, bayou), tout le décor se teinte de bleu et les lampadaires brillent ; les cachettes restent claires.
 - Fabriqués avec `sources/decoupe-flat.py` (héros), `sources/decoupe-creatures.py`, `sources/decoupe-decor.py` (outils communs dans `sources/planches.py` : fond vert ou magenta, un dessin = une tache, même s'il déborde de sa case).
 - Les habitants sont encore en volumes, en attendant leurs planches.
+- Animations en douceur : chaque image se fond dans la suivante à la fin de son temps (`fonduImages`), la caméra rattrape le héros, les pas s'enchaînent sans temps mort, la créature sort avec un petit rebond et s'efface en partant. Tailles : héros 1,2 case (`TAILLE_HEROS`), créatures selon chacune (`TAILLE_CREA`), arbres et maisons agrandis pour rester plus grands que le héros.
 
 ### Choisir son aventure (16/10/2026)
 - Deux choix seulement. **Aventure réelle** : explique les QR codes, bouton pour télécharger `qr-codes-cryptids.pdf`, puis « Commencer l'aventure réelle » (intro, choix des cryptides, QR codes à cacher). **Aventure virtuelle** : reprend la partie en cours, sinon passe directement au choix du nombre de cryptides (sans l'intro), puis le jeu vidéo.

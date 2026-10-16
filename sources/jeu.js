@@ -308,28 +308,45 @@ function creerHeros() {   // un enfant en sweat à capuche violet, masque de cha
   m(new THREE.CylinderGeometry(.01, .01, .14, 4), COUL.lampe, .27, .5, .08);
   m(new THREE.BoxGeometry(.12, .15, .12), COUL.lumiere, .27, .37, .08, 1.2);       // la lanterne
   const lueur = new THREE.PointLight(0xffd27a, 1.2, 3, 1.6); lueur.position.set(.27, .4, .1); g.add(lueur);
-  const dessin = new THREE.Sprite(new THREE.SpriteMaterial({ transparent: true, alphaTest: .05 }));
-  dessin.center.set(.5, .05); dessin.scale.set(1.44, 1.44, 1); dessin.position.y = .02; dessin.visible = false; g.add(dessin);
+  const dessin = new THREE.Sprite(new THREE.SpriteMaterial({ transparent: true, alphaTest: .05, depthWrite: false }));
+  dessin.center.set(.5, .05); dessin.scale.set(TAILLE_HEROS, TAILLE_HEROS, 1); dessin.position.y = .02; dessin.visible = false; g.add(dessin);
+  // l'image suivante, posée par-dessus et de plus en plus visible : on passe en douceur d'une image à l'autre
+  const suite = new THREE.Sprite(new THREE.SpriteMaterial({ transparent: true, alphaTest: .05, depthWrite: false, opacity: 0 }));
+  suite.center.copy(dessin.center); suite.scale.copy(dessin.scale); suite.position.y = .02; suite.visible = false; g.add(suite);
   const ombre = new THREE.Mesh(new THREE.CircleGeometry(.3, 20), new THREE.MeshBasicMaterial({ color: 0x1a1030, transparent: true, opacity: .28, depthWrite: false, depthTest: false }));
   ombre.rotation.x = -Math.PI / 2; ombre.scale.set(1, .75, 1); ombre.position.y = .01; ombre.renderOrder = -1; ombre.visible = false; g.add(ombre);   // une ombre douce sous les pieds
-  g.userData = { corps, lueur, dessin, ombre };
+  g.userData = { corps, lueur, dessin, suite, ombre };
   new THREE.TextureLoader().load(IMG_JEU + "jeu-heros.webp", tex => {
-    tex.colorSpace = THREE.SRGBColorSpace; tex.repeat.set(1 / 6, 1 / 4); tex.magFilter = THREE.LinearFilter; g.userData.texMarche = tex;
+    tex.colorSpace = THREE.SRGBColorSpace; tex.repeat.set(1 / 6, 1 / 4); tex.magFilter = THREE.LinearFilter; g.userData.texMarche = tex; g.userData.texMarche2 = tex.clone();
     dessin.material.map = tex; dessin.material.needsUpdate = true; dessin.visible = true; ombre.visible = true; corps.visible = false;
   });
   // les actions (4 images de 320×360 par ligne) : fouiller vers la gauche, fouiller vers la droite, surprise, joie
-  new THREE.TextureLoader().load(IMG_JEU + "jeu-heros-actions.webp", tex => { tex.colorSpace = THREE.SRGBColorSpace; tex.repeat.set(1 / 4, 1 / 4); g.userData.texActions = tex; });
+  new THREE.TextureLoader().load(IMG_JEU + "jeu-heros-actions.webp", tex => { tex.colorSpace = THREE.SRGBColorSpace; tex.repeat.set(1 / 4, 1 / 4); g.userData.texActions = tex; g.userData.texActions2 = tex.clone(); });
   return g;
+}
+const TAILLE_HEROS = 1.2;   // un enfant : un peu plus petit qu'une porte, bien plus petit qu'un arbre
+const lisse = f => f * f * (3 - 2 * f);   // départ et arrivée en douceur
+function fonduImages(a, b, texA, texB, posA, posB, f) {   // image a, puis l'image suivante b qui apparaît par-dessus (f de 0 à 1)
+  if (a.material.map !== texA) { a.material.map = texA; a.material.needsUpdate = true; }
+  if (b.material.map !== texB) { b.material.map = texB; b.material.needsUpdate = true; }
+  texA.offset.set(posA[0], posA[1]); texB.offset.set(posB[0], posB[1]);
+  f = Math.min(1, Math.max(0, (f - .6) / .4));   // on ne mélange qu'à la fin de chaque image : un passage rapide, sans image en double
+  b.material.opacity = lisse(f); b.visible = a.visible && f > .02;
+  b.center.copy(a.center); b.scale.copy(a.scale); b.material.color.copy(a.material.color);
 }
 function imageHeros(h, t, marche) {   // choisit l'image de la planche : direction, et pas de marche ou respiration (ou une action : fouiller, surprise, joie)
   const u = h.userData, d = u.dessin; if (!u.texMarche) return;
   let a = JEU.action;
   if (a && !a.boucle && t - a.t0 > a.duree) a = JEU.action = a.puis ? Object.assign(a.puis, { t0: t }) : null;
-  const tex = a && u.texActions ? u.texActions : u.texMarche;
-  if (d.material.map !== tex) { d.material.map = tex; d.material.needsUpdate = true; tex === u.texActions ? (d.scale.set(1.44, 1.62, 1), d.center.set(.5, 16 / 360)) : (d.scale.set(1.44, 1.44, 1), d.center.set(.5, .05)); }
-  if (tex === u.texActions) return tex.offset.set((Math.floor(Math.max(0, t - a.t0) / a.vitesse) % 4) / 4, 1 - (a.ligne + 1) / 4);
-  const col = marche ? Math.floor(t / 140) % 4 : 4 + Math.floor(t / 650) % 2;
-  tex.offset.set(col / 6, 1 - (LIGNE_HEROS[JEU.dir] + 1) / 4);
+  const act = !!(a && u.texActions), S = TAILLE_HEROS;
+  if (act !== !!u.enAction) { u.enAction = act; act ? (d.scale.set(S, S * 1.125, 1), d.center.set(.5, 16 / 360)) : (d.scale.set(S, S, 1), d.center.set(.5, .05)); }
+  if (act) {
+    const x = Math.max(0, t - a.t0) / a.vitesse, c = Math.floor(x) % 4, ligne = 1 - (a.ligne + 1) / 4;
+    const fin = !a.boucle && Math.floor(x) >= 3;   // la dernière image d'une action qui ne boucle pas ne revient pas à la première
+    return fonduImages(d, u.suite, u.texActions, u.texActions2, [c / 4, ligne], [((c + 1) % 4) / 4, ligne], fin ? 0 : x % 1);
+  }
+  const ligne = 1 - (LIGNE_HEROS[JEU.dir] + 1) / 4, x = marche ? t / 140 : t / 650, c = Math.floor(x) % (marche ? 4 : 2), base = marche ? 0 : 4, n = marche ? 4 : 2;
+  fonduImages(d, u.suite, u.texMarche, u.texMarche2, [(base + c) / 6, ligne], [(base + (c + 1) % n) / 6, ligne], x % 1);
 }
 const fouilleJ = puis => { JEU.action = { ligne: "bas gauche".includes(JEU.dir) ? 0 : 1, t0: performance.now(), duree: 400, vitesse: 100, puis }; };
 function prisme(w, d, h) {   // un toit à deux pentes, faîtage le long de x
@@ -564,9 +581,9 @@ const HAUT_CAM = { flat: 12.9, volumes: 10.5 };
 const SOL_FLAT = ["vertdeau", "mousse", "sarcelle", "bayou", "feuilles", "sable", "neige", "chemin", "paves", "eau", "marais", "planches"];
 const SOL_ZONE = { lande: "vertdeau", village: "mousse", foret: "sarcelle", bayou: "bayou", cabane: "feuilles", desert: "sable" };
 // chaque objet : sa hauteur (en cases) et, s'il le faut, de combien son pied descend sous le centre de la case
-const TAILLE_DECOR = { sapin: 1.9, sapinneige: 1.9, bouleau: 1.8, automne: 1.7, mort: 1.5, cypres: 2, fleuri: .8, rocher: .85, rune: 1.1, bruyere: .5, champignons: .5,
+const TAILLE_DECOR = { sapin: 2.4, sapinneige: 2.4, bouleau: 2.2, automne: 2.2, mort: 1.9, cypres: 2.5, fleuri: .8, rocher: .85, rune: 1.1, bruyere: .5, champignons: .5,
   montagne: 2.3, tronc: .6, roseaux: .65, nenuphar: .35, cactus: 1.3, petitcactus: .7, falaise: 1.25, tombe: .75, croix: .85, grille: .9, citrouille: .55, lampadaire: 1.6,
-  souche: .55, arche: 1.7, panneau: 1, barriere: .75, banc: .6, puits: 1.2, tonneau: .6, caisse: .6, boite: .9, epouvantail: 1.3, lanterne: .7, panier: .45, fontaine: 1 };
+  souche: .55, arche: 2, panneau: 1, barriere: .75, banc: .6, puits: 1.2, tonneau: .6, caisse: .6, boite: .9, epouvantail: 1.3, lanterne: .7, panier: .45, fontaine: 1 };
 const PROPS_VILLAGE = ["puits", "fontaine", "tonneau", "caisse", "banc", "boite", "epouvantail", "lanterne", "panier"];
 const CACHETTE_FLAT = { foret: "cach_foret", lande: "cach_lande", village: "cach_village", desert: "cach_desert", bayou: "cach_bayou", cabane: "cach_cabane" };
 const SIN_CAM = .675;   // un écart au sol (dx + dz) / √2 se voit SIN_CAM fois plus court à l'écran, en hauteur
@@ -652,7 +669,7 @@ function dioramaFlat() {
   }
   // les bâtiments : une image pour tout le bloc de cases (maison, cathédrale, cabane, ranch, pont couvert)
   const bloc = (lettres, choix) => blocsJ(lettres).forEach((b, i) => {
-    const w = b.x1 - b.x0 + 1, d = b.y1 - b.y0 + 1, nom = choix(b, i), large = (w + d) / Math.SQRT2 * (nom === "pont" ? 1.15 : 1.08);
+    const w = b.x1 - b.x0 + 1, d = b.y1 - b.y0 + 1, nom = choix(b, i), large = Math.max(nom.startsWith("maison") ? 3.3 : 0, (w + d) / Math.SQRT2 * (nom === "pont" ? 1.15 : 1.08));   // une maison reste assez grande pour qu'on passe la porte
     const s = poserDecor(R, groupe, nom, (b.x0 + b.x1) / 2, (b.y0 + b.y1) / 2, { large, pied: (w + d) / 2 / Math.SQRT2 * 1.05, miroir: nom === "pont" && d > w });
     s.userData.bloc = b; devant.push(s);
   });
@@ -695,7 +712,7 @@ function habitantsJ(R) {
     o(new THREE.SphereGeometry(.22, 14, 10), COUL.peau, 0, .8, 0);
     o(new THREE.SphereGeometry(.035, 8, 6), COUL.yeux, -.08, .83, .2); o(new THREE.SphereGeometry(.035, 8, 6), COUL.yeux, .08, .83, .2);
     o(new THREE.CylinderGeometry(.34, .34, .04, 16), n.chapeau, 0, .98, 0); o(new THREE.ConeGeometry(.2, .32, 12), n.chapeau, 0, 1.15, 0).rotation.z = .15;
-    g.add(c); g.position.set(n.x, 0, n.y); R.scene.add(g); return { n, g, c };
+    g.add(c); g.scale.setScalar(.85); g.position.set(n.x, 0, n.y); R.scene.add(g); return { n, g, c };   // à la taille du héros
   });
   return R.pnj;
 }
@@ -764,22 +781,32 @@ function texCrea(k) {
   new THREE.TextureLoader().load(IMG_JEU + "jeu-crea-" + (k === "catsith" ? k : TRAQUES[k].cle) + ".webp", t => { t.colorSpace = THREE.SRGBColorSpace; t.repeat.set(1 / 4, 1 / 4); TEX_CREA[k] = t; });
   return null;
 }
+// taille de l'image (en cases) : le dessin occupe environ les 3/4 de l'image ; le héros fait 1,2
+const TAILLE_CREA = { mothman: 2, nessie: 2.3, thunderbird: 2.3, barghest: 2, faery: 1.15, lutins: 1.35, jackalope: 1.2, yeti: 2.2, gargouille: 1.5,
+  chupacabra: 1.45, kraken: 2.1, swamp: 2, catsith: 1.25 };
 const LIGNES_CREA = k => k === "catsith" ? { arrive: 3, attente: 0, action: 1, part: 2 } : { arrive: 0, attente: 1, action: 2, part: 3 };
 function partirCrea(q) { const R = moteurJeu(); if (R.creaEtat && R.creaEtat.k === q.k) Object.assign(R.creaEtat, { part: performance.now() }); }
 function creatureJ(R, t) {
   const rv = JEU.revele;
   if (rv && (!R.creaEtat || R.creaEtat.k !== rv.q.k || R.creaEtat.part)) R.creaEtat = { k: rv.q.k, x: rv.q.x, z: rv.q.y, t0: rv.t0 };
   const e = R.creaEtat, tex = e && texCrea(e.k);
-  if (!R.crea) { R.crea = new THREE.Sprite(new THREE.SpriteMaterial({ transparent: true, depthWrite: false, alphaTest: .03 })); R.crea.scale.set(1.7, 1.7, 1); R.crea.center.set(.5, .1); R.crea.visible = false; R.scene.add(R.crea); }
-  const c = R.crea;
-  if (!e || !tex || (e.part && t - e.part > 520) || (!e.part && !rv)) { c.visible = false; if (e && (e.part && t - e.part > 520 || !rv && !e.part)) R.creaEtat = null; return; }
-  if (c.material.map !== tex) { c.material.map = tex; c.material.needsUpdate = true; }
-  const L = LIGNES_CREA(e.k), dt = Math.max(0, t - e.t0); let ligne, col;
-  if (e.part) { ligne = L.part; col = Math.min(3, Math.floor((t - e.part) / 120)); }
-  else if (t < e.t0) { c.visible = false; return; }
-  else if (dt < 440) { ligne = L.arrive; col = Math.floor(dt / 110); }
-  else { const w = (dt - 440) % 2040; if (w < 1440) { ligne = L.attente; col = Math.floor(w / 180) % 4; } else { ligne = L.action; col = Math.floor((w - 1440) / 150); } }
-  tex.offset.set(col / 4, 1 - (ligne + 1) / 4); c.position.set(e.x + .14, 0, e.z + .14); c.visible = true;
+  if (!R.crea) {
+    const m = () => new THREE.Sprite(new THREE.SpriteMaterial({ transparent: true, depthWrite: false, alphaTest: .03 }));
+    R.crea = m(); R.crea2 = m(); [R.crea, R.crea2].forEach(c => { c.center.set(.5, .1); c.visible = false; R.scene.add(c); });
+  }
+  const c = R.crea, PART = 760;
+  if (e && !tex && !e.part && !rv) R.creaEtat = null;
+  if (!e || !tex || (e.part && t - e.part > PART) || (!e.part && !rv) || (!e.part && t < e.t0)) { c.visible = R.crea2.visible = false; if (e && (e.part && t - e.part > PART || !rv && !e.part)) R.creaEtat = null; return; }
+  if (!e.tex2) e.tex2 = tex.clone();
+  const L = LIGNES_CREA(e.k), dt = Math.max(0, t - e.t0), cle = e.k === "catsith" ? "catsith" : TRAQUES[e.k].cle, S = TAILLE_CREA[cle] || 1.7;
+  let ligne, x, boucle = true, echelle = 1, op = 1;
+  if (e.part) { const p = t - e.part; ligne = L.part; x = Math.min(3, p / 130); boucle = false; op = 1 - lisse(Math.max(0, (p - 460) / 300)); }
+  else if (dt < 480) { ligne = L.arrive; x = dt / 120; boucle = false; const f = Math.min(1, dt / 320); echelle = .55 + .45 * (1 + 2.2 * (f - 1) ** 3 + 1.2 * (f - 1) ** 2); }   // un petit rebond en sortant
+  else { const w = (dt - 480) % 2040; if (w < 1440) { ligne = L.attente; x = (w / 180) % 4; } else { ligne = L.action; x = (w - 1440) / 150; boucle = false; } }
+  const col = Math.min(3, Math.floor(x)), suivante = boucle ? (col + 1) % 4 : Math.min(3, col + 1), r = 1 - (ligne + 1) / 4;
+  c.scale.set(S * echelle, S * echelle, 1); c.position.set(e.x + .14, 0, e.z + .14); c.visible = true; c.material.opacity = op;
+  fonduImages(c, R.crea2, tex, e.tex2, [col / 4, r], [suivante / 4, r], suivante === col ? 0 : x % 1);
+  R.crea2.position.copy(c.position); R.crea2.material.opacity *= op;
 }
 const ANGLE = { bas: 0, droite: Math.PI / 2, haut: Math.PI, gauche: -Math.PI / 2 };
 const _c = new THREE.Color();
@@ -802,7 +829,8 @@ function boucleJeu(t) {
   // un pas en cours ? on avance en douceur, sinon on repart si le joystick est tenu
   let fx = JEU.x, fy = JEU.y, bond = 0;
   if (JEU.pas) { const k = Math.min(1, (t - JEU.pas.t0) / DUREE_PAS); fx = JEU.pas.de[0] + (JEU.x - JEU.pas.de[0]) * k; fy = JEU.pas.de[1] + (JEU.y - JEU.pas.de[1]) * k; bond = Math.sin(k * Math.PI) * .12;
-    if (k >= 1) { finPas(); fx = JEU.x; fy = JEU.y; bond = 0; } }
+    if (k >= 1) { const t0 = JEU.pas.t0; finPas(); fx = JEU.x; fy = JEU.y; bond = 0;
+      if (JEU.tenu) { essayerPas(JEU.tenu); if (JEU.pas) JEU.pas.t0 = Math.max(t0 + DUREE_PAS, t - DUREE_PAS * .5); } } }   // le pas suivant part sans temps mort
   if (!JEU.pas && JEU.tenu) essayerPas(JEU.tenu);
   const d = dioramaJ(), h = R.heros, sol = d && d.flat ? 0 : hautSol(tuileJ(Math.round(fx), Math.round(fy)));
   if (!d) { R.rendu.setClearColor(R.fond, 1); R.rendu.clear(); return; }   // les planches du décor arrivent
@@ -818,7 +846,10 @@ function boucleJeu(t) {
   // caméra isométrique qui suit le héros
   const demi = 4.2, ratio = W / Math.max(1, H);
   Object.assign(R.camera, { left: -demi, right: demi, top: demi / ratio, bottom: -demi / ratio }); R.camera.updateProjectionMatrix();
-  R.camera.position.set(fx + 10, HAUT_CAM[d.flat ? "flat" : "volumes"], fy + 10); R.camera.lookAt(fx, 0, fy);
+  const dt = premier || !R.cam ? 1e9 : t - JEU.t, kc = 1 - Math.exp(-dt / 110);   // la caméra rattrape le héros en douceur
+  R.cam = premier || !R.cam ? [fx, fy] : [R.cam[0] + (fx - R.cam[0]) * kc, R.cam[1] + (fy - R.cam[1]) * kc];
+  if (Math.hypot(fx - R.cam[0], fy - R.cam[1]) > 3) R.cam = [fx, fy];   // téléporté : on ne glisse pas à travers l'île
+  R.camera.position.set(R.cam[0] + 10, HAUT_CAM[d.flat ? "flat" : "volumes"], R.cam[1] + 10); R.camera.lookAt(R.cam[0], 0, R.cam[1]);
   R.soleil.position.set(fx - 5, 12, fy + 3); R.soleil.target.position.set(fx, 0, fy);
   if (premier || t - (JEU.tLampes || 0) > 300) {   // les 4 lumières vont aux lampadaires les plus proches
     JEU.tLampes = t;
