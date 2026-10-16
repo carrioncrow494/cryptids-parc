@@ -146,16 +146,25 @@ function scoreJ(cle, x, y) {
   }
   return 1;
 }
+const AQUATIQUES = ["nessie", "kraken", "swamp"];   // ceux-là se cachent dans l'eau, tout près du bord : on les débusque depuis la rive
+function casesEau(z) {   // l'eau de la région, juste à côté d'une case où l'on peut marcher (pas un pont)
+  const acc = new Set(casesAccessibles().map(c => c + "")), l = [];
+  for (let y = 0; y < HAUT; y++) for (let x = 0; x < LARG; x++) if (tuileJ(x, y) === "~" && zoneJ(x, y) === z
+    && Object.values(DIRS).some(([dx, dy]) => acc.has([x + dx, y + dy] + "") && !"bB".includes(tuileJ(x + dx, y + dy)))) l.push([x, y]);
+  return l;
+}
 function cachettesJ(cle, prises, loinDe) {   // les meilleures cases de sa région, loin du départ (ou du joueur) et des autres créatures
-  const z = HABITAT[cle] || "village", ok = casesAccessibles().filter(([x, y]) => zoneJ(x, y) === z && !"PpbB=".includes(tuileJ(x, y))
-    && Object.values(DIRS).filter(([dx, dy]) => libreSol(x + dx, y + dy)).length >= 3 && PNJ.every(n => Math.abs(n.x - x) + Math.abs(n.y - y) > 2)
-    && Math.abs(loinDe[0] - x) + Math.abs(loinDe[1] - y) >= 5 && prises.every(([a, b]) => Math.max(Math.abs(a - x), Math.abs(b - y)) >= 3));
+  const z = HABITAT[cle] || "village", loin = ([x, y]) => Math.abs(loinDe[0] - x) + Math.abs(loinDe[1] - y) >= 5 && prises.every(([a, b]) => Math.max(Math.abs(a - x), Math.abs(b - y)) >= 3);
+  if (AQUATIQUES.includes(cle)) { const l = casesEau(z).filter(loin); if (l.length) return l; }
+  const ok = casesAccessibles().filter(([x, y]) => zoneJ(x, y) === z && !"PpbB=".includes(tuileJ(x, y))
+    && Object.values(DIRS).filter(([dx, dy]) => libreSol(x + dx, y + dy)).length >= 3 && PNJ.every(n => Math.abs(n.x - x) + Math.abs(n.y - y) > 2) && loin([x, y]));
   let best = 0; ok.forEach(([x, y]) => best = Math.max(best, scoreJ(cle, x, y)));
   return ok.filter(([x, y]) => scoreJ(cle, x, y) === best);
 }
 const auHasardJ = l => l[Math.floor(Math.random() * l.length)];
 function placerJeu(p) {   // chaque créature de l'aventure se cache dans sa région
   const j = p.jeu, prises = () => Object.values(j.pos).map(q => [q[1], q[2]]);
+  Object.keys(j.pos).forEach(k => { if (AQUATIQUES.includes(TRAQUES[k].cle) && tuileJ(j.pos[k][1], j.pos[k][2]) !== "~" && casesEau(HABITAT[TRAQUES[k].cle]).length) delete j.pos[k]; });   // une ancienne partie : on les remet dans l'eau
   p.liste.filter(k => !p.pris.includes(k) && !j.pos[k]).forEach(k => {
     const l = cachettesJ(TRAQUES[k].cle, prises(), DEPART), c = l.length ? auHasardJ(l) : auHasardJ(casesAccessibles());
     j.pos[k] = [0, c[0], c[1]];
@@ -643,7 +652,7 @@ function matDecor(R, nom, miroir, fondu) {   // un matériau par objet (et par s
 function poserDecor(R, groupe, nom, x, z, o = {}) {   // une image debout ; o.haut = hauteur (cases), o.large = largeur, o.pied = descente du pied
   const [, , w, h] = ATLAS_DECOR[nom], s = new THREE.Sprite(matDecor(R, nom, o.miroir));
   const H = o.large ? o.large * h / w : (o.haut || TAILLE_DECOR[nom] || 1) * (o.varie || 1), Wd = H * w / h, pied = o.pied === undefined ? .18 : o.pied;
-  s.scale.set(Wd, H, 1); s.center.set(.5, -pied * SIN_CAM / H); s.position.set(x, 0, z);
+  s.scale.set(Wd, H, 1); s.center.set(.5, pied * SIN_CAM / H); s.position.set(x, 0, z);   // le bas de l'image descend de « pied » sous le centre de la case
   s.userData = { nom, miroir: !!o.miroir, x, z, haut: H }; groupe.add(s); return s;
 }
 function dioramaFlat() {
@@ -733,7 +742,7 @@ function dioramaJ() {   // l'île : dessinée si les planches sont là, sinon en
 function estomperJ(R, d, fx, fy) {   // un arbre ou une maison qui cache le héros devient transparent, pour qu'on le voie toujours
   const hx = (fx - fy) / Math.SQRT2, hy = (fx + fy) / Math.SQRT2 * SIN_CAM, hp = fx + fy;   // le héros à l'écran (y vers le bas)
   d.devant.forEach(s => {
-    const u = s.userData, sx = (u.x - u.z) / Math.SQRT2, bas = (u.x + u.z) / Math.SQRT2 * SIN_CAM - s.center.y * s.scale.y, haut = bas - s.scale.y;
+    const u = s.userData, sx = (u.x - u.z) / Math.SQRT2, bas = (u.x + u.z) / Math.SQRT2 * SIN_CAM + s.center.y * s.scale.y, haut = bas - s.scale.y;
     const cache = u.x + u.z > hp + .01 && Math.abs(sx - hx) < s.scale.x * .42 + .25 && haut < hy - .1 && bas > hy - 1.1;
     const m = matDecor(R, u.nom, u.miroir, cache); if (s.material !== m) s.material = m;
   });
@@ -778,8 +787,10 @@ function cachettesFlat(R, t) {   // un buisson dessiné par créature encore cac
   if (R.cleCach !== cle) {
     (R.cach || []).forEach(c => R.scene.remove(c.g)); R.cleCach = cle;
     R.cach = l.map(q => {
-      const z = zoneJ(q.x, q.y), nom = tuileJ(q.x, q.y) === "n" || autour(q.x, q.y, "n") >= 3 ? "cach_neige" : CACHETTE_FLAT[z], g = new THREE.Group();
-      const b = poserDecor(R, g, nom, 0, 0, { haut: 1.1, pied: .16 }); b.material = b.material.clone();   // pas teintée la nuit : on doit bien la voir
+      const z = zoneJ(q.x, q.y), eau = tuileJ(q.x, q.y) === "~", g = new THREE.Group();
+      const nom = eau ? (z === "bayou" ? "cach_bayou" : "nenuphar") : tuileJ(q.x, q.y) === "n" || autour(q.x, q.y, "n") >= 3 ? "cach_neige" : CACHETTE_FLAT[z];
+      const b = poserDecor(R, g, nom, 0, 0, eau && nom === "nenuphar" ? { haut: .7, pied: 0 } : { haut: 1.1, pied: .16 });   // dans l'eau : des nénuphars qui bougent
+      b.material = b.material.clone();   // pas teintée la nuit : on doit bien la voir
       const yeux = new THREE.Sprite(yeuxJ()); yeux.scale.set(.3, .15, 1); yeux.position.set(.06, .3, .06); g.add(yeux);
       const etincelles = [0, 1, 2].map(() => { const e = new THREE.Sprite(etincelleJ()); e.scale.set(.2, .2, 1); g.add(e); return e; });
       g.position.set(q.x, 0, q.y); R.scene.add(g); texCrea(q.k);
