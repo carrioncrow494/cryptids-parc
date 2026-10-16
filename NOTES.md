@@ -138,3 +138,4 @@ Ensuite, on publie avec git : commit puis push sur `main`. GitHub Pages est serv
   - La caméra a pris la pente des terrains (`SIN_CAM` .543, `HAUT_CAM.flat` 9,15) et voit 12 cases de large au lieu de 8,4 : le héros paraît plus petit.
   - Les anciennes parties (v3) repartent du village ; les créatures sauvées le restent.
   - Pour de nouveaux terrains : les copier dans les uploads, mettre leur nom dans `TERRAINS` (terrains.py), régler si besoin la couleur de l'eau (`eau`) et des rochers (`rocher`), puis `python3 sources/monde.py <dossier>` et `python3 sources/assemble.py`.
+- Zoom : on pince l'écran à deux doigts (ou la molette) pour rapprocher la caméra (`ZOOM`, de 3,2 à 8 cases de demi-largeur, 5 au départ), et le choix est gardé (localStorage `cryptids-zoom`). Le zoom de la page par Safari est bloqué pendant le jeu.
