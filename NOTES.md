@@ -110,3 +110,7 @@ Ensuite, on publie avec git : commit puis push sur `main`. GitHub Pages est serv
 - `jeu-detecteur.webp` : le détecteur éteint (à gauche) et allumé (à droite) ; les voyants sont découpés dans l'image allumée (`VOYANTS` dans jeu.js).
 - Fabriqués depuis les planches de Sam sur fond vert avec `sources/decoupe.py` et `sources/detecteur.py` (chemins des images à adapter).
 - `IMG_JEU` dans jeu.js : vide dans index.html. Pour test.html, on le remplace par l'adresse raw de la branche, pour ne pas ajouter d'images sur main.
+
+### Choisir son aventure (16/10/2026)
+- Deux choix seulement. **Aventure réelle** : explique les QR codes, bouton pour télécharger `qr-codes-cryptids.pdf`, puis « Commencer l'aventure réelle » (intro, choix des cryptides, QR codes à cacher). **Aventure virtuelle** : lance tout de suite le jeu vidéo (reprend la partie en cours, sinon cache les 12 cryptides).
+- La géolocalisation est retirée de l'écran pour l'instant (demande de Sam) : `mode()` ramène les anciens réglages `exterieur`/`interieur` aux QR codes. Le code de la carte pixel art et du GPS reste en place pour plus tard.

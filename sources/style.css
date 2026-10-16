@@ -279,8 +279,11 @@
   #jaugeBarre { height: 100%; width: 0; background: linear-gradient(90deg, var(--citrouille), var(--cyan)); transition: width .1s; }
   /* « Choisir son aventure » */
   .onglets.genre { width: 100%; justify-content: center; flex-wrap: wrap; }
-  .onglets.genre .planche { flex: 1 1 140px; opacity: .6; }
+  .onglets.genre .planche { flex: 1 1 140px; }
+  .onglets.genre:has(.actif) .planche:not(.actif) { opacity: .6; }
   .onglets.genre .planche.actif { opacity: 1; }
+  a.mini { text-decoration: none; }
+  .etapes { margin: 0; padding-left: 1.3em; text-align: left; display: flex; flex-direction: column; gap: 8px; }
   .onglets.genre .planche.actif { border-color: var(--cyan); box-shadow: 0 0 16px rgba(79,243,255,.45); color: var(--cyan); }
   /* Aventure virtuelle : écran de jeu façon console portable */
   #jeu { position: fixed; inset: 0; z-index: 8; display: flex; flex-direction: column; background: #10161c; user-select: none; -webkit-user-select: none; touch-action: none; }

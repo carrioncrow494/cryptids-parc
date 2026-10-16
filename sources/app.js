@@ -78,7 +78,7 @@ const ecrire = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } c
 const pris = () => lire(CLES.pris, []).filter(k => TRAQUES[k]);
 const relaches = () => lire(CLES.relache, []);
 const ajouter = (cle, val) => { const l = lire(cle, []); if (!l.includes(val)) { l.push(val); ecrire(cle, l); } };
-const mode = () => lire(CLES.mode, "qr");
+const mode = () => lire(CLES.mode, "qr") === "virtuel" ? "virtuel" : "qr";   // la géolocalisation est retirée pour l'instant : ses anciens réglages reviennent aux QR codes
 // une partie = une sélection de créatures à sauver (la collection du grimoire, elle, se garde d'une partie à l'autre)
 const partie = () => lire(CLES.partie, null);
 const enCours = () => { const p = partie(); return p && p.pris.length < p.liste.length ? p : null; };
@@ -243,24 +243,20 @@ document.addEventListener("pointerdown", e => { const b = e.target.closest("butt
 
 /* ===================== Accueil, parents ===================== */
 const LIBELLES = { qr: "Mode : QR codes cachés", interieur: "Mode : intérieur (10 m)", exterieur: "Mode : extérieur (20 m)", virtuel: "Mode : aventure virtuelle (jeu vidéo)" };
-function majModes() {
-  majAccueil(); $("modeParents").textContent = LIBELLES[mode()];
-  document.querySelectorAll(".carte-mode").forEach(c => { c.classList.toggle("actif", c.dataset.mode === mode()); c.classList.toggle("eteint", c.dataset.mode !== mode()); });
-}
-function genre(virtuel) {   // « Choisir son aventure » : réelle (QR codes, géolocalisation) ou virtuelle (jeu vidéo)
-  $("choixReel").hidden = virtuel; $("choixVirtuel").hidden = !virtuel;
+function majModes() { majAccueil(); $("modeParents").textContent = LIBELLES[mode()]; }
+function genre(virtuel) {   // « Choisir son aventure » : réelle (QR codes à imprimer) ou virtuelle (jeu vidéo)
+  $("choixReel").hidden = virtuel;
   $("genreReel").classList.toggle("actif", !virtuel); $("genreVirtuel").classList.toggle("actif", virtuel);
 }
-$("genreReel").addEventListener("click", () => genre(false));
-$("genreVirtuel").addEventListener("click", () => genre(true));
-$("ouvrirParents").addEventListener("click", () => { majModes(); genre(mode() === "virtuel"); montrer("parents"); });
+$("genreReel").addEventListener("click", () => { ecrire(CLES.mode, "qr"); majModes(); genre(false); });
+$("genreVirtuel").addEventListener("click", () => {   // tout droit dans le jeu vidéo : on reprend la partie en cours, sinon on cache les 12 cryptides
+  ecrire(CLES.mode, "virtuel"); majModes();
+  if (!enCours()) ecrire(CLES.partie, { liste: ids.slice(), pris: [], membres: {}, debut: Date.now() });
+  ecrire(CLES.intro, true); lancerAventure();
+});
+$("lancerReel").addEventListener("click", () => { ecrire(CLES.mode, "qr"); majModes(); enCours() ? lancerAventure() : nouvelleAventure(); });
+$("ouvrirParents").addEventListener("click", () => { majModes(); $("choixReel").hidden = true; ["genreReel", "genreVirtuel"].forEach(k => $(k).classList.remove("actif")); montrer("parents"); });
 $("fermerParents").addEventListener("click", () => { majModes(); montrer("accueil"); });
-document.querySelectorAll(".carte-mode").forEach(b => b.addEventListener("click", e => {
-  if (e.target.closest("a")) return;   // le lien de la planche reste un lien
-  ecrire(CLES.mode, b.dataset.mode); majModes(); sfx("valider");
-  if (e.target.closest("[data-placer]")) return setTimeout(ouvrirCarteParents, 300);
-  setTimeout(() => { majAccueil(); montrer("accueil"); }, 900);
-}));
 $("raz").addEventListener("click", () => {
   const b = $("raz");
   if (!b.dataset.ok) { b.dataset.ok = "1"; b.textContent = "Touchez encore pour tout effacer"; setTimeout(() => { delete b.dataset.ok; b.textContent = "Remettre toute l'aventure à zéro"; }, 4000); return; }

@@ -93,7 +93,7 @@
   </div>
 </div>
 
-<!-- Choisir son aventure : réelle (QR codes, géolocalisation) ou virtuelle (jeu vidéo) -->
+<!-- Choisir son aventure : réelle (QR codes à imprimer) ou virtuelle (jeu vidéo) -->
 <div id="parents" class="ecran" hidden>
   <button class="croix" type="button" data-ferme="parents" aria-label="Fermer">✕</button>
   <img class="chat-menu" src="menu-catsith-3.webp" alt="">
@@ -104,23 +104,16 @@
       <button id="genreVirtuel" class="planche petit" type="button">Aventure virtuelle</button>
     </div>
     <div id="choixReel" class="colonne" hidden>
-      <p>Pour les parents : choisissez comment les créatures seront cachées.</p>
-      <div class="choix carte-mode" data-mode="qr" role="button" tabindex="0">
-        <h3>QR codes à imprimer</h3>
-        <p>Imprimez la planche, découpez les cartes et cachez-les où vous voulez. Les enfants les trouvent puis les visent avec l'œil magique.</p>
-        <div class="boutons"><a class="mini cyan" href="qr-codes-cryptids.pdf" target="_blank" rel="noopener">Planche à imprimer</a></div>
+      <div class="choix">
+        <h3>Les QR codes, comment ça marche ?</h3>
+        <ol class="etapes">
+          <li>Un parent imprime la planche de QR codes et découpe les cartes : une carte par cryptide.</li>
+          <li>Au début de l'aventure, l'appli dit quels QR codes cacher. Le parent les cache dans la maison ou le jardin.</li>
+          <li>L'enfant cherche les cartes, puis les vise avec l'œil magique (la caméra) : le cryptide apparaît, il faut le capturer.</li>
+        </ol>
+        <div class="boutons"><a id="telechargerQr" class="mini cyan" href="qr-codes-cryptids.pdf" download="qr-codes-cryptids.pdf">Télécharger la planche</a></div>
       </div>
-      <div class="choix carte-mode" data-mode="exterieur" role="button" tabindex="0">
-        <h3>Géolocalisation · extérieur</h3>
-        <p>Placez vous-même les créatures sur la carte d'un parc. L'enfant les cherche avec le détecteur, sur une carte en pixel art de vos alentours.</p>
-        <div class="boutons"><button class="mini cyan" type="button" data-placer="1">Placer les créatures</button></div>
-      </div>
-    </div>
-    <div id="choixVirtuel" class="colonne" hidden>
-      <div class="choix carte-mode" data-mode="virtuel" role="button" tabindex="0">
-        <h3>Jeu vidéo</h3>
-        <p>Une aventure en 3D à l'écran, comme un jeu vidéo : explore une grande île (forêt sombre, hautes-terres, bayou, vieux village, désert) et retrouve les cryptides cachés, puis Sporran près de sa cabane. Le joystick sert à marcher, le bouton A à capturer.</p>
-      </div>
+      <button id="lancerReel" class="planche principal" type="button">Commencer l'aventure réelle</button>
     </div>
     <p id="modeParents" class="etat"></p>
     <button id="fermerParents" class="planche petit" type="button">Retour</button>
