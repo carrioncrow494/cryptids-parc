@@ -67,12 +67,41 @@ const zoneJ = (x, y) => Object.keys(ZONES).find(z => ZONES[z].dans(x, y));
 const HABITAT = { barghest: "foret", mothman: "foret", nessie: "lande", kraken: "lande", yeti: "lande", swamp: "bayou", faery: "bayou",
   gargouille: "village", lutins: "village", chupacabra: "desert", thunderbird: "desert", jackalope: "desert", catsith: "cabane" };
 const DIRS = { haut: [0, -1], bas: [0, 1], gauche: [-1, 0], droite: [1, 0] };
-const DUREE_PAS = 190;   // ms pour avancer d'une case
+const DUREE_PAS = 240;   // ms pour avancer d'une case
 let JEU = null;
 
 // ---------- la grille ----------
 const tuileJ = (x, y) => (CARTE[y] || "")[x] || "T";
-const libreSol = (x, y) => !!(TUILES[tuileJ(x, y)] || {}).libre;   // la case elle-même (pour le plan de l'île)
+const libreSol = (x, y) => !!(TUILES[tuileJ(x, y)] || {}).libre && !sousBatiment(x, y);   // la case elle-même (pour le plan de l'île)
+// Les bâtiments dessinés : une image par bloc de cases. Une petite maison est dessinée un peu plus grande que son bloc (pour qu'on passe sa porte) :
+// les cases qu'elle recouvre sont bloquées aussi, pour qu'on ne marche jamais à travers un mur.
+let BATIS = null, SOUS_BATI = null;
+function batimentsJ() {
+  if (BATIS) return BATIS; BATIS = [];
+  const bloc = (lettres, choix) => blocsJ(lettres).forEach((b, i) => {
+    const w = b.x1 - b.x0 + 1, d = b.y1 - b.y0 + 1, nom = choix(b, i), base = (w + d) / Math.SQRT2;
+    BATIS.push({ b, nom, w, d, large: Math.max(nom.startsWith("maison") ? 3.3 : 0, base * (nom === "pont" ? 1.15 : 1.08)), base });
+  });
+  bloc("EG", () => "cathedrale"); bloc("Kk", () => "cabane"); bloc("B", () => "pont");
+  bloc("RHD", (b, i) => zoneJ(b.x0, b.y0) === "desert" ? "saloon" : "maison" + (1 + i % 4));
+  return BATIS;
+}
+function sousBatiment(x, y) {
+  if (!SOUS_BATI) {
+    SOUS_BATI = new Set();
+    batimentsJ().forEach(({ b, nom, w, d, large, base }) => { if (nom === "pont") return;
+      const k = large / base, cx = (b.x0 + b.x1) / 2, cz = (b.y0 + b.y1) / 2, ex = w * k / 2 - .25, ez = d * k / 2 - .25;
+      for (let yy = Math.ceil(cz - ez); yy <= Math.floor(cz + ez); yy++) for (let xx = Math.ceil(cx - ex); xx <= Math.floor(cx + ex); xx++) SOUS_BATI.add(xx + "," + yy);
+      // derrière le bâtiment, là où son image cacherait tout le héros : on ne passe pas non plus (sinon on a l'air de marcher dans les murs)
+      const [, , pw, ph] = ATLAS_DECOR[nom], H = large * ph / pw, sxb = (cx - cz) / Math.SQRT2, bas = (cx + cz) / Math.SQRT2 * SIN_CAM + large * .486 * SIN_CAM, haut = bas - H;
+      for (let yy = b.y0 - 6; yy <= b.y1; yy++) for (let xx = b.x0 - 6; xx <= b.x1; xx++) {
+        if (xx + yy >= b.x0 + b.y0 + Math.min(w, d) - 1 || "=pPbB".includes(tuileJ(xx, yy))) continue;   // les chemins restent ouverts
+        const hx = (xx - yy) / Math.SQRT2, hy = (xx + yy) / Math.SQRT2 * SIN_CAM;
+        if (Math.abs(hx - sxb) < large * .3 && hy - 1.05 > haut + H * .12 && hy < bas) SOUS_BATI.add(xx + "," + yy);
+      } });
+  }
+  return SOUS_BATI.has(x + "," + y);
+}
 const libreJ = (x, y) => libreSol(x, y) && !occupeJ(x, y);           // et personne dessus (habitant, cachette)
 // Un habitant par région : on lui parle avec A, il donne les indices des cryptides cachés chez lui.
 const PNJ = [
@@ -339,7 +368,7 @@ function fonduImages(a, b, texA, texB, posA, posB, f) {   // image a, puis l'ima
   if (a.material.map !== texA) { a.material.map = texA; a.material.needsUpdate = true; }
   if (b.material.map !== texB) { b.material.map = texB; b.material.needsUpdate = true; }
   texA.offset.set(posA[0], posA[1]); texB.offset.set(posB[0], posB[1]);
-  f = Math.min(1, Math.max(0, (f - .6) / .4));   // on ne mélange qu'à la fin de chaque image : un passage rapide, sans image en double
+  f = Math.min(1, Math.max(0, (f - .55) / .45));   // on ne mélange qu'à la fin de chaque image : un passage rapide, sans image en double
   b.material.opacity = lisse(f); b.visible = a.visible && f > .02;
   b.center.copy(a.center); b.scale.copy(a.scale); b.material.color.copy(a.material.color);
 }
@@ -354,7 +383,7 @@ function imageHeros(h, t, marche) {   // choisit l'image de la planche : directi
     const fin = !a.boucle && Math.floor(x) >= 3;   // la dernière image d'une action qui ne boucle pas ne revient pas à la première
     return fonduImages(d, u.suite, u.texActions, u.texActions2, [c / 4, ligne], [((c + 1) % 4) / 4, ligne], fin ? 0 : x % 1);
   }
-  const ligne = 1 - (LIGNE_HEROS[JEU.dir] + 1) / 4, x = marche ? t / 140 : t / 650, c = Math.floor(x) % (marche ? 4 : 2), base = marche ? 0 : 4, n = marche ? 4 : 2;
+  const ligne = 1 - (LIGNE_HEROS[JEU.dir] + 1) / 4, x = marche ? t / 170 : t / 650, c = Math.floor(x) % (marche ? 4 : 2), base = marche ? 0 : 4, n = marche ? 4 : 2;
   fonduImages(d, u.suite, u.texMarche, u.texMarche2, [(base + c) / 6, ligne], [(base + (c + 1) % n) / 6, ligne], x % 1);
 }
 const fouilleJ = puis => { JEU.action = { ligne: "bas gauche".includes(JEU.dir) ? 0 : 1, t0: performance.now(), duree: 400, vitesse: 100, puis }; };
@@ -677,13 +706,10 @@ function dioramaFlat() {
     else if (ch === "~" && z === "bayou" && r < .12) pose("nenuphar", x, y, { miroir: m, pied: 0 });
   }
   // les bâtiments : une image pour tout le bloc de cases (maison, cathédrale, cabane, ranch, pont couvert)
-  const bloc = (lettres, choix) => blocsJ(lettres).forEach((b, i) => {
-    const w = b.x1 - b.x0 + 1, d = b.y1 - b.y0 + 1, nom = choix(b, i), large = Math.max(nom.startsWith("maison") ? 3.3 : 0, (w + d) / Math.SQRT2 * (nom === "pont" ? 1.15 : 1.08));   // une maison reste assez grande pour qu'on passe la porte
-    const s = poserDecor(R, groupe, nom, (b.x0 + b.x1) / 2, (b.y0 + b.y1) / 2, { large, pied: (w + d) / 2 / Math.SQRT2 * 1.05, miroir: nom === "pont" && d > w });
+  batimentsJ().forEach(({ b, nom, w, d, large }) => {
+    const s = poserDecor(R, groupe, nom, (b.x0 + b.x1) / 2, (b.y0 + b.y1) / 2, { large, pied: large * .486, miroir: nom === "pont" && d > w });
     s.userData.bloc = b; devant.push(s);
   });
-  bloc("EG", () => "cathedrale"); bloc("Kk", () => "cabane"); bloc("B", () => "pont");
-  bloc("RHD", (b, i) => zoneJ(b.x0, b.y0) === "desert" ? "saloon" : "maison" + (1 + i % 4));
   // la nuit, les lampadaires brillent
   const halo = halosJ(); lampes.forEach(l => { const s = new THREE.Sprite(halo); s.scale.set(1.6, 1.6, 1); s.position.set(l.x, l.h, l.z); s.renderOrder = 2; groupe.add(s); });
   R.scene.add(groupe);
@@ -803,17 +829,20 @@ function creatureJ(R, t) {
     const m = () => new THREE.Sprite(new THREE.SpriteMaterial({ transparent: true, depthWrite: false, alphaTest: .03 }));
     R.crea = m(); R.crea2 = m(); [R.crea, R.crea2].forEach(c => { c.center.set(.5, .1); c.visible = false; R.scene.add(c); });
   }
-  const c = R.crea, PART = 760;
+  const c = R.crea, PART = 1250;
   if (e && !tex && !e.part && !rv) R.creaEtat = null;
   if (!e || !tex || (e.part && t - e.part > PART) || (!e.part && !rv) || (!e.part && t < e.t0)) { c.visible = R.crea2.visible = false; if (e && (e.part && t - e.part > PART || !rv && !e.part)) R.creaEtat = null; return; }
   if (!e.tex2) e.tex2 = tex.clone();
   const L = LIGNES_CREA(e.k), dt = Math.max(0, t - e.t0), cle = e.k === "catsith" ? "catsith" : TRAQUES[e.k].cle, S = TAILLE_CREA[cle] || 1.7;
   let ligne, x, boucle = true, echelle = 1, op = 1;
-  if (e.part) { const p = t - e.part; ligne = L.part; x = Math.min(3, p / 130); boucle = false; op = 1 - lisse(Math.max(0, (p - 460) / 300)); }
-  else if (dt < 480) { ligne = L.arrive; x = dt / 120; boucle = false; const f = Math.min(1, dt / 320); echelle = .55 + .45 * (1 + 2.2 * (f - 1) ** 3 + 1.2 * (f - 1) ** 2); }   // un petit rebond en sortant
-  else { const w = (dt - 480) % 2040; if (w < 1440) { ligne = L.attente; x = (w / 180) % 4; } else { ligne = L.action; x = (w - 1440) / 150; boucle = false; } }
+  // un cycle d'environ 5,5 s : 2 tours d'attente (450 ms par image), puis l'action (400 ms par image) ; l'arrivée et le départ prennent 1 s
+  let bouge = 0;
+  if (e.part) { const p = t - e.part; ligne = L.part; x = Math.min(3, p / 250); boucle = false; op = 1 - lisse(Math.max(0, (p - 850) / 350)); }
+  else if (dt < 1000) { ligne = L.arrive; x = dt / 250; boucle = false; const f = Math.min(1, dt / 600); echelle = .55 + .45 * (1 + 2.2 * (f - 1) ** 3 + 1.2 * (f - 1) ** 2); }   // un petit rebond en sortant
+  else { const w = (dt - 1000) % 5200; bouge = 1; if (w < 3600) { ligne = L.attente; x = (w / 450) % 4; } else { ligne = L.action; x = (w - 3600) / 400; boucle = false; } }
   const col = Math.min(3, Math.floor(x)), suivante = boucle ? (col + 1) % 4 : Math.min(3, col + 1), r = 1 - (ligne + 1) / 4;
-  c.scale.set(S * echelle, S * echelle, 1); c.position.set(e.x + .14, 0, e.z + .14); c.visible = true; c.material.opacity = op;
+  const souffle = bouge * Math.sin(dt / 700) * .025;   // entre les images, elle respire doucement
+  c.scale.set(S * echelle * (1 - souffle * .5), S * echelle * (1 + souffle), 1); c.position.set(e.x + .14, 0, e.z + .14); c.visible = true; c.material.opacity = op;
   fonduImages(c, R.crea2, tex, e.tex2, [col / 4, r], [suivante / 4, r], suivante === col ? 0 : x % 1);
   R.crea2.position.copy(c.position); R.crea2.material.opacity *= op;
 }
@@ -910,10 +939,11 @@ function bougerStick(e) {
   const r = stick.getBoundingClientRect(), dx = e.clientX - (r.left + r.width / 2), dy = e.clientY - (r.top + r.height / 2), d = Math.hypot(dx, dy), max = r.width * .3, k = d > max ? max / d : 1;
   pommeau.style.transform = `translate(${dx * k}px, ${dy * k}px)`;
   if (!JEU) return;
-  if (d < r.width * .12) { JEU.tenu = JEU.tenu2 = null; return; }
+  if (d < r.width * .17) { JEU.tenu = JEU.tenu2 = null; return; }   // une grande zone morte au centre : un doigt posé ne fait pas marcher
   const a = (Math.atan2(-dy, dx) * 180 / Math.PI + 360) % 360, ecart = c => Math.abs(((a - c + 540) % 360) - 180);
-  const [p, q] = Object.keys(CAP).sort((k, l) => ecart(CAP[k]) - ecart(CAP[l]));   // la diagonale la plus proche, puis sa voisine
-  const zigzag = ecart(CAP[p]) > 28, change = p !== JEU.tenu || zigzag !== !!JEU.zigzag;
+  let [p, q] = Object.keys(CAP).sort((k, l) => ecart(CAP[k]) - ecart(CAP[l]));   // la diagonale la plus proche, puis sa voisine
+  if (JEU.tenu && JEU.tenu !== p && ecart(CAP[JEU.tenu]) < 60) { q = p; p = JEU.tenu; }   // on garde la direction tant qu'on n'a pas franchement tourné le pouce
+  const ep = ecart(CAP[p]), zigzag = JEU.zigzag ? ep > 20 : ep > 34, change = p !== JEU.tenu || zigzag !== !!JEU.zigzag;
   JEU.tenu = p; JEU.tenu2 = ecart(CAP[q]) <= 90 ? q : null; JEU.zigzag = zigzag;
   if (change) pasTenu();
 }
@@ -936,5 +966,6 @@ $("jeuQuitter").addEventListener("click", () => { fermerJeu(); enBoss = false; m
 
 window.__jeu = { etat: () => JEU && { x: JEU.x, y: JEU.y, dir: JEU.dir, zone: zoneJ(JEU.x, JEU.y), revele: JEU.revele && JEU.revele.q.k, cibles: ciblesJ() },
   aller: (x, y, dir) => { JEU.x = x; JEU.y = y; JEU.pas = null; if (dir) JEU.dir = dir; arriverJ(true); }, pnj: PNJ, libreSol, pas: d => essayerPas(d), A: () => boutonA(), B: () => boutonB(),
+  sousBati: () => { sousBatiment(0, 0); return [...SOUS_BATI].filter(k => { const [x, y] = k.split(",").map(Number); return !!(TUILES[tuileJ(x, y)] || {}).libre; }); },
   decor: () => R3 && R3.ile && R3.ile.flat ? { objets: R3.ile.groupe.children.length, dessins: R3.rendu.info.render.calls } : null,
   carte: CARTE, zone: zoneJ, accessibles: () => casesAccessibles().length, trouver: k => { JEU.revele = { q: { k }, t0: 0 }; trouveJ(); } };
