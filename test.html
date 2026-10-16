@@ -287,8 +287,11 @@
   #jaugeBarre { height: 100%; width: 0; background: linear-gradient(90deg, var(--citrouille), var(--cyan)); transition: width .1s; }
   /* « Choisir son aventure » */
   .onglets.genre { width: 100%; justify-content: center; flex-wrap: wrap; }
-  .onglets.genre .planche { flex: 1 1 140px; opacity: .6; }
+  .onglets.genre .planche { flex: 1 1 140px; }
+  .onglets.genre:has(.actif) .planche:not(.actif) { opacity: .6; }
   .onglets.genre .planche.actif { opacity: 1; }
+  a.mini { text-decoration: none; }
+  .etapes { margin: 0; padding-left: 1.3em; text-align: left; display: flex; flex-direction: column; gap: 8px; }
   .onglets.genre .planche.actif { border-color: var(--cyan); box-shadow: 0 0 16px rgba(79,243,255,.45); color: var(--cyan); }
   /* Aventure virtuelle : écran de jeu façon console portable */
   #jeu { position: fixed; inset: 0; z-index: 8; display: flex; flex-direction: column; background: #10161c; user-select: none; -webkit-user-select: none; touch-action: none; }
@@ -430,7 +433,7 @@
   </div>
 </div>
 
-<!-- Choisir son aventure : réelle (QR codes, géolocalisation) ou virtuelle (jeu vidéo) -->
+<!-- Choisir son aventure : réelle (QR codes à imprimer) ou virtuelle (jeu vidéo) -->
 <div id="parents" class="ecran" hidden>
   <button class="croix" type="button" data-ferme="parents" aria-label="Fermer">✕</button>
   <img class="chat-menu" src="menu-catsith-3.webp" alt="">
@@ -441,23 +444,16 @@
       <button id="genreVirtuel" class="planche petit" type="button">Aventure virtuelle</button>
     </div>
     <div id="choixReel" class="colonne" hidden>
-      <p>Pour les parents : choisissez comment les créatures seront cachées.</p>
-      <div class="choix carte-mode" data-mode="qr" role="button" tabindex="0">
-        <h3>QR codes à imprimer</h3>
-        <p>Imprimez la planche, découpez les cartes et cachez-les où vous voulez. Les enfants les trouvent puis les visent avec l'œil magique.</p>
-        <div class="boutons"><a class="mini cyan" href="qr-codes-cryptids.pdf" target="_blank" rel="noopener">Planche à imprimer</a></div>
+      <div class="choix">
+        <h3>Les QR codes, comment ça marche ?</h3>
+        <ol class="etapes">
+          <li>Un parent imprime la planche de QR codes et découpe les cartes : une carte par cryptide.</li>
+          <li>Au début de l'aventure, l'appli dit quels QR codes cacher. Le parent les cache dans la maison ou le jardin.</li>
+          <li>L'enfant cherche les cartes, puis les vise avec l'œil magique (la caméra) : le cryptide apparaît, il faut le capturer.</li>
+        </ol>
+        <div class="boutons"><a id="telechargerQr" class="mini cyan" href="qr-codes-cryptids.pdf" download="qr-codes-cryptids.pdf">Télécharger la planche</a></div>
       </div>
-      <div class="choix carte-mode" data-mode="exterieur" role="button" tabindex="0">
-        <h3>Géolocalisation · extérieur</h3>
-        <p>Placez vous-même les créatures sur la carte d'un parc. L'enfant les cherche avec le détecteur, sur une carte en pixel art de vos alentours.</p>
-        <div class="boutons"><button class="mini cyan" type="button" data-placer="1">Placer les créatures</button></div>
-      </div>
-    </div>
-    <div id="choixVirtuel" class="colonne" hidden>
-      <div class="choix carte-mode" data-mode="virtuel" role="button" tabindex="0">
-        <h3>Jeu vidéo</h3>
-        <p>Une aventure en 3D à l'écran, comme un jeu vidéo : explore une grande île (forêt sombre, hautes-terres, bayou, vieux village, désert) et retrouve les cryptides cachés, puis Sporran près de sa cabane. Le joystick sert à marcher, le bouton A à capturer.</p>
-      </div>
+      <button id="lancerReel" class="planche principal" type="button">Commencer l'aventure réelle</button>
     </div>
     <p id="modeParents" class="etat"></p>
     <button id="fermerParents" class="planche petit" type="button">Retour</button>
@@ -688,7 +684,7 @@ const ecrire = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } c
 const pris = () => lire(CLES.pris, []).filter(k => TRAQUES[k]);
 const relaches = () => lire(CLES.relache, []);
 const ajouter = (cle, val) => { const l = lire(cle, []); if (!l.includes(val)) { l.push(val); ecrire(cle, l); } };
-const mode = () => lire(CLES.mode, "qr");
+const mode = () => lire(CLES.mode, "qr") === "virtuel" ? "virtuel" : "qr";   // la géolocalisation est retirée pour l'instant : ses anciens réglages reviennent aux QR codes
 // une partie = une sélection de créatures à sauver (la collection du grimoire, elle, se garde d'une partie à l'autre)
 const partie = () => lire(CLES.partie, null);
 const enCours = () => { const p = partie(); return p && p.pris.length < p.liste.length ? p : null; };
@@ -853,24 +849,20 @@ document.addEventListener("pointerdown", e => { const b = e.target.closest("butt
 
 /* ===================== Accueil, parents ===================== */
 const LIBELLES = { qr: "Mode : QR codes cachés", interieur: "Mode : intérieur (10 m)", exterieur: "Mode : extérieur (20 m)", virtuel: "Mode : aventure virtuelle (jeu vidéo)" };
-function majModes() {
-  majAccueil(); $("modeParents").textContent = LIBELLES[mode()];
-  document.querySelectorAll(".carte-mode").forEach(c => { c.classList.toggle("actif", c.dataset.mode === mode()); c.classList.toggle("eteint", c.dataset.mode !== mode()); });
-}
-function genre(virtuel) {   // « Choisir son aventure » : réelle (QR codes, géolocalisation) ou virtuelle (jeu vidéo)
-  $("choixReel").hidden = virtuel; $("choixVirtuel").hidden = !virtuel;
+function majModes() { majAccueil(); $("modeParents").textContent = LIBELLES[mode()]; }
+function genre(virtuel) {   // « Choisir son aventure » : réelle (QR codes à imprimer) ou virtuelle (jeu vidéo)
+  $("choixReel").hidden = virtuel;
   $("genreReel").classList.toggle("actif", !virtuel); $("genreVirtuel").classList.toggle("actif", virtuel);
 }
-$("genreReel").addEventListener("click", () => genre(false));
-$("genreVirtuel").addEventListener("click", () => genre(true));
-$("ouvrirParents").addEventListener("click", () => { majModes(); genre(mode() === "virtuel"); montrer("parents"); });
+$("genreReel").addEventListener("click", () => { ecrire(CLES.mode, "qr"); majModes(); genre(false); });
+$("genreVirtuel").addEventListener("click", () => {   // tout droit dans le jeu vidéo : on reprend la partie en cours, sinon on cache les 12 cryptides
+  ecrire(CLES.mode, "virtuel"); majModes();
+  if (!enCours()) ecrire(CLES.partie, { liste: ids.slice(), pris: [], membres: {}, debut: Date.now() });
+  ecrire(CLES.intro, true); lancerAventure();
+});
+$("lancerReel").addEventListener("click", () => { ecrire(CLES.mode, "qr"); majModes(); enCours() ? lancerAventure() : nouvelleAventure(); });
+$("ouvrirParents").addEventListener("click", () => { majModes(); $("choixReel").hidden = true; ["genreReel", "genreVirtuel"].forEach(k => $(k).classList.remove("actif")); montrer("parents"); });
 $("fermerParents").addEventListener("click", () => { majModes(); montrer("accueil"); });
-document.querySelectorAll(".carte-mode").forEach(b => b.addEventListener("click", e => {
-  if (e.target.closest("a")) return;   // le lien de la planche reste un lien
-  ecrire(CLES.mode, b.dataset.mode); majModes(); sfx("valider");
-  if (e.target.closest("[data-placer]")) return setTimeout(ouvrirCarteParents, 300);
-  setTimeout(() => { majAccueil(); montrer("accueil"); }, 900);
-}));
 $("raz").addEventListener("click", () => {
   const b = $("raz");
   if (!b.dataset.ok) { b.dataset.ok = "1"; b.textContent = "Touchez encore pour tout effacer"; setTimeout(() => { delete b.dataset.ok; b.textContent = "Remettre toute l'aventure à zéro"; }, 4000); return; }
