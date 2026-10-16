@@ -249,10 +249,10 @@ function genre(virtuel) {   // « Choisir son aventure » : réelle (QR codes à
   $("genreReel").classList.toggle("actif", !virtuel); $("genreVirtuel").classList.toggle("actif", virtuel);
 }
 $("genreReel").addEventListener("click", () => { ecrire(CLES.mode, "qr"); majModes(); genre(false); });
-$("genreVirtuel").addEventListener("click", () => {   // tout droit dans le jeu vidéo : on reprend la partie en cours, sinon on cache les 12 cryptides
+$("genreVirtuel").addEventListener("click", () => {   // vers le jeu vidéo : on reprend la partie en cours, sinon on choisit d'abord combien de cryptides (sans l'intro)
   ecrire(CLES.mode, "virtuel"); majModes();
-  if (!enCours()) ecrire(CLES.partie, { liste: ids.slice(), pris: [], membres: {}, debut: Date.now() });
-  ecrire(CLES.intro, true); lancerAventure();
+  if (enCours()) return lancerAventure();
+  ecrire(CLES.intro, true); preparerChoix(); montrer("partie");
 });
 $("lancerReel").addEventListener("click", () => { ecrire(CLES.mode, "qr"); majModes(); enCours() ? lancerAventure() : nouvelleAventure(); });
 $("ouvrirParents").addEventListener("click", () => { majModes(); $("choixReel").hidden = true; ["genreReel", "genreVirtuel"].forEach(k => $(k).classList.remove("actif")); montrer("parents"); });
