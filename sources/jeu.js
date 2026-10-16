@@ -641,12 +641,12 @@ function fusionnerJ(groupe) {   // les objets immobiles de même couleur fondus 
   lots.forEach(({ mat, g, ombre }) => { const m = new THREE.Mesh(mergeGeometries(g), mat); m.castShadow = ombre; m.receiveShadow = true; groupe.add(m); });
 }
 // ---------- le décor dessiné (flat design) : le sol en tuiles, et chaque objet est une image posée debout, face à la caméra ----------
-// Les images viennent de 3 planches : jeu-sol.webp (12 tuiles déroulées en carrés), jeu-decor.webp (les objets, voir ATLAS_DECOR)
+// Les images viennent de 3 planches : jeu-sols.webp (les tuiles de sol de chaque zone, voir SOLS), jeu-decor.webp (les objets, voir ATLAS_DECOR)
 // et jeu-nature.webp (les arbres et plantes de chaque zone : <zone>_a1…a8 grands, <zone>_p1…p4 petits).
 // La caméra est inclinée comme sur les dessins (le losange d'une tuile est 0,675 fois moins haut que large).
 const HAUT_CAM = { flat: 12.9, volumes: 10.5 };
-const SOL_FLAT = ["vertdeau", "mousse", "sarcelle", "bayou", "feuilles", "sable", "neige", "chemin", "paves", "eau", "marais", "planches"];
-const SOL_ZONE = { lande: "vertdeau", village: "mousse", foret: "mousse", bayou: "bayou", cabane: "sarcelle", desert: "sable" };
+// jeu-sols.webp : une ligne par zone (tirée de son terrain peint), 7 tuiles par ligne
+const SOLS_ZONE = ["village", "foret", "cabane", "desert", "lande", "bayou"], SOLS = ["sol", "sol2", "chemin", "paves", "eau", "planches", "neige"];
 // chaque objet : sa hauteur (en cases) et, s'il le faut, de combien son pied descend sous le centre de la case
 const TAILLE_DECOR = { sapin: 2.4, sapinneige: 2.4, bouleau: 2.2, automne: 2.2, mort: 1.9, cypres: 2.5, fleuri: .8, rocher: .85, rune: 1.1, bruyere: .5, champignons: .5,
   montagne: 2.3, tronc: .6, roseaux: .65, nenuphar: .35, cactus: 1.3, petitcactus: .7, falaise: 1.25, tombe: .75, croix: .85, grille: .9, citrouille: .55, lampadaire: 1.6,
@@ -667,7 +667,7 @@ const SIN_CAM = .675;   // un écart au sol (dx + dz) / √2 se voit SIN_CAM foi
 function chargerFlat(R) {   // les 3 planches du décor ; si l'une manque, on garde l'île en volumes
   R.flat = "attente"; R.tFlat = performance.now(); let n = 0;
   const L = new THREE.TextureLoader(), ok = () => { if (++n === 3 && R.flat === "attente") R.flat = "ok"; }, non = () => { R.flat = "non"; };
-  R.texSol = L.load(IMG_JEU + "jeu-sol.webp", t => { t.colorSpace = THREE.SRGBColorSpace; t.flipY = false; t.anisotropy = 4; t.needsUpdate = true; ok(); }, undefined, non);
+  R.texSol = L.load(IMG_JEU + "jeu-sols.webp", t => { t.colorSpace = THREE.SRGBColorSpace; t.flipY = false; t.anisotropy = 4; t.needsUpdate = true; ok(); }, undefined, non);
   R.texDecor = L.load(IMG_JEU + "jeu-decor.webp", t => { t.colorSpace = THREE.SRGBColorSpace; ok(); }, undefined, non);
   R.texNature = L.load(IMG_JEU + "jeu-nature.webp", t => { t.colorSpace = THREE.SRGBColorSpace; ok(); }, undefined, non);   // les arbres de chaque zone
   R.matsFlat = [];   // tous les matériaux dessinés : on les teinte la nuit
@@ -692,20 +692,17 @@ function dioramaFlat() {
   const neigeux = (x, y) => G[y][x] === "n" || autour(x, y, "n") >= 3;
   // le sol : un carré par case, rangés du fond vers l'avant (on les dessine dans cet ordre, sans profondeur)
   const pos = [], uv = [], e = .004;
-  const sol = (x, y) => { const ch = G[y][x], z = zoneJ(x, y);
-    if (ch === "~") return z === "bayou" || z === "cabane" ? "marais" : "eau";
-    if ("bB".includes(ch)) return "planches";
-    if ("=pPGk".includes(ch)) return z === "village" ? "paves" : "chemin";
-    if (ch === ":" || (z === "desert" && ch !== "*")) return "sable";
-    if (neigeux(x, y)) return "neige";
-    if (ch === "*") return "vertdeau";
-    if ("EGRHD".includes(ch) && z === "village") return "paves";
-    if (z === "bayou") return rnd() < .35 ? "bayou" : "mousse";
-    return SOL_ZONE[z]; };
+  const sol = (x, y) => { const ch = G[y][x], z = zoneJ(x, y), Z = SOLS_ZONE.indexOf(z), c = k => [Z, SOLS.indexOf(k)];   // [ligne de la zone, tuile]
+    if (ch === "~") return c("eau");
+    if ("bB".includes(ch)) return c("planches");
+    if ("=pPGk".includes(ch)) return z === "village" ? c("paves") : c("chemin");
+    if ("EGRHD".includes(ch) && z === "village") return c("paves");
+    if (neigeux(x, y)) return [SOLS_ZONE.indexOf("lande"), SOLS.indexOf("neige")];
+    return c(ch === "*" || rnd() < .3 ? "sol2" : "sol"); };
   const cases = []; for (let y = 0; y < HAUT; y++) for (let x = 0; x < LARG; x++) if (G[y][x] !== " ") cases.push([x, y]);
   cases.sort((a, b) => a[0] + a[1] - b[0] - b[1]);
   cases.forEach(([x, y]) => {
-    const i = SOL_FLAT.indexOf(sol(x, y)), u0 = (i % 4) / 4 + e, u1 = (i % 4 + 1) / 4 - e, v0 = Math.floor(i / 4) / 3 + e, v1 = (Math.floor(i / 4) + 1) / 3 - e;
+    const [l, k] = sol(x, y), nc = SOLS.length, nl = SOLS_ZONE.length, u0 = k / nc + e, u1 = (k + 1) / nc - e, v0 = l / nl + e, v1 = (l + 1) / nl - e;
     const c = [[u0, v0], [u1, v0], [u1, v1], [u0, v1]], r = Math.floor(rnd() * 4), q = k => c[(k + r) % 4];   // tournée au hasard : moins de répétitions
     const P = [[x - .5, 0, y - .5], [x + .5, 0, y - .5], [x + .5, 0, y + .5], [x - .5, 0, y + .5]];
     [0, 2, 1, 0, 3, 2].forEach(k => { pos.push(...P[k]); uv.push(...q(k)); });
