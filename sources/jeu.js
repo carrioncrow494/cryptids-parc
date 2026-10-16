@@ -153,6 +153,8 @@ function ouvrirJeu() {
   if (!p.jeu) p.jeu = { v: 3, m: 0, x: DEPART[0], y: DEPART[1], dir: "haut", pos: {} };
   placerJeu(p);
   JEU = { x: p.jeu.x, y: p.jeu.y, dir: p.jeu.dir || "bas", pas: null, tenu: null, revele: null, raf: 0, t: 0, dernierBip: 0, zone: null };
+  if (p.jeu.nPris !== undefined && p.pris.length > p.jeu.nPris) JEU.action = { ligne: 3, t0: performance.now() + 300, duree: 1900, vitesse: 120 };   // un cryptide de plus : on saute de joie
+  p.jeu.nPris = p.pris.length;
   if (enBoss && !p.jeu.boss) { cacherBoss(p); bossPhase = 0; }
   ecrire(CLES.partie, p);
   $("jeu").hidden = false; allumerJ(0);
@@ -187,7 +189,7 @@ function essayerPas(dir) {
   if (!JEU || JEU.pas || JEU.revele) return;
   JEU.dir = dir; const [dx, dy] = DIRS[dir], x = JEU.x + dx, y = JEU.y + dy;
   if (!libreJ(x, y)) { if (performance.now() - (JEU.tCogne || 0) > 350) { JEU.tCogne = performance.now(); sfx("clic"); } return; }
-  JEU.pas = { de: [JEU.x, JEU.y], t0: performance.now() }; JEU.x = x; JEU.y = y;
+  JEU.pas = { de: [JEU.x, JEU.y], t0: performance.now() }; JEU.x = x; JEU.y = y; JEU.action = null;
 }
 function finPas() {
   JEU.pas = null; sauverJ();
@@ -199,12 +201,12 @@ function boutonA() {
   const [dx, dy] = DIRS[JEU.dir], fx = JEU.x + dx, fy = JEU.y + dy;
   // comme dans Zelda : on fouille ce qu'on a devant soi. Un buisson qui bouge cache un cryptide.
   const q = cachetteEn(fx, fy);
-  if (q) { JEU.revele = { q, t0: performance.now() }; sfx("revele"); if (navigator.vibrate) navigator.vibrate([60, 40, 60]);
+  if (q) { JEU.revele = { q, t0: performance.now() + 400 }; fouilleJ({ ligne: 2, boucle: true, vitesse: 160 }); sfx("revele"); if (navigator.vibrate) navigator.vibrate([60, 40, 60]);
     return dialogueJ(q.k === "catsith" ? "C'est Sporran ! Appuie encore sur A pour l'attraper !" : "Deux yeux brillent dans la cachette… C'est un cryptide ! Appuie encore sur A pour ouvrir l'œil magique.", 60000); }
   const n = pnjEn(fx, fy);
   if (n) { sfx("page"); JEU.parle = n; return dialogueJ(n.nom + " : " + texteHabitant(n), 8000); }
   if (tuileJ(fx, fy) === "S") { sfx("page"); return dialogueJ(texteSigne(JEU.x + dx, JEU.y + dy), 6000); }
-  sfx("clic"); dialogueJ(["Rien par ici…", "Cherche ce qui bouge ! Mets-toi devant et appuie sur A.", "Le détecteur t'aide : plus il s'allume, plus un cryptide est proche !"][Math.floor(Math.random() * 3)], 2400);
+  sfx("clic"); fouilleJ(); dialogueJ(["Rien par ici…", "Cherche ce qui bouge ! Mets-toi devant et appuie sur A.", "Le détecteur t'aide : plus il s'allume, plus un cryptide est proche !"][Math.floor(Math.random() * 3)], 2400);
 }
 function texteHabitant(n) {   // ce que dit l'habitant d'une région : bonjour, puis les indices
   if (enBoss) return "Sporran ? Il est parti vers sa cabane, dans le bois Biscornu, au sud du village !";
@@ -228,17 +230,17 @@ function boutonB() {
 function trouveJ() {   // appelé depuis un « clic » ou une touche : iOS n'autorise la caméra et les capteurs qu'à ce moment-là
   const r = JEU && JEU.revele; if (!r) return;
   const k = r.q.k; JEU.revele = null; $("jeuDialogue").hidden = true;
-  if (k === "catsith" && bossPhase < 2) return fuiteBoss();
+  if (k === "catsith" && bossPhase < 2) { partirCrea(r.q); return fuiteBoss(); }
   fermerJeu(); sfx("oeil");
   bandeau(k === "catsith" ? "Tu as débusqué Sporran ! Ouvre l'œil magique…" : "Débusqué ! Cherche-le autour de toi avec l'œil magique…", 2400);
   ouvrirOeil(() => k === "catsith" ? demarrerBossAR() : demarrerTraque(k, { gpsFait: true, angleGPS: null }));
 }
 function fuirJ() {
-  JEU.revele = null; sfx("clic");
+  partirCrea(JEU.revele.q); JEU.revele = null; JEU.action = null; sfx("clic");
   dialogueJ("Tu laisses le cryptide tranquille… Il reste caché ici. Reviens quand tu veux !", 3000);
 }
 function fuiteBoss() {   // comme sur la carte GPS : Sporran file ailleurs deux fois avant de se laisser attraper
-  bossPhase++; sfx("fuite");
+  bossPhase++; sfx("fuite"); JEU.action = null;
   const p = partie(); cacherBoss(p); ecrire(CLES.partie, p);
   dialogueJ(bossPhase === 1 ? "Hé hé ! Trop lent ! Attrape-moi si tu peux !" : "Encore raté ! Dernière chance, petit humain !", 3400);
 }
@@ -308,18 +310,28 @@ function creerHeros() {   // un enfant en sweat à capuche violet, masque de cha
   const lueur = new THREE.PointLight(0xffd27a, 1.2, 3, 1.6); lueur.position.set(.27, .4, .1); g.add(lueur);
   const dessin = new THREE.Sprite(new THREE.SpriteMaterial({ transparent: true, alphaTest: .05 }));
   dessin.center.set(.5, .05); dessin.scale.set(1.44, 1.44, 1); dessin.position.y = .02; dessin.visible = false; g.add(dessin);
+  const ombre = new THREE.Mesh(new THREE.CircleGeometry(.3, 20), new THREE.MeshBasicMaterial({ color: 0x1a1030, transparent: true, opacity: .28, depthWrite: false, depthTest: false }));
+  ombre.rotation.x = -Math.PI / 2; ombre.scale.set(1, .75, 1); ombre.position.y = .01; ombre.renderOrder = -1; ombre.visible = false; g.add(ombre);   // une ombre douce sous les pieds
+  g.userData = { corps, lueur, dessin, ombre };
   new THREE.TextureLoader().load(IMG_JEU + "jeu-heros.webp", tex => {
-    tex.colorSpace = THREE.SRGBColorSpace; tex.repeat.set(1 / 6, 1 / 4); tex.magFilter = THREE.LinearFilter;
-    dessin.material.map = tex; dessin.material.needsUpdate = true; dessin.visible = true; corps.visible = false;
+    tex.colorSpace = THREE.SRGBColorSpace; tex.repeat.set(1 / 6, 1 / 4); tex.magFilter = THREE.LinearFilter; g.userData.texMarche = tex;
+    dessin.material.map = tex; dessin.material.needsUpdate = true; dessin.visible = true; ombre.visible = true; corps.visible = false;
   });
-  g.userData = { corps, lueur, dessin };
+  // les actions (4 images de 320×360 par ligne) : fouiller vers la gauche, fouiller vers la droite, surprise, joie
+  new THREE.TextureLoader().load(IMG_JEU + "jeu-heros-actions.webp", tex => { tex.colorSpace = THREE.SRGBColorSpace; tex.repeat.set(1 / 4, 1 / 4); g.userData.texActions = tex; });
   return g;
 }
-function imageHeros(h, t, marche) {   // choisit l'image de la planche : direction, et pas de marche ou respiration
-  const d = h.userData.dessin, tex = d.material.map; if (!tex) return;
+function imageHeros(h, t, marche) {   // choisit l'image de la planche : direction, et pas de marche ou respiration (ou une action : fouiller, surprise, joie)
+  const u = h.userData, d = u.dessin; if (!u.texMarche) return;
+  let a = JEU.action;
+  if (a && !a.boucle && t - a.t0 > a.duree) a = JEU.action = a.puis ? Object.assign(a.puis, { t0: t }) : null;
+  const tex = a && u.texActions ? u.texActions : u.texMarche;
+  if (d.material.map !== tex) { d.material.map = tex; d.material.needsUpdate = true; tex === u.texActions ? (d.scale.set(1.44, 1.62, 1), d.center.set(.5, 16 / 360)) : (d.scale.set(1.44, 1.44, 1), d.center.set(.5, .05)); }
+  if (tex === u.texActions) return tex.offset.set((Math.floor(Math.max(0, t - a.t0) / a.vitesse) % 4) / 4, 1 - (a.ligne + 1) / 4);
   const col = marche ? Math.floor(t / 140) % 4 : 4 + Math.floor(t / 650) % 2;
   tex.offset.set(col / 6, 1 - (LIGNE_HEROS[JEU.dir] + 1) / 4);
 }
+const fouilleJ = puis => { JEU.action = { ligne: "bas gauche".includes(JEU.dir) ? 0 : 1, t0: performance.now(), duree: 400, vitesse: 100, puis }; };
 function prisme(w, d, h) {   // un toit à deux pentes, faîtage le long de x
   const x = w / 2, z = d / 2, p = [-x, 0, -z, x, 0, -z, x, h, 0, -x, h, 0, -x, 0, z, x, 0, z];
   const geo = new THREE.BufferGeometry(); geo.setAttribute("position", new THREE.Float32BufferAttribute(p, 3));
@@ -337,7 +349,7 @@ function blocsJ(lettres) {   // les groupes de cases voisines faits de ces lettr
   }
   return blocs;
 }
-function dioramaJ() {   // construit l'île en 3D, une seule fois
+function dioramaVolumes() {   // l'ancienne île en volumes : gardée si les planches dessinées ne se chargent pas
   const R = moteurJeu(); if (R.ile) return R.ile;
   const G = CARTE, H = HAUT, W = LARG, groupe = new THREE.Group(), anim = [], lampes = [], rnd = hasard(311);
   const ajoute = (o, x, y, z, ombre) => { o.position.set(x, y, z); if (ombre !== false) o.castShadow = true; groupe.add(o); return o; };
@@ -545,6 +557,135 @@ function fusionnerJ(groupe) {   // les objets immobiles de même couleur fondus 
   vieux.forEach(o => o.parent.remove(o));
   lots.forEach(({ mat, g, ombre }) => { const m = new THREE.Mesh(mergeGeometries(g), mat); m.castShadow = ombre; m.receiveShadow = true; groupe.add(m); });
 }
+// ---------- le décor dessiné (flat design) : le sol en tuiles, et chaque objet est une image posée debout, face à la caméra ----------
+// Les images viennent de 2 planches : jeu-sol.webp (12 tuiles déroulées en carrés) et jeu-decor.webp (les objets, voir ATLAS_DECOR).
+// La caméra est inclinée comme sur les dessins (le losange d'une tuile est 0,675 fois moins haut que large).
+const HAUT_CAM = { flat: 12.9, volumes: 10.5 };
+const SOL_FLAT = ["vertdeau", "mousse", "sarcelle", "bayou", "feuilles", "sable", "neige", "chemin", "paves", "eau", "marais", "planches"];
+const SOL_ZONE = { lande: "vertdeau", village: "mousse", foret: "sarcelle", bayou: "bayou", cabane: "feuilles", desert: "sable" };
+// chaque objet : sa hauteur (en cases) et, s'il le faut, de combien son pied descend sous le centre de la case
+const TAILLE_DECOR = { sapin: 1.9, sapinneige: 1.9, bouleau: 1.8, automne: 1.7, mort: 1.5, cypres: 2, fleuri: .8, rocher: .85, rune: 1.1, bruyere: .5, champignons: .5,
+  montagne: 2.3, tronc: .6, roseaux: .65, nenuphar: .35, cactus: 1.3, petitcactus: .7, falaise: 1.25, tombe: .75, croix: .85, grille: .9, citrouille: .55, lampadaire: 1.6,
+  souche: .55, arche: 1.7, panneau: 1, barriere: .75, banc: .6, puits: 1.2, tonneau: .6, caisse: .6, boite: .9, epouvantail: 1.3, lanterne: .7, panier: .45, fontaine: 1 };
+const PROPS_VILLAGE = ["puits", "fontaine", "tonneau", "caisse", "banc", "boite", "epouvantail", "lanterne", "panier"];
+const CACHETTE_FLAT = { foret: "cach_foret", lande: "cach_lande", village: "cach_village", desert: "cach_desert", bayou: "cach_bayou", cabane: "cach_cabane" };
+const SIN_CAM = .675;   // un écart au sol (dx + dz) / √2 se voit SIN_CAM fois plus court à l'écran, en hauteur
+function chargerFlat(R) {   // les 2 planches du décor ; si l'une manque, on garde l'île en volumes
+  R.flat = "attente"; R.tFlat = performance.now(); let n = 0;
+  const L = new THREE.TextureLoader(), ok = () => { if (++n === 2 && R.flat === "attente") R.flat = "ok"; }, non = () => { R.flat = "non"; };
+  R.texSol = L.load(IMG_JEU + "jeu-sol.webp", t => { t.colorSpace = THREE.SRGBColorSpace; t.flipY = false; t.anisotropy = 4; t.needsUpdate = true; ok(); }, undefined, non);
+  R.texDecor = L.load(IMG_JEU + "jeu-decor.webp", t => { t.colorSpace = THREE.SRGBColorSpace; ok(); }, undefined, non);
+  R.matsFlat = [];   // tous les matériaux dessinés : on les teinte la nuit
+}
+function matDecor(R, nom, miroir, fondu) {   // un matériau par objet (et par sens, et estompé quand il cache le héros)
+  const cle = nom + (miroir ? "/m" : "") + (fondu ? "/f" : ""); R.mats = R.mats || {};
+  if (R.mats[cle]) return R.mats[cle];
+  const [x, y, w, h] = ATLAS_DECOR[nom], [W, H] = ATLAS_DECOR.taille, t = R.texDecor.clone();
+  t.repeat.set((miroir ? -w : w) / W, h / H); t.offset.set((miroir ? x + w : x) / W, 1 - (y + h) / H); t.needsUpdate = true;
+  const m = new THREE.SpriteMaterial({ map: t, transparent: true, alphaTest: .04, depthWrite: false, opacity: fondu ? .4 : 1 });
+  R.matsFlat.push(m); return R.mats[cle] = m;
+}
+function poserDecor(R, groupe, nom, x, z, o = {}) {   // une image debout ; o.haut = hauteur (cases), o.large = largeur, o.pied = descente du pied
+  const [, , w, h] = ATLAS_DECOR[nom], s = new THREE.Sprite(matDecor(R, nom, o.miroir));
+  const H = o.large ? o.large * h / w : (o.haut || TAILLE_DECOR[nom] || 1) * (o.varie || 1), Wd = H * w / h, pied = o.pied === undefined ? .18 : o.pied;
+  s.scale.set(Wd, H, 1); s.center.set(.5, -pied * SIN_CAM / H); s.position.set(x, 0, z);
+  s.userData = { nom, miroir: !!o.miroir, x, z, haut: H }; groupe.add(s); return s;
+}
+function dioramaFlat() {
+  const R = moteurJeu(); if (R.ile) return R.ile;
+  const G = CARTE, groupe = new THREE.Group(), anim = [], rnd = hasard(311), devant = [];
+  const neigeux = (x, y) => G[y][x] === "n" || autour(x, y, "n") >= 3;
+  // le sol : un carré par case, rangés du fond vers l'avant (on les dessine dans cet ordre, sans profondeur)
+  const pos = [], uv = [], e = .004;
+  const sol = (x, y) => { const ch = G[y][x], z = zoneJ(x, y);
+    if (ch === "~") return z === "bayou" || z === "foret" ? "marais" : "eau";
+    if ("bB".includes(ch)) return "planches";
+    if ("=pPGk".includes(ch)) return z === "village" ? "paves" : "chemin";
+    if (ch === ":" || (z === "desert" && ch !== "*")) return "sable";
+    if (neigeux(x, y)) return "neige";
+    if (ch === "*") return "vertdeau";
+    if ("EGRHD".includes(ch) && z === "village") return "paves";
+    if (z === "bayou") return rnd() < .35 ? "bayou" : "mousse";
+    return SOL_ZONE[z]; };
+  const cases = []; for (let y = 0; y < HAUT; y++) for (let x = 0; x < LARG; x++) cases.push([x, y]);
+  cases.sort((a, b) => a[0] + a[1] - b[0] - b[1]);
+  cases.forEach(([x, y]) => {
+    const i = SOL_FLAT.indexOf(sol(x, y)), u0 = (i % 4) / 4 + e, u1 = (i % 4 + 1) / 4 - e, v0 = Math.floor(i / 4) / 3 + e, v1 = (Math.floor(i / 4) + 1) / 3 - e;
+    const c = [[u0, v0], [u1, v0], [u1, v1], [u0, v1]], r = Math.floor(rnd() * 4), q = k => c[(k + r) % 4];   // tournée au hasard : moins de répétitions
+    const P = [[x - .5, 0, y - .5], [x + .5, 0, y - .5], [x + .5, 0, y + .5], [x - .5, 0, y + .5]];
+    [0, 2, 1, 0, 3, 2].forEach(k => { pos.push(...P[k]); uv.push(...q(k)); });
+  });
+  const gs = new THREE.BufferGeometry(); gs.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3)); gs.setAttribute("uv", new THREE.Float32BufferAttribute(uv, 2));
+  const ms = new THREE.MeshBasicMaterial({ map: R.texSol, depthWrite: false, depthTest: false }); R.matsFlat.push(ms);
+  const msol = new THREE.Mesh(gs, ms); msol.renderOrder = -10; msol.frustumCulled = false; groupe.add(msol);
+  // le bord de l'île : une tranche de terre sous les côtés qu'on voit
+  const bp = [], W = LARG - .5, Hh = HAUT - .5, P = -1.6;
+  bp.push(W, 0, -.5, W, P, -.5, W, P, Hh, W, 0, -.5, W, P, Hh, W, 0, Hh, -.5, 0, Hh, W, P, Hh, -.5, P, Hh, -.5, 0, Hh, W, 0, Hh, W, P, Hh);
+  const gb = new THREE.BufferGeometry(); gb.setAttribute("position", new THREE.Float32BufferAttribute(bp, 3));
+  const mb = new THREE.MeshBasicMaterial({ color: 0x5a2f35, side: THREE.DoubleSide, depthWrite: false, depthTest: false }); const bord = new THREE.Mesh(gb, mb); bord.renderOrder = -11; groupe.add(bord);
+  // les objets
+  const pose = (nom, x, z, o) => { const s = poserDecor(R, groupe, nom, x, z, o); if (s.userData.haut > 1.1) devant.push(s); return s; };
+  const lampes = [], lueur = (x, z, h) => lampes.push({ x, z, h });
+  for (let y = 0; y < HAUT; y++) for (let x = 0; x < LARG; x++) {
+    const ch = G[y][x], z = zoneJ(x, y), r = rnd(), m = rnd() < .5;
+    if (ch === "T") {
+      if (z === "village" && r < .22 && autour(x, y, "=.,*") >= 3) pose(PROPS_VILLAGE[Math.floor(rnd() * PROPS_VILLAGE.length)], x, y, { miroir: m });
+      else pose(z === "foret" ? (r < .8 ? "sapin" : r < .93 ? "mort" : "souche") : z === "bayou" ? (r < .7 ? "cypres" : r < .85 ? "mort" : "souche")
+        : z === "cabane" ? (r < .55 ? "automne" : r < .85 ? "mort" : "sapin") : z === "lande" ? (neigeux(x, y) || autour(x, y, "nA") ? "sapinneige" : r < .5 ? "bouleau" : "sapin")
+        : z === "desert" ? "cactus" : (r < .5 ? "automne" : r < .8 ? "bouleau" : "sapin"), x + (rnd() - .5) * .15, y + (rnd() - .5) * .15, { miroir: m, varie: .85 + rnd() * .3 });
+    }
+    else if (ch === "A") pose("montagne", x, y, { miroir: m, haut: 2 + rnd() * .6 });
+    else if (ch === "M") pose("falaise", x, y, { miroir: m, haut: 1.1 + rnd() * .3 });
+    else if (ch === "#") pose(z === "desert" ? "falaise" : "rocher", x, y, { miroir: m, haut: z === "desert" ? .8 : .85 });
+    else if (ch === "o") pose("rune", x, y, { miroir: m });
+    else if (ch === "c") pose(r < .6 ? "cactus" : "petitcactus", x, y, { miroir: m });
+    else if (ch === "t") pose(r < .6 ? "tombe" : "croix", x, y, { miroir: m });
+    else if (ch === "u") pose("citrouille", x, y, { miroir: m });
+    else if (ch === "S") pose("panneau", x, y, { miroir: m });
+    else if (ch === "L") { pose("lampadaire", x, y); lueur(x, y, 1.35); }
+    else if (ch === "f") pose(z === "foret" ? "grille" : "barriere", x, y, { miroir: "fT".includes(tuileJ(x, y - 1)) || "fT".includes(tuileJ(x, y + 1)) });
+    else if (ch === "p") { pose("arche", x, y, { miroir: libreSol(x - 1, y) && libreSol(x + 1, y) && !(libreSol(x, y - 1) && libreSol(x, y + 1)) ? false : true, pied: .05 }).userData.passage = true; }
+    else if (ch === "," && (z === "lande" || z === "cabane")) pose("bruyere", x + (rnd() - .5) * .3, y + (rnd() - .5) * .3, { miroir: m, haut: .4 + rnd() * .2 });
+    else if (ch === "," && z === "bayou") pose("roseaux", x, y, { miroir: m });
+    else if (ch === "," && z === "foret" && r < .5) pose("champignons", x, y, { miroir: m, haut: .4 });
+    else if (ch === "~" && z === "bayou" && r < .12) pose("nenuphar", x, y, { miroir: m, pied: 0 });
+  }
+  // les bâtiments : une image pour tout le bloc de cases (maison, cathédrale, cabane, ranch, pont couvert)
+  const bloc = (lettres, choix) => blocsJ(lettres).forEach((b, i) => {
+    const w = b.x1 - b.x0 + 1, d = b.y1 - b.y0 + 1, nom = choix(b, i), large = (w + d) / Math.SQRT2 * (nom === "pont" ? 1.15 : 1.08);
+    const s = poserDecor(R, groupe, nom, (b.x0 + b.x1) / 2, (b.y0 + b.y1) / 2, { large, pied: (w + d) / 2 / Math.SQRT2 * 1.05, miroir: nom === "pont" && d > w });
+    s.userData.bloc = b; devant.push(s);
+  });
+  bloc("EG", () => "cathedrale"); bloc("Kk", () => "cabane"); bloc("B", () => "pont");
+  bloc("RHD", (b, i) => zoneJ(b.x0, b.y0) === "desert" ? "saloon" : "maison" + (1 + i % 4));
+  // la nuit, les lampadaires brillent
+  const halo = halosJ(); lampes.forEach(l => { const s = new THREE.Sprite(halo); s.scale.set(1.6, 1.6, 1); s.position.set(l.x, l.h, l.z); s.renderOrder = 2; groupe.add(s); });
+  R.scene.add(groupe);
+  return R.ile = { groupe, anim, lampes: [], devant, flat: true };
+}
+function halosJ() {   // un rond de lumière jaune, doux, qui s'ajoute à l'image (la nuit seulement)
+  const R = moteurJeu(); if (R.halo) return R.halo;
+  const c = document.createElement("canvas"); c.width = c.height = 64; const g = c.getContext("2d"), d = g.createRadialGradient(32, 32, 0, 32, 32, 32);
+  d.addColorStop(0, "rgba(255,226,140,.9)"); d.addColorStop(.4, "rgba(255,200,90,.35)"); d.addColorStop(1, "rgba(255,190,80,0)"); g.fillStyle = d; g.fillRect(0, 0, 64, 64);
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
+  return R.halo = new THREE.SpriteMaterial({ map: t, blending: THREE.AdditiveBlending, depthWrite: false, depthTest: false, transparent: true, opacity: 0 });
+}
+function dioramaJ() {   // l'île : dessinée si les planches sont là, sinon en volumes
+  const R = moteurJeu(); if (R.ile) return R.ile;
+  if (R.flat === undefined) chargerFlat(R);
+  if (R.flat === "attente" && performance.now() - R.tFlat > 8000) R.flat = "non";
+  if (R.flat === "attente") return null;
+  if (R.flat === "ok") { R.rendu.shadowMap.enabled = false; R.heros.userData.lueur.visible = false; return dioramaFlat(); }
+  return dioramaVolumes();
+}
+function estomperJ(R, d, fx, fy) {   // un arbre ou une maison qui cache le héros devient transparent, pour qu'on le voie toujours
+  const hx = (fx - fy) / Math.SQRT2, hy = (fx + fy) / Math.SQRT2 * SIN_CAM, hp = fx + fy;   // le héros à l'écran (y vers le bas)
+  d.devant.forEach(s => {
+    const u = s.userData, sx = (u.x - u.z) / Math.SQRT2, bas = (u.x + u.z) / Math.SQRT2 * SIN_CAM - s.center.y * s.scale.y, haut = bas - s.scale.y;
+    const cache = u.x + u.z > hp + .01 && Math.abs(sx - hx) < s.scale.x * .42 + .25 && haut < hy - .1 && bas > hy - 1.1;
+    const m = matDecor(R, u.nom, u.miroir, cache); if (s.material !== m) s.material = m;
+  });
+}
 // ---------- les habitants et les cachettes, posés sur l'île (ils bougent, ils ne sont pas fondus avec le décor) ----------
 function habitantsJ(R) {
   if (R.pnj) return R.pnj;
@@ -580,6 +721,66 @@ function cachettesJ3D(R, t) {   // un buisson par créature encore cachée : il 
     c.etincelles.forEach((e, i) => { const a = t / 600 + i * 2.1 + c.phase; e.position.set(Math.cos(a) * .45, .5 + Math.sin(t / 300 + i) * .15, Math.sin(a) * .45); e.rotation.y = t / 300; });
   });
 }
+function cachettesFlat(R, t) {   // un buisson dessiné par créature encore cachée : il frémit quand on approche, deux yeux brillent dans le trou
+  const l = ciblesJ(), cle = l.map(q => q.k + q.x + "," + q.y).join("|");
+  if (R.cleCach !== cle) {
+    (R.cach || []).forEach(c => R.scene.remove(c.g)); R.cleCach = cle;
+    R.cach = l.map(q => {
+      const z = zoneJ(q.x, q.y), nom = tuileJ(q.x, q.y) === "n" || autour(q.x, q.y, "n") >= 3 ? "cach_neige" : CACHETTE_FLAT[z], g = new THREE.Group();
+      const b = poserDecor(R, g, nom, 0, 0, { haut: 1.1, pied: .16 }); b.material = b.material.clone();   // pas teintée la nuit : on doit bien la voir
+      const yeux = new THREE.Sprite(yeuxJ()); yeux.scale.set(.3, .15, 1); yeux.position.set(.06, .3, .06); g.add(yeux);
+      const etincelles = [0, 1, 2].map(() => { const e = new THREE.Sprite(etincelleJ()); e.scale.set(.2, .2, 1); g.add(e); return e; });
+      g.position.set(q.x, 0, q.y); R.scene.add(g); texCrea(q.k);
+      return { q, g, b, yeux, etincelles, phase: Math.random() * 6 };
+    });
+  }
+  R.cach.forEach(c => {
+    const d = Math.abs(c.q.x - JEU.x) + Math.abs(c.q.y - JEU.y), fort = !!(JEU.revele && JEU.revele.q.k === c.q.k);
+    c.b.material.rotation = Math.sin(t / 70 + c.phase) * (fort ? .07 : d <= 3 ? .045 : .012);
+    c.yeux.visible = !fort && Math.sin(t / 900 + c.phase) > .75;
+    c.etincelles.forEach((e, i) => { const a = t / 600 + i * 2.1 + c.phase; e.position.set(Math.cos(a) * .45, .55 + Math.sin(t / 300 + i) * .15, Math.sin(a) * .45); });
+  });
+}
+function yeuxJ() {   // deux yeux jaunes qui brillent dans le noir
+  const R = moteurJeu(); if (R.yeux) return R.yeux;
+  const c = document.createElement("canvas"); c.width = 64; c.height = 32; const g = c.getContext("2d");
+  [18, 46].forEach(x => { g.fillStyle = "rgba(255,225,74,.35)"; g.beginPath(); g.arc(x, 16, 14, 0, 7); g.fill(); g.fillStyle = "#ffe14a"; g.beginPath(); g.ellipse(x, 16, 6, 8, 0, 0, 7); g.fill(); g.fillStyle = "#2a1d24"; g.fillRect(x - 1.5, 10, 3, 12); });
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
+  return R.yeux = new THREE.SpriteMaterial({ map: t, transparent: true, depthWrite: false });
+}
+function etincelleJ() {   // une petite étoile qui brille
+  const R = moteurJeu(); if (R.etoile) return R.etoile;
+  const c = document.createElement("canvas"); c.width = c.height = 32; const g = c.getContext("2d");
+  g.fillStyle = "#fff6b0"; g.beginPath(); [0, 1, 2, 3, 4, 5, 6, 7].forEach(i => { const a = i * Math.PI / 4, r = i % 2 ? 4 : 15; g.lineTo(16 + Math.cos(a) * r, 16 + Math.sin(a) * r); }); g.fill();
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
+  return R.etoile = new THREE.SpriteMaterial({ map: t, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending });
+}
+// Les créatures animées : jeu-crea-<clé>.webp, 4 lignes de 4 images (apparition, attente, action, disparition ;
+// pour Sporran : attente, attente, disparition, réapparition). Elle sort de sa cachette quand on la trouve.
+const TEX_CREA = {};
+function texCrea(k) {
+  if (TEX_CREA[k] !== undefined) return TEX_CREA[k];
+  TEX_CREA[k] = null;
+  new THREE.TextureLoader().load(IMG_JEU + "jeu-crea-" + (k === "catsith" ? k : TRAQUES[k].cle) + ".webp", t => { t.colorSpace = THREE.SRGBColorSpace; t.repeat.set(1 / 4, 1 / 4); TEX_CREA[k] = t; });
+  return null;
+}
+const LIGNES_CREA = k => k === "catsith" ? { arrive: 3, attente: 0, action: 1, part: 2 } : { arrive: 0, attente: 1, action: 2, part: 3 };
+function partirCrea(q) { const R = moteurJeu(); if (R.creaEtat && R.creaEtat.k === q.k) Object.assign(R.creaEtat, { part: performance.now() }); }
+function creatureJ(R, t) {
+  const rv = JEU.revele;
+  if (rv && (!R.creaEtat || R.creaEtat.k !== rv.q.k || R.creaEtat.part)) R.creaEtat = { k: rv.q.k, x: rv.q.x, z: rv.q.y, t0: rv.t0 };
+  const e = R.creaEtat, tex = e && texCrea(e.k);
+  if (!R.crea) { R.crea = new THREE.Sprite(new THREE.SpriteMaterial({ transparent: true, depthWrite: false, alphaTest: .03 })); R.crea.scale.set(1.7, 1.7, 1); R.crea.center.set(.5, .1); R.crea.visible = false; R.scene.add(R.crea); }
+  const c = R.crea;
+  if (!e || !tex || (e.part && t - e.part > 520) || (!e.part && !rv)) { c.visible = false; if (e && (e.part && t - e.part > 520 || !rv && !e.part)) R.creaEtat = null; return; }
+  if (c.material.map !== tex) { c.material.map = tex; c.material.needsUpdate = true; }
+  const L = LIGNES_CREA(e.k), dt = Math.max(0, t - e.t0); let ligne, col;
+  if (e.part) { ligne = L.part; col = Math.min(3, Math.floor((t - e.part) / 120)); }
+  else if (t < e.t0) { c.visible = false; return; }
+  else if (dt < 440) { ligne = L.arrive; col = Math.floor(dt / 110); }
+  else { const w = (dt - 440) % 2040; if (w < 1440) { ligne = L.attente; col = Math.floor(w / 180) % 4; } else { ligne = L.action; col = Math.floor((w - 1440) / 150); } }
+  tex.offset.set(col / 4, 1 - (ligne + 1) / 4); c.position.set(e.x + .14, 0, e.z + .14); c.visible = true;
+}
 const ANGLE = { bas: 0, droite: Math.PI / 2, haut: Math.PI, gauche: -Math.PI / 2 };
 const _c = new THREE.Color();
 function lumiereJ(R, zone, vite) {   // la lumière glisse doucement vers celle de la région où l'on marche
@@ -588,6 +789,9 @@ function lumiereJ(R, zone, vite) {   // la lumière glisse doucement vers celle 
   R.soleil.color.lerp(_c.setHex(A.soleil[0]), k); R.soleil.intensity += (A.soleil[1] - R.soleil.intensity) * k;
   R.fond.lerp(_c.setHex(A.fond), k); R.rendu.setClearColor(R.fond, 1);
   R.nuit += (A.nuit - R.nuit) * k; R.heros.userData.lueur.intensity = 1.2 + 2 * R.nuit;
+  if (R.matsFlat && Math.abs((R.nuitFlat ?? -1) - R.nuit) > .01) {   // le décor dessiné se teinte de bleu la nuit, les lampadaires s'allument
+    R.nuitFlat = R.nuit; R.matsFlat.forEach(m => m.color.setRGB(1 - .36 * R.nuit, 1 - .32 * R.nuit, 1 - .12 * R.nuit)); halosJ().opacity = .95 * R.nuit;
+  }
   $("jeu").classList.toggle("nuit", R.nuit > .5);
 }
 function boucleJeu(t) {
@@ -600,7 +804,8 @@ function boucleJeu(t) {
   if (JEU.pas) { const k = Math.min(1, (t - JEU.pas.t0) / DUREE_PAS); fx = JEU.pas.de[0] + (JEU.x - JEU.pas.de[0]) * k; fy = JEU.pas.de[1] + (JEU.y - JEU.pas.de[1]) * k; bond = Math.sin(k * Math.PI) * .12;
     if (k >= 1) { finPas(); fx = JEU.x; fy = JEU.y; bond = 0; } }
   if (!JEU.pas && JEU.tenu) essayerPas(JEU.tenu);
-  const d = dioramaJ(), h = R.heros, sol = hautSol(tuileJ(Math.round(fx), Math.round(fy)));
+  const d = dioramaJ(), h = R.heros, sol = d && d.flat ? 0 : hautSol(tuileJ(Math.round(fx), Math.round(fy)));
+  if (!d) { R.rendu.setClearColor(R.fond, 1); R.rendu.clear(); return; }   // les planches du décor arrivent
   lumiereJ(R, zoneJ(Math.round(fx), Math.round(fy)), premier);
   h.position.set(fx, Math.max(0, sol) + bond, fy);
   if (h.userData.dessin.visible) {   // le dessin regarde toujours la caméra : on change seulement d'image
@@ -613,7 +818,7 @@ function boucleJeu(t) {
   // caméra isométrique qui suit le héros
   const demi = 4.2, ratio = W / Math.max(1, H);
   Object.assign(R.camera, { left: -demi, right: demi, top: demi / ratio, bottom: -demi / ratio }); R.camera.updateProjectionMatrix();
-  R.camera.position.set(fx + 10, 10.5, fy + 10); R.camera.lookAt(fx, 0, fy);
+  R.camera.position.set(fx + 10, HAUT_CAM[d.flat ? "flat" : "volumes"], fy + 10); R.camera.lookAt(fx, 0, fy);
   R.soleil.position.set(fx - 5, 12, fy + 3); R.soleil.target.position.set(fx, 0, fy);
   if (premier || t - (JEU.tLampes || 0) > 300) {   // les 4 lumières vont aux lampadaires les plus proches
     JEU.tLampes = t;
@@ -622,13 +827,14 @@ function boucleJeu(t) {
   }
   R.lampes.forEach(l => l.intensity = l.userData.ok ? .4 + 2.8 * R.nuit : 0);
   d.anim.forEach(f => f(t));
-  cachettesJ3D(R, t);
+  if (d.flat) { cachettesFlat(R, t); estomperJ(R, d, fx, fy); } else cachettesJ3D(R, t);
+  creatureJ(R, t);
   habitantsJ(R).forEach(({ n, g, c }) => {   // les habitants respirent, et se tournent vers toi quand tu approches
     c.position.y = Math.abs(Math.sin(t / 500 + n.x)) * .04;
     if (Math.abs(n.x - fx) + Math.abs(n.y - fy) <= 3) { const a = Math.atan2(fx - n.x, fy - n.y), da = Math.atan2(Math.sin(a - g.rotation.y), Math.cos(a - g.rotation.y)); g.rotation.y += da * .15; }
   });
   const rv = JEU.revele; R.signe.visible = !!rv;
-  if (rv) R.signe.position.set(rv.q.x, 1.25 + Math.abs(Math.sin(t / 220)) * .2, rv.q.y);
+  if (rv) R.signe.position.set(rv.q.x, (R.crea && R.crea.visible ? 2.1 : 1.25) + Math.abs(Math.sin(t / 220)) * .2, rv.q.y);
   R.rendu.render(R.scene, R.camera);
   if (t - (JEU.tDet || 0) > 180) { JEU.tDet = t; detecteurJ(t); }
   JEU.t = t;
@@ -689,4 +895,5 @@ $("jeuQuitter").addEventListener("click", () => { fermerJeu(); enBoss = false; m
 
 window.__jeu = { etat: () => JEU && { x: JEU.x, y: JEU.y, dir: JEU.dir, zone: zoneJ(JEU.x, JEU.y), revele: JEU.revele && JEU.revele.q.k, cibles: ciblesJ() },
   aller: (x, y, dir) => { JEU.x = x; JEU.y = y; JEU.pas = null; if (dir) JEU.dir = dir; arriverJ(true); }, pnj: PNJ, libreSol, pas: d => essayerPas(d), A: () => boutonA(), B: () => boutonB(),
+  decor: () => R3 && R3.ile && R3.ile.flat ? { objets: R3.ile.groupe.children.length, dessins: R3.rendu.info.render.calls } : null,
   carte: CARTE, zone: zoneJ, accessibles: () => casesAccessibles().length, trouver: k => { JEU.revele = { q: { k }, t0: 0 }; trouveJ(); } };

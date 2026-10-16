@@ -106,10 +106,21 @@ Ensuite, on publie avec git : commit puis push sur `main`. GitHub Pages est serv
 - Tuiles OpenStreetMap : usage gratuit pour un petit volume, avec la mention « © OpenStreetMap » (affichée en bas de la carte).
 
 ### Images dessinées du jeu (15/10/2026)
-- `jeu-heros.webp` : le héros au masque de chat, 6 colonnes (4 pas de marche, 2 images d'attente) × 4 lignes (bas, droite, haut, gauche). Les lignes bas et gauche sont des miroirs : ChatGPT n'a dessiné que 2 directions.
+- `jeu-heros.webp` : 6 colonnes (4 pas de marche, 2 images d'attente) × 4 lignes (bas, droite, haut, gauche). Depuis le 16/10, c'est le héros flat (voir plus bas) ; l'ancien héros dessiné est dans l'historique git.
 - `jeu-detecteur.webp` : le détecteur éteint (à gauche) et allumé (à droite) ; les voyants sont découpés dans l'image allumée (`VOYANTS` dans jeu.js).
 - Fabriqués depuis les planches de Sam sur fond vert avec `sources/decoupe.py` et `sources/detecteur.py` (chemins des images à adapter).
 - `IMG_JEU` dans jeu.js : vide dans index.html. Pour test.html, on le remplace par l'adresse raw de la branche, pour ne pas ajouter d'images sur main.
+
+### Jeu en flat design (16/10/2026)
+- Le décor 3D en volumes est remplacé par les planches flat de Sam (`dioramaFlat` dans jeu.js). L'ancienne île (`dioramaVolumes`) revient seulement si les images ne se chargent pas.
+- `jeu-sol.webp` : les 12 tuiles de sol, déroulées en carrés (4×3). Chaque case de la grille prend une tuile selon sa lettre et sa région (`sol` dans `dioramaFlat`, `SOL_ZONE`).
+- `jeu-decor.webp` : tous les objets (nature, objets du village, marais/désert/cimetière, bâtiments, maisons, cachettes). Leur place est dans `sources/decor-atlas.js` (`ATLAS_DECOR`), leur hauteur dans `TAILLE_DECOR`. Chaque objet est une image debout face à la caméra ; les bâtiments couvrent tout leur bloc de cases. Un objet qui cache le héros devient transparent (`estomperJ`).
+- La caméra est inclinée comme les dessins : le losange d'une tuile est 0,675 fois moins haut que large (`HAUT_CAM.flat`, `SIN_CAM`).
+- Héros : `jeu-heros.webp` (marche et attente, 4 directions sans miroir) et `jeu-heros-actions.webp` (fouiller vers la gauche, vers la droite, surprise, joie ; images de 320×360). On fouille à chaque A, surprise quand un cryptide sort, joie au retour après une capture.
+- Créatures : `jeu-crea-<clé>.webp`, 4×4 images de 256 (apparition, attente, action, disparition ; Sporran : attente, attente, disparition, réapparition). Elle sort de sa cachette au premier A, et disparaît si on fuit avec B.
+- La nuit (forêt, cabane, bayou), tout le décor se teinte de bleu et les lampadaires brillent ; les cachettes restent claires.
+- Fabriqués avec `sources/decoupe-flat.py` (héros), `sources/decoupe-creatures.py`, `sources/decoupe-decor.py` (outils communs dans `sources/planches.py` : fond vert ou magenta, un dessin = une tache, même s'il déborde de sa case).
+- Les habitants sont encore en volumes, en attendant leurs planches.
 
 ### Choisir son aventure (16/10/2026)
 - Deux choix seulement. **Aventure réelle** : explique les QR codes, bouton pour télécharger `qr-codes-cryptids.pdf`, puis « Commencer l'aventure réelle » (intro, choix des cryptides, QR codes à cacher). **Aventure virtuelle** : reprend la partie en cours, sinon passe directement au choix du nombre de cryptides (sans l'intro), puis le jeu vidéo.
