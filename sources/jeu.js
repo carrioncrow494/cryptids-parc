@@ -641,7 +641,8 @@ function fusionnerJ(groupe) {   // les objets immobiles de même couleur fondus 
   lots.forEach(({ mat, g, ombre }) => { const m = new THREE.Mesh(mergeGeometries(g), mat); m.castShadow = ombre; m.receiveShadow = true; groupe.add(m); });
 }
 // ---------- le décor dessiné (flat design) : le sol en tuiles, et chaque objet est une image posée debout, face à la caméra ----------
-// Les images viennent de 2 planches : jeu-sol.webp (12 tuiles déroulées en carrés) et jeu-decor.webp (les objets, voir ATLAS_DECOR).
+// Les images viennent de 3 planches : jeu-sol.webp (12 tuiles déroulées en carrés), jeu-decor.webp (les objets, voir ATLAS_DECOR)
+// et jeu-nature.webp (les arbres et plantes de chaque zone : <zone>_a1…a8 grands, <zone>_p1…p4 petits).
 // La caméra est inclinée comme sur les dessins (le losange d'une tuile est 0,675 fois moins haut que large).
 const HAUT_CAM = { flat: 12.9, volumes: 10.5 };
 const SOL_FLAT = ["vertdeau", "mousse", "sarcelle", "bayou", "feuilles", "sable", "neige", "chemin", "paves", "eau", "marais", "planches"];
@@ -653,25 +654,35 @@ const TAILLE_DECOR = { sapin: 2.4, sapinneige: 2.4, bouleau: 2.2, automne: 2.2, 
 const JEUX_PARC = ["toboggan", "balancoire", "tourniquet", "bacasable", "cheval", "tour", "tapecul", "dome"];   // quand la planche du parc sera là
 const PROPS_VILLAGE = ["puits", "fontaine", "tonneau", "caisse", "banc", "boite", "epouvantail", "lanterne", "panier"];
 const CACHETTE_FLAT = { foret: "cach_foret", lande: "cach_lande", village: "cach_village", desert: "cach_desert", bayou: "cach_bayou", cabane: "cach_cabane" };
+// les arbres d'une zone : surtout ses grands arbres, parfois un petit (buisson, rocher, souche)
+const ARBRES = { cabane: [1, 2, 3, 4, 5, 6, 7, 8], desert: [2, 3, 6, 8], lande: [2, 4, 5, 7, 8], bayou: [1, 2, 3, 4, 5, 6, 7, 8], foret: [1, 2, 3, 4, 5, 6, 7, 8], village: [1, 2, 3, 4, 5, 6] };
+const NEIGE_LANDE = [1, 3, 6];
+function arbreJ(z, neige, r, r2) {
+  if (typeof ATLAS_DECOR === "undefined" || !ATLAS_DECOR[z + "_a1"]) return z === "desert" ? "cactus" : "sapin";
+  if (r < .14) return z + "_p" + (1 + Math.floor(r2 * 4));
+  const l = z === "lande" && neige ? NEIGE_LANDE : ARBRES[z]; return z + "_a" + l[Math.floor(r2 * l.length)];
+}
+const CACTUS_DESERT = ["desert_a1", "desert_a4", "desert_a5", "desert_a7"];
 const SIN_CAM = .675;   // un écart au sol (dx + dz) / √2 se voit SIN_CAM fois plus court à l'écran, en hauteur
-function chargerFlat(R) {   // les 2 planches du décor ; si l'une manque, on garde l'île en volumes
+function chargerFlat(R) {   // les 3 planches du décor ; si l'une manque, on garde l'île en volumes
   R.flat = "attente"; R.tFlat = performance.now(); let n = 0;
-  const L = new THREE.TextureLoader(), ok = () => { if (++n === 2 && R.flat === "attente") R.flat = "ok"; }, non = () => { R.flat = "non"; };
+  const L = new THREE.TextureLoader(), ok = () => { if (++n === 3 && R.flat === "attente") R.flat = "ok"; }, non = () => { R.flat = "non"; };
   R.texSol = L.load(IMG_JEU + "jeu-sol.webp", t => { t.colorSpace = THREE.SRGBColorSpace; t.flipY = false; t.anisotropy = 4; t.needsUpdate = true; ok(); }, undefined, non);
   R.texDecor = L.load(IMG_JEU + "jeu-decor.webp", t => { t.colorSpace = THREE.SRGBColorSpace; ok(); }, undefined, non);
+  R.texNature = L.load(IMG_JEU + "jeu-nature.webp", t => { t.colorSpace = THREE.SRGBColorSpace; ok(); }, undefined, non);   // les arbres de chaque zone
   R.matsFlat = [];   // tous les matériaux dessinés : on les teinte la nuit
 }
 function matDecor(R, nom, miroir, fondu) {   // un matériau par objet (et par sens, et estompé quand il cache le héros)
   const cle = nom + (miroir ? "/m" : "") + (fondu ? "/f" : ""); R.mats = R.mats || {};
   if (R.mats[cle]) return R.mats[cle];
-  const [x, y, w, h] = ATLAS_DECOR[nom], [W, H] = ATLAS_DECOR.taille, t = R.texDecor.clone();
+  const [x, y, w, h, nat] = ATLAS_DECOR[nom], [W, H] = nat ? ATLAS_DECOR.taille2 : ATLAS_DECOR.taille, t = (nat ? R.texNature : R.texDecor).clone();
   t.repeat.set((miroir ? -w : w) / W, h / H); t.offset.set((miroir ? x + w : x) / W, 1 - (y + h) / H); t.needsUpdate = true;
   const m = new THREE.SpriteMaterial({ map: t, transparent: true, alphaTest: .04, depthWrite: false, opacity: fondu ? .4 : 1 });
   R.matsFlat.push(m); return R.mats[cle] = m;
 }
 function poserDecor(R, groupe, nom, x, z, o = {}) {   // une image debout ; o.haut = hauteur (cases), o.large = largeur, o.pied = descente du pied
   const [, , w, h] = ATLAS_DECOR[nom], s = new THREE.Sprite(matDecor(R, nom, o.miroir));
-  const H = o.large ? o.large * h / w : (o.haut || TAILLE_DECOR[nom] || 1) * (o.varie || 1), Wd = H * w / h, pied = o.pied === undefined ? .18 : o.pied;
+  const H = o.large ? o.large * h / w : (o.haut || TAILLE_DECOR[nom] || (/_a\d$/.test(nom) ? 2.3 : 1)) * (o.varie || 1), Wd = H * w / h, pied = o.pied === undefined ? .18 : o.pied;
   s.scale.set(Wd, H, 1); s.center.set(.5, pied * SIN_CAM / H); s.position.set(x, 0, z);   // le bas de l'image descend de « pied » sous le centre de la case
   s.userData = { nom, miroir: !!o.miroir, x, z, haut: H }; groupe.add(s); return s;
 }
@@ -717,15 +728,14 @@ function dioramaFlat() {
     const ch = G[y][x], z = zoneJ(x, y), r = rnd(), m = rnd() < .5;
     if (ch === "T") {
       if (z === "village" && r < .22 && autour(x, y, "=.,*") >= 3) pose(PROPS_VILLAGE[Math.floor(rnd() * PROPS_VILLAGE.length)], x, y, { miroir: m });
-      else pose(z === "foret" ? (r < .6 ? "sapin" : r < .82 ? "bouleau" : r < .94 ? "automne" : "souche") : z === "bayou" ? (r < .7 ? "cypres" : r < .85 ? "mort" : "souche")
-        : z === "cabane" ? (r < .55 ? "mort" : r < .9 ? "sapin" : "automne") : z === "lande" ? (neigeux(x, y) || autour(x, y, "nA") ? "sapinneige" : r < .5 ? "bouleau" : "sapin")
-        : z === "desert" ? "cactus" : (r < .5 ? "automne" : r < .8 ? "bouleau" : "sapin"), x + (rnd() - .5) * .15, y + (rnd() - .5) * .15, { miroir: m, varie: .85 + rnd() * .3 });
+      else { const n = arbreJ(z, neigeux(x, y) || autour(x, y, "nA"), r, rnd()), pt = n.includes("_p");
+        pose(n, x + (rnd() - .5) * .15, y + (rnd() - .5) * .15, { miroir: m, varie: .85 + rnd() * .3, haut: pt ? .75 : undefined }); }
     }
     else if (ch === "A") pose("montagne", x, y, { miroir: m, haut: 2 + rnd() * .6 });
     else if (ch === "M") pose("falaise", x, y, { miroir: m, haut: 1.1 + rnd() * .3 });
     else if (ch === "#") pose(z === "desert" ? "falaise" : "rocher", x, y, { miroir: m, haut: z === "desert" ? .8 : .85 });
     else if (ch === "o") pose("rune", x, y, { miroir: m });
-    else if (ch === "c") pose(r < .6 ? "cactus" : "petitcactus", x, y, { miroir: m });
+    else if (ch === "c") pose(ATLAS_DECOR.desert_a1 ? (r < .75 ? CACTUS_DESERT[Math.floor(rnd() * 4)] : "desert_p" + (1 + Math.floor(rnd() * 4))) : r < .6 ? "cactus" : "petitcactus", x, y, { miroir: m, haut: ATLAS_DECOR.desert_a1 ? (r < .75 ? 1.5 : .7) : undefined });
     else if (ch === "t") pose(r < .6 ? "tombe" : "croix", x, y, { miroir: m });
     else if (ch === "u") pose("citrouille", x, y, { miroir: m });
     else if (ch === "j") { const l = JEUX_PARC.filter(n => ATLAS_DECOR[n]); pose(l.length ? l[Math.floor(rnd() * l.length)] : ["banc", "tonneau", "lanterne"][Math.floor(rnd() * 3)], x, y, { miroir: m }); }
