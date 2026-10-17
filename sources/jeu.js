@@ -165,7 +165,7 @@ function ouvrirJeu() {
   if (b && !eauDuLac().has(b.x + "," + b.y)) { delete p.jeu.bateau; if (b.a) Object.assign(p.jeu, { x: DEPART[0], y: DEPART[1], dir: "bas" }); }
   if (!(p.jeu.bateau && p.jeu.bateau.a) && !libreSol(p.jeu.x, p.jeu.y)) Object.assign(p.jeu, { x: DEPART[0], y: DEPART[1], dir: "bas" });   // une ancienne partie arrêtée sur un pont qui n'existe plus
   JEU = { x: p.jeu.x, y: p.jeu.y, dir: p.jeu.dir || "bas", pas: null, tenu: null, revele: null, raf: 0, t: 0, dernierBip: 0, zone: null };
-  JEU.bateau = BATEAU0 && (p.jeu.bateau ? { ...p.jeu.bateau } : { x: BATEAU0[0], y: BATEAU0[1], dir: "gauche", a: false });
+  JEU.bateau = BATEAU0 && (p.jeu.bateau && p.jeu.bateau.lac ? { ...p.jeu.bateau } : { x: BATEAU0[0], y: BATEAU0[1], dir: dirLac(), a: false, lac: 1 });   // lac : tourné vers le large (17/10 ; les anciens bateaux sont retournés)
   if (p.jeu.nPris !== undefined && p.pris.length > p.jeu.nPris) JEU.action = { ligne: 3, t0: performance.now() + 300, duree: 1900, vitesse: 120 };   // un cryptide de plus : on saute de joie
   p.jeu.nPris = p.pris.length;
   if (enBoss && !p.jeu.boss) { cacherBoss(p); bossPhase = 0; }
@@ -208,7 +208,7 @@ function essayerPas(dir, essai) {   // essai : on regarde seulement si ça passe
   }
   else if (B && x === B.x && y === B.y) {   // on monte dans le bateau
     if (essai) return false;
-    B.a = true; B.dir = dir; sfx("page"); dialogueJ("Tu montes dans le bateau de pêche ! Navigue sur le lac. Pousse vers la rive pour descendre.", 3600);
+    B.a = true; sfx("page"); dialogueJ("Tu montes dans le bateau de pêche ! Navigue sur le lac. Pousse vers la rive pour descendre.", 3600);   // il garde son sens : la proue vers le lac
   }
   else if (!libreJ(x, y)) { if (essai) return false; JEU.dir = dir; const g = portailEn(x, y); if (g && !JEU.portail) return portailJ(g), false; if (performance.now() - (JEU.tCogne || 0) > 350) { JEU.tCogne = performance.now(); sfx("clic"); } return false; }
   if (JEU.portail) { JEU.portail = null; $("jeuDialogue").hidden = true; }   // on s'éloigne du portail : on reste
@@ -216,6 +216,27 @@ function essayerPas(dir, essai) {   // essai : on regarde seulement si ça passe
 }
 // ---------- le bateau de pêche (17/10) : amarré au bord du lac Carcajou ; il emmène au large, là où se cache le kraken ----------
 const BATEAU0 = MONDE.bateau || null;
+function dirLac() {   // le sens du lac à l'amarre : la direction où l'eau s'étend le plus loin
+  let best = "droite", n0 = -1;
+  for (const [d, [dx, dy]] of Object.entries(DIRS)) { let n = 0; while (n < 30 && "~v".includes(tuileJ(BATEAU0[0] + dx * (n + 1), BATEAU0[1] + dy * (n + 1)))) n++; if (n > n0) { n0 = n; best = d; } }
+  return best;
+}
+// le bouton « Monter » / « Descendre » (17/10) : à côté du bateau, plus besoin de pousser pile dessus
+function boutonBateauJ() {
+  const B = JEU && JEU.bateau, el = $("jeuBateau"); if (!el) return;
+  let quoi = "";
+  if (B && !B.a && !JEU.pas && Math.max(Math.abs(B.x - JEU.x), Math.abs(B.y - JEU.y)) <= 2 && zoneJ(B.x, B.y) === zoneJ(JEU.x, JEU.y)) quoi = "Monter dans le bateau";
+  else if (B && B.a && !JEU.pas && rivePres()) quoi = "Descendre";
+  if (el.textContent !== quoi) el.textContent = quoi; el.hidden = !quoi;
+}
+function rivePres() { return Object.entries(DIRS).map(([d, [dx, dy]]) => [d, JEU.x + dx, JEU.y + dy]).sort(([a], [b]) => (b === JEU.dir) - (a === JEU.dir)).find(([, x, y]) => libreJ(x, y)); }
+function bateauBoutonJ() {
+  const B = JEU && JEU.bateau; if (!B || JEU.pas || JEU.revele) return;
+  if (!B.a) { B.a = true; JEU.pas = { de: [JEU.x, JEU.y], t0: performance.now() }; JEU.x = B.x; JEU.y = B.y; JEU.dir = B.dir; JEU.action = null; sfx("page");
+    dialogueJ("Tu montes dans le bateau de pêche ! Navigue sur le lac. Pousse vers la rive ou appuie sur « Descendre ».", 3600); }
+  else { const r = rivePres(); if (!r) return; B.a = false; JEU.pas = { de: [JEU.x, JEU.y], t0: performance.now() }; JEU.x = r[1]; JEU.y = r[2]; JEU.dir = r[0]; dialogueJ("Tu descends du bateau. Il t'attend ici.", 2400); }
+  boutonBateauJ(); sauverJ();
+}
 const eauJ = (x, y) => "~v".includes(tuileJ(x, y)) && !occupeJ(x, y);
 let largeJ = null;
 let lacJ = null;
@@ -1012,7 +1033,7 @@ function boucleJeu(t) {
   }
   R.lampes.forEach(l => l.intensity = l.userData.ok ? .4 + 2.8 * R.nuit : 0);
   d.anim.forEach(f => f(t));
-  if (d.flat) { cachettesFlat(R, t); estomperJ(R, d, fx, fy); vueZoneJ(R, d); } else cachettesJ3D(R, t);
+  if (d.flat) { cachettesFlat(R, t); estomperJ(R, d, fx, fy); vueZoneJ(R, d); boutonBateauJ(); } else cachettesJ3D(R, t);
   creatureJ(R, t);
   habitantsJ(R).forEach(({ n, g, c }) => {   // les habitants respirent, et se tournent vers toi quand tu approches
     c.position.y = Math.abs(Math.sin(t / 500 + n.x)) * .04;
@@ -1082,6 +1103,7 @@ stick.addEventListener("pointermove", e => { if (e.pointerId === doigtStick) bou
 $("jeuA").addEventListener("pointerdown", e => { e.preventDefault(); if (!(JEU && JEU.revele)) boutonA(); });
 $("jeuA").addEventListener("click", () => { if (JEU && JEU.revele && performance.now() - JEU.revele.t0 > 350) trouveJ(); });   // ouvrir la caméra demande un vrai clic sur iPhone
 $("jeuB").addEventListener("pointerdown", e => { e.preventDefault(); boutonB(); });
+$("jeuBateau").addEventListener("pointerdown", e => { e.preventDefault(); bateauBoutonJ(); });
 const TOUCHES = { ArrowUp: "haut", ArrowDown: "bas", ArrowLeft: "gauche", ArrowRight: "droite", z: "haut", s: "bas", q: "gauche", d: "droite", w: "haut", a: "gauche" };
 addEventListener("keydown", e => {
   if (!JEU || $("jeu").hidden) return;
@@ -1092,7 +1114,7 @@ addEventListener("keydown", e => {
 addEventListener("keyup", e => { if (JEU && TOUCHES[e.key] === JEU.tenu) JEU.tenu = null; });
 $("jeuQuitter").addEventListener("click", () => { fermerJeu(); enBoss = false; majAccueil(); montrer("accueil"); });
 
-window.__jeu = { zoom: () => ZOOM.demi, etat: () => JEU && { x: JEU.x, y: JEU.y, dir: JEU.dir, zone: zoneJ(JEU.x, JEU.y), revele: JEU.revele && JEU.revele.q.k, bateau: JEU.bateau, cibles: ciblesJ() },
+window.__jeu = { bateau: () => bateauBoutonJ(), zoom: () => ZOOM.demi, etat: () => JEU && { x: JEU.x, y: JEU.y, dir: JEU.dir, zone: zoneJ(JEU.x, JEU.y), revele: JEU.revele && JEU.revele.q.k, bateau: JEU.bateau, boutonBateau: !$("jeuBateau").hidden && $("jeuBateau").textContent, cibles: ciblesJ() },
   aller: (x, y, dir) => { JEU.x = x; JEU.y = y; JEU.pas = null; if (dir) JEU.dir = dir; arriverJ(true); }, pnj: PNJ, libreSol, pas: d => essayerPas(d), A: () => boutonA(), B: () => boutonB(),
   sousBati: () => { sousBatiment(0, 0); return [...SOUS_BATI].filter(k => { const [x, y] = k.split(",").map(Number); return !!(TUILES[tuileJ(x, y)] || {}).libre; }); },
   decor: () => R3 && R3.ile && R3.ile.flat ? { objets: R3.ile.groupe.children.length, dessins: R3.rendu.info.render.calls } : null,
