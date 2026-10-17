@@ -16,7 +16,7 @@ const TUILES = {
      // (espace) hors de l'île   x bord peint de l'île (on n'y marche pas)
      // X Excalibook  Q Chez Bergamotte  N Ninamoto  Y supérette  W Chupa la sopa  F ferme  C chalet en A  j jeu du parc
      // g portail (au bout des chemins : il mène à l'île voisine, ou au village ; voir MONDE.portails)
-     // le lac : I atelier d'art  Z statue du kelpie  O petit objet (rocher, souche, bûches, cairn)  v barque  J banc
+     // le lac : I atelier d'art  Z statue du kelpie  O petit objet (rocher, souche, bûches, cairn)  v bateau de pêche (son amarre)  J banc
 const CARTE = MONDE.carte;   // fabriquée par sources/monde.py : 6 îles peintes reliées par des ponts
 const LARG = CARTE[0].length, HAUT = CARTE.length;
 // Les régions de l'île : la première qui contient la case gagne. Chaque créature a la sienne (HABITAT).
@@ -75,7 +75,7 @@ const libreJ = (x, y) => libreSol(x, y) && !occupeJ(x, y);           // et perso
 // Un habitant par région : on lui parle avec A, il donne les indices des cryptides cachés chez lui.
 const PNJ = [
   { x: MONDE.pnj.village[0], y: MONDE.pnj.village[1], zone: "village", nom: "Le maire Pistache", corps: 0xd99a3c, chapeau: 0x6b569b, bonjour: "Bienvenue au vieux village ! Un pont part d'ici vers chaque région." },
-  { x: MONDE.pnj.foret[0], y: MONDE.pnj.foret[1], zone: "foret", nom: "Lumignon le veilleur", corps: 0x3f8790, chapeau: 0x2a2a3a, bonjour: "Bienvenue au lac Carcajou ! On dit que Nessie et le kraken nagent tout au fond. Le bois Biscornu est juste après." },
+  { x: MONDE.pnj.foret[0], y: MONDE.pnj.foret[1], zone: "foret", nom: "Lumignon le veilleur", corps: 0x3f8790, chapeau: 0x2a2a3a, bonjour: "Bienvenue au lac Carcajou ! On dit que Nessie nage près des rives, et le kraken tout au large : prends le bateau de pêche ! Le bois Biscornu est juste après." },
   { x: MONDE.pnj.lande[0], y: MONDE.pnj.lande[1], zone: "lande", nom: "Bergère Mousse", corps: 0x9a6fb0, chapeau: 0xf3e2c4, bonjour: "Le vent souffle fort sur les Hautes-Terres. Le lac cache bien des secrets." },
   { x: MONDE.pnj.desert[0], y: MONDE.pnj.desert[1], zone: "desert", nom: "Papy Coyote", corps: 0xc9573f, chapeau: 0xe2b77c, bonjour: "Fait chaud, hein ? Dans le désert, regarde bien autour des cactus et des rochers rouges." },
   { x: MONDE.pnj.bayou[0], y: MONDE.pnj.bayou[1], zone: "bayou", nom: "Tante Grenouille", corps: 0x6e8a44, chapeau: 0xff8fa3, bonjour: "Attention où tu mets les pieds, petit ! Le bayou, ça glisse." }
@@ -124,6 +124,7 @@ function casesEau(z) {   // l'eau de la région, juste à côté d'une case où 
 }
 function cachettesJ(cle, prises, loinDe) {   // les meilleures cases de sa région, loin du départ (ou du joueur) et des autres créatures
   const z = HABITAT[cle] || "village", loin = ([x, y]) => Math.abs(loinDe[0] - x) + Math.abs(loinDe[1] - y) >= 5 && prises.every(([a, b]) => Math.max(Math.abs(a - x), Math.abs(b - y)) >= 3);
+  if (cle === "kraken") { const l = casesLarge().filter(c => zoneJ(c[0], c[1]) === z && loin(c) && Math.abs(c[0] - BATEAU0[0]) + Math.abs(c[1] - BATEAU0[1]) >= 12); if (l.length) return l; }   // au large : il faut le bateau
   if (AQUATIQUES.includes(cle)) { const l = casesEau(z).filter(loin); if (l.length) return l; }
   const ok = casesAccessibles().filter(([x, y]) => zoneJ(x, y) === z && !"PpbB=".includes(tuileJ(x, y))
     && Object.values(DIRS).filter(([dx, dy]) => libreSol(x + dx, y + dy)).length >= 3 && PNJ.every(n => Math.abs(n.x - x) + Math.abs(n.y - y) > 2) && loin([x, y]));
@@ -134,7 +135,8 @@ const auHasardJ = l => l[Math.floor(Math.random() * l.length)];
 function placerJeu(p) {   // chaque créature de l'aventure se cache dans sa région
   const j = p.jeu, prises = () => Object.values(j.pos).map(q => [q[1], q[2]]);
   Object.keys(j.pos).forEach(k => { const c = TRAQUES[k].cle, [, x, y] = j.pos[k];   // une ancienne partie : on remet chacun dans sa région, et dans l'eau s'il y nage
-  if (zoneJ(x, y) !== (HABITAT[c] || "village") || AQUATIQUES.includes(c) && tuileJ(x, y) !== "~" && casesEau(HABITAT[c]).length) delete j.pos[k]; });
+  if (zoneJ(x, y) !== (HABITAT[c] || "village") || AQUATIQUES.includes(c) && tuileJ(x, y) !== "~" && casesEau(HABITAT[c]).length
+    || c === "kraken" && casesLarge().length && !casesLarge().some(([a, b]) => a === x && b === y)) delete j.pos[k]; });
   p.liste.filter(k => !p.pris.includes(k) && !j.pos[k]).forEach(k => {
     const l = cachettesJ(TRAQUES[k].cle, prises(), DEPART), c = l.length ? auHasardJ(l) : auHasardJ(casesAccessibles());
     j.pos[k] = [0, c[0], c[1]];
@@ -159,8 +161,9 @@ function ouvrirJeu() {
     if (p.jeu && p.jeu.v !== 4) delete p.jeu;   // une partie de l'ancien jeu (4 petites maps) : on repart du village, les créatures sauvées le restent
   if (!p.jeu) p.jeu = { v: 4, m: 0, x: DEPART[0], y: DEPART[1], dir: "haut", pos: {} };
   placerJeu(p);
-  if (!libreSol(p.jeu.x, p.jeu.y)) Object.assign(p.jeu, { x: DEPART[0], y: DEPART[1], dir: "bas" });   // une ancienne partie arrêtée sur un pont qui n'existe plus
+  if (!(p.jeu.bateau && p.jeu.bateau.a) && !libreSol(p.jeu.x, p.jeu.y)) Object.assign(p.jeu, { x: DEPART[0], y: DEPART[1], dir: "bas" });   // une ancienne partie arrêtée sur un pont qui n'existe plus
   JEU = { x: p.jeu.x, y: p.jeu.y, dir: p.jeu.dir || "bas", pas: null, tenu: null, revele: null, raf: 0, t: 0, dernierBip: 0, zone: null };
+  JEU.bateau = BATEAU0 && (p.jeu.bateau ? { ...p.jeu.bateau } : { x: BATEAU0[0], y: BATEAU0[1], dir: "gauche", a: false });
   if (p.jeu.nPris !== undefined && p.pris.length > p.jeu.nPris) JEU.action = { ligne: 3, t0: performance.now() + 300, duree: 1900, vitesse: 120 };   // un cryptide de plus : on saute de joie
   p.jeu.nPris = p.pris.length;
   if (enBoss && !p.jeu.boss) { cacherBoss(p); bossPhase = 0; }
@@ -169,7 +172,7 @@ function ouvrirJeu() {
   arriverJ(true);
   if (!JEU.raf) JEU.raf = requestAnimationFrame(boucleJeu);
 }
-function sauverJ() { majPartie(p => { if (p.jeu) Object.assign(p.jeu, { x: JEU.x, y: JEU.y, dir: JEU.dir }); }); }
+function sauverJ() { majPartie(p => { if (p.jeu) Object.assign(p.jeu, { x: JEU.x, y: JEU.y, dir: JEU.dir }, JEU.bateau ? { bateau: { ...JEU.bateau } } : {}); }); }
 function fermerJeu() {
   if (JEU) { cancelAnimationFrame(JEU.raf); JEU.raf = 0; JEU.tenu = null; sauverJ(); }
   $("jeu").hidden = true;
@@ -195,10 +198,38 @@ function dialogueJ(texte, duree) {
 // ---------- déplacement ----------
 function essayerPas(dir, essai) {   // essai : on regarde seulement si ça passe (sans se tourner ni cogner)
   if (!JEU || JEU.pas || JEU.revele) return false;
-  const [dx, dy] = DIRS[dir], x = JEU.x + dx, y = JEU.y + dy;
-  if (!libreJ(x, y)) { if (essai) return false; JEU.dir = dir; const g = portailEn(x, y); if (g && !JEU.portail) return portailJ(g), false; if (performance.now() - (JEU.tCogne || 0) > 350) { JEU.tCogne = performance.now(); sfx("clic"); } return false; }
+  const [dx, dy] = DIRS[dir], x = JEU.x + dx, y = JEU.y + dy, B = JEU.bateau;
+  if (B && B.a) {   // en bateau : on va sur l'eau ; en poussant vers la rive, on descend (le bateau reste là)
+    if (eauJ(x, y)) { B.x = x; B.y = y; B.dir = dir; }
+    else if (libreJ(x, y) && !essai) { B.a = false; dialogueJ("Tu descends du bateau. Il t'attend ici.", 2400); }
+    else { if (!essai) JEU.dir = B.dir = dir; return false; }
+  }
+  else if (B && x === B.x && y === B.y) {   // on monte dans le bateau
+    if (essai) return false;
+    B.a = true; B.dir = dir; sfx("page"); dialogueJ("Tu montes dans le bateau de pêche ! Navigue sur le lac. Pousse vers la rive pour descendre.", 3600);
+  }
+  else if (!libreJ(x, y)) { if (essai) return false; JEU.dir = dir; const g = portailEn(x, y); if (g && !JEU.portail) return portailJ(g), false; if (performance.now() - (JEU.tCogne || 0) > 350) { JEU.tCogne = performance.now(); sfx("clic"); } return false; }
   if (JEU.portail) { JEU.portail = null; $("jeuDialogue").hidden = true; }   // on s'éloigne du portail : on reste
   JEU.dir = dir; JEU.pas = { de: [JEU.x, JEU.y], t0: performance.now() }; JEU.x = x; JEU.y = y; JEU.action = null; return true;
+}
+// ---------- le bateau de pêche (17/10) : amarré au bord du lac Carcajou ; il emmène au large, là où se cache le kraken ----------
+const BATEAU0 = MONDE.bateau || null;
+const eauJ = (x, y) => "~v".includes(tuileJ(x, y)) && !occupeJ(x, y);
+let largeJ = null;
+function casesLarge() {   // l'eau qu'on atteint en bateau depuis l'amarre, à plus de 2 cases de toute rive
+  if (largeJ) return largeJ; if (!BATEAU0) return largeJ = [];
+  const vu = new Set([BATEAU0 + ""]), f = [BATEAU0];
+  while (f.length) { const [x, y] = f.shift(); for (const [dx, dy] of Object.values(DIRS)) { const n = [x + dx, y + dy]; if (!vu.has(n + "") && "~v".includes(tuileJ(n[0], n[1]))) { vu.add(n + ""); f.push(n); } } }
+  return largeJ = [...vu].map(s => s.split(",").map(Number)).filter(([x, y]) => { for (let b = -2; b <= 2; b++) for (let a = -2; a <= 2; a++) if (!"~vZ".includes(tuileJ(x + a, y + b))) return false; return true; });
+}
+function bateauJ(R, fx, fy, t) {   // l'image du bateau, tournée vers sa direction ; le héros est assis dessus quand il navigue
+  const B = JEU.bateau; if (!B || !ATLAS_DECOR.bateau_haut) return;
+  if (!R.bateau) { R.bateau = new THREE.Sprite(matDecor(R, "bateau_haut")); R.bateau.center.set(.5, .36); R.scene.add(R.bateau); }
+  const nom = "bateau_" + B.dir, [, , w, h] = ATLAS_DECOR[nom], s = R.bateau, m = matDecor(R, nom);
+  if (s.material !== m) s.material = m;
+  s.scale.set(2.6, 2.6 * h / w, 1);
+  const x = B.a ? fx : B.x, z = B.a ? fy : B.y, houle = Math.sin(t / 600) * .03;
+  s.position.set(x - .05, houle, z - .05);   // un peu plus loin que le héros : il est dessiné par-dessus, sur le pont
 }
 // ---------- les portails (17/10) : au bout des chemins, un portail mène à l'île voisine ; on peut aussi rentrer tout de suite au village ----------
 const portailEn = (x, y) => (MONDE.portails || []).find(q => q.x === x && q.y === y);
@@ -238,6 +269,7 @@ function boutonA() {
   if (JEU.portail) return voyagerJ(JEU.portail.vers);
   const [dx, dy] = DIRS[JEU.dir], fx = JEU.x + dx, fy = JEU.y + dy;
   const g = portailEn(fx, fy); if (g) return portailJ(g);
+  if (JEU.bateau && !JEU.bateau.a && fx === JEU.bateau.x && fy === JEU.bateau.y) return essayerPas(JEU.dir);   // A devant le bateau : on monte
   // comme dans Zelda : on fouille ce qu'on a devant soi. Un buisson qui bouge cache un cryptide.
   const q = cachetteEn(fx, fy);
   if (q) { JEU.revele = { q, t0: performance.now() + 400 }; fouilleJ({ ligne: 2, boucle: true, vitesse: 160 }); sfx("revele"); if (navigator.vibrate) navigator.vibrate([60, 40, 60]);
@@ -713,7 +745,6 @@ function dioramaFlat() {
     else if (ch === "g") pose("arche", x, y, { pied: .05, haut: 2.2 });
     else if (ch === "o") pose(z === "foret" && ATLAS_DECOR.menhirs ? "menhirs" : "rune", x, y, { miroir: m });
     else if (ch === "O") pose(OBJETS_LAC[Math.floor(r * 4)], x, y, { miroir: m });
-    else if (ch === "v") pose("lac_barque", x, y, { miroir: m });
     else if (ch === "J") pose("lac_banc", x, y, { miroir: m });
     else if (ch === "c") pose(ATLAS_DECOR.desert_a1 ? (r < .75 ? CACTUS_DESERT[Math.floor(rnd() * 4)] : "desert_p" + (1 + Math.floor(rnd() * 4))) : r < .6 ? "cactus" : "petitcactus", x, y, { miroir: m, haut: ATLAS_DECOR.desert_a1 ? (r < .75 ? 1.5 : .7) : undefined });
     else if (ch === "t") pose(r < .6 ? "tombe" : "croix", x, y, { miroir: m });
@@ -941,7 +972,9 @@ function boucleJeu(t) {
   lumiereJ(R, zoneJ(Math.round(fx), Math.round(fy)), premier);
   h.position.set(fx, Math.max(0, sol) + bond, fy);
   if (h.userData.dessin.visible) {   // le dessin regarde toujours la caméra : on change seulement d'image
-    imageHeros(h, t, !!(JEU.pas || JEU.tenu)); h.position.y = Math.max(0, sol);   // pas de petit saut : les images de marche bougent déjà
+    const nav = JEU.bateau && JEU.bateau.a;   // en bateau : assis sur le pont, sans marcher
+    imageHeros(h, t, !nav && !!(JEU.pas || JEU.tenu)); h.position.y = nav ? .22 + Math.sin(t / 600) * .03 : Math.max(0, sol);   // pas de petit saut : les images de marche bougent déjà
+    h.userData.ombre.visible = !nav; if (d.flat) bateauJ(R, fx, fy, t);
     h.userData.dessin.material.color.setRGB(1 - .18 * R.nuit, 1 - .22 * R.nuit, 1 - .08 * R.nuit);
   } else {
     const cible = ANGLE[JEU.dir], da = Math.atan2(Math.sin(cible - h.rotation.y), Math.cos(cible - h.rotation.y)); h.rotation.y += da * .35;

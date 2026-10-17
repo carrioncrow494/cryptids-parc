@@ -139,9 +139,9 @@ d_ = ILE['foret']; eau = np.array([[M[y][x] == '~' for x in range(d_['ox'], d_['
 dist_ = ndi.distance_transform_edt(np.pad(eau, 1))[1:-1, 1:-1]; sy, sx = np.unravel_index(dist_.argmax(), dist_.shape); sx += d_['ox'] + .5; sy += d_['oy'] + .5
 for y in range(round(sy) - 2, round(sy) + 2):
     for x in range(round(sx) - 2, round(sx) + 2): M[y][x] = 'Z'
-bx, by = repere('foret', 'barque')   # la barque : sur l'eau, contre la plage de galets
+bx, by = repere('foret', 'barque')   # la bateau de pêche : sur l'eau, contre la plage de galets
 _, x, y = min((abs(x - bx) + abs(y - by), x, y) for y in range(ILE['foret']['oy'], ILE['foret']['oy'] + ILE['foret']['h'] - 1) for x in range(ILE['foret']['ox'], ILE['foret']['ox'] + ILE['foret']['w'] - 1) if M[y][x] == '~' and any(M[y + b][x + a] == '.' for a, b in ((1, 0), (-1, 0), (0, 1), (0, -1))))
-M[y][x] = 'v'
+M[y][x] = 'v'; BATEAU = (x, y)   # le bateau de pêche est amarré là (jeu.js le fait naviguer)
 bati('cabane', ['KKKKKK'] * 3 + ['KKkKKK'], cible=centre('cabane'))       # la cabane de Sporran
 # les habitants et les panneaux : près du pont par lequel on arrive
 ENTREE = {'village': dep}
@@ -224,7 +224,7 @@ CODE = {'village': 'V', 'foret': 'F', 'cabane': 'K', 'desert': 'D', 'lande': 'L'
 ZG = [''.join('_' if ZONE[y][x] is None else CODE[ZONE[y][x]] for x in range(WW)) for y in range(WH)]
 with open('sources/monde.js', 'w') as o:
     o.write('// fabriqué par sources/monde.py : les 6 îles peintes, reliées par des ponts. Chaque case : voir TUILES dans jeu.js.\n')
-    o.write('const MONDE = ' + json.dumps(dict(carte=carte, iles=INFO, pnj=PNJ, zones=ZG, portails=PORTAILS), ensure_ascii=False) + ';\n')
+    o.write('const MONDE = ' + json.dumps(dict(carte=carte, iles=INFO, pnj=PNJ, zones=ZG, portails=PORTAILS, bateau=BATEAU), ensure_ascii=False) + ';\n')
 # un aperçu : la carte entière en petits carrés
 C = {' ': (12, 30, 40), 'x': (120, 100, 140), '.': (130, 170, 100), '~': (60, 140, 220), 'b': (170, 110, 70), 'T': (30, 90, 50), '#': (150, 60, 50), 'P': (255, 255, 0)}
 im = Image.new('RGB', (WW * 4, WH * 4)); d = ImageDraw.Draw(im)
