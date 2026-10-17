@@ -17,7 +17,55 @@ def rocher(z, a):
     r, g, b = a[..., 0], a[..., 1], a[..., 2]
     if z == 'desert': return nd.binary_dilation(nd.binary_fill_holes(nd.binary_closing((g < 95) & (r - g > 90), iterations=4)), iterations=4)
     return np.zeros(a.shape[:2], bool)
+# Les cartes en cube (17/10) : un bloc peint par ChatGPT, avec ses faces de terre et ses montagnes au fond.
+# On repère les trois coins visibles du dessus (gauche, avant, droite) et on redresse l'image pour que le losange du dessus
+# ait exactement l'angle du jeu ; seul ce losange est découpé en cases.
+CUBES = {'foret': dict(fichier='/mnt/project-files/cryptids-parc/jeu-video/lac-essais/map-lac.png',
+                       gauche=(35, 581), avant=(885, 938), droite=(1637, 622), N=54,
+                       passages=[((900, 495), (1085, 555), 22)],            # le pont de pierre (segment et demi-largeur, en pixels de l'image d'origine)
+                       reperes=dict(terre=(1330, 600), cromlech=(470, 330)))}   # la terre battue (chalet) et un pré dégagé
+def couleurs_cube(a):
+    r, g, b = a[..., 0], a[..., 1], a[..., 2]
+    eau = (b > r + 70) & (b > 120)
+    gris = (np.abs(r - g) < 40) & (b > g - 5) & (np.maximum(np.maximum(r, g), b) < 175) & ~eau   # rochers et montagnes (gris-violet)
+    return nd.binary_opening(eau, iterations=1), nd.binary_opening(gris, iterations=2)
+def grille_cube(z):
+    c = CUBES[z]; im = Image.open(c['fichier']).convert('RGB'); N = c['N']
+    (gx, gy), (ax, ay), (dx, dy) = c['gauche'], c['avant'], c['droite']
+    hwD = (dx - gx) / 2; hhD = hwD * R_ISO; m = 40
+    # le losange voulu : gauche (m, Yc), avant (m + hwD, Yc + hhD), droite (m + 2 hwD, Yc) ; Yc laisse la place aux montagnes au-dessus
+    src = np.array([[gx, gy, 1], [ax, ay, 1], [dx, dy, 1]], float)
+    def vers(Yc): return np.array([[m, Yc], [m + hwD, Yc + hhD], [m + 2 * hwD, Yc]], float)
+    A = np.linalg.solve(src, vers(0))            # source -> cible (sans décalage vertical)
+    coins = np.array([[0, 0, 1], [im.width, 0, 1], [0, im.height, 1], [im.width, im.height, 1]], float) @ A
+    Yc = -coins[:, 1].min() + 10; W = int(2 * hwD + 2 * m); H = int(coins[:, 1].max() + Yc + 10)
+    A = np.linalg.solve(src, vers(Yc)); Ai = np.linalg.inv(np.vstack([A.T, [0, 0, 1]]))   # cible -> source, pour PIL
+    im = im.transform((W, H), Image.AFFINE, tuple(Ai[:2].ravel()), Image.BICUBIC, fillcolor=(0, 255, 0))
+    a = np.asarray(im).astype(np.float32); E, R = couleurs_cube(a)
+    hw = hwD / N; hh = hw * R_ISO; X0, Y0 = m + hwD, Yc - hhD   # le coin du fond du losange
+    G = [[' '] * N for _ in range(N)]
+    for j in range(N):
+        for i in range(N):
+            x, y = X0 + (i - j) * hw, Y0 + (i + j + 1) * hh
+            vus = [(int(x + ddx * hw * .6), int(y + ddy * hh * .6)) for ddx, ddy in ((0, 0), (1, 0), (-1, 0), (0, 1), (0, -1))]
+            fe = sum(E[Y, X] for X, Y in vus); fr = sum(R[Y, X] for X, Y in vus)
+            G[j][i] = '~' if fe >= 3 else '#' if fr >= 3 else '.'
+    def case(pt):   # un point de l'image d'origine -> (x, y) de la grille
+        X, Y = np.array([pt[0], pt[1], 1.]) @ A; a_, b_ = (X - X0) / hw, (Y - Y0) / hh - 1
+        return (a_ + b_) / 2, (b_ - a_) / 2
+    for p0, p1, w in c.get('passages', []):
+        (x0, y0), (x1, y1) = case(p0), case(p1); r = w / hw / 2 + .5
+        for j in range(N):
+            for i in range(N):
+                t = max(0, min(1, ((i - x0) * (x1 - x0) + (j - y0) * (y1 - y0)) / ((x1 - x0) ** 2 + (y1 - y0) ** 2)))
+                if np.hypot(i - (x0 + t * (x1 - x0)), j - (y0 + t * (y1 - y0))) < r: G[j][i] = '.'
+    reperes = {k: tuple(int(round(v)) for v in case(pt)) for k, pt in c.get('reperes', {}).items()}
+    for y in range(N):
+        for x in range(N):
+            if (x in (0, N - 1) or y in (0, N - 1)) and G[y][x] == '.': G[y][x] = 'x'
+    return G, dict(image=z, W=W, H=H, i0=0, j0=0, X0=X0, Y0=Y0, hw=hw, hh=hh, reperes=reperes), im
 def grille(z):
+    if z in CUBES: return grille_cube(z)
     im = Image.open(U + TERRAINS[z] + '-image.png').convert('RGB'); a = np.asarray(im).astype(np.float32); H, W = a.shape[:2]
     al = np.asarray(detoure(im))[..., 3] > 128
     E = eau('village' if z == 'cabane' else z, np.asarray(Image.open(U + TERRAINS['village' if z == 'cabane' else z] + '-image.png').convert('RGB')).astype(np.float32))   # l'eau du bois Biscornu, trop sombre, est prise sur le village (même dessin)
@@ -55,6 +103,6 @@ def apercu(z, G, P, im, chemin):
             d.polygon([(cx, cy - P['hh']), (cx + P['hw'], cy), (cx, cy + P['hh']), (cx - P['hw'], cy)], fill=C[c], outline=(0, 0, 0, 60))
     im.convert('RGB').save(chemin)
 if __name__ == '__main__':
-    for z in TERRAINS:
+    for z in (sys.argv[2:] or TERRAINS):
         G, P, im = grille(z); apercu(z, G, P, im, sys.argv[1] + '/grille-%s.png' % z)
         print(z, len(G[0]), 'x', len(G), sum(r.count('.') for r in G), 'cases de sol')

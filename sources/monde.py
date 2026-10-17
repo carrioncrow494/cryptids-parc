@@ -21,7 +21,7 @@ for z, (g, P, im) in iles.items():
     c, l = PLACE[z]; ox, oy = c * LW + (LW - len(g[0])) // 2, l * LH + (LH - len(g)) // 2
     for y, ligne in enumerate(g):
         for x, ch in enumerate(ligne): M[oy + y][ox + x] = ch; ZONE[oy + y][ox + x] = z if ch != ' ' else None
-    INFO.append(dict(zone=z, image='jeu-ile-%s.webp' % z, ox=ox, oy=oy, w=len(g[0]), h=len(g), **{k: P[k] for k in ('W', 'H', 'i0', 'j0', 'X0', 'Y0', 'hw', 'hh')}))
+    INFO.append(dict(zone=z, image='jeu-ile-%s.webp' % z, ox=ox, oy=oy, w=len(g[0]), h=len(g), peint='reperes' in P, **{k: P[k] for k in ('W', 'H', 'i0', 'j0', 'X0', 'Y0', 'hw', 'hh')}))
     detoure(im).save('jeu-ile-%s.webp' % z, quality=86, method=6)
 ILE = {d['zone']: d for d in INFO}
 def couleur(z, x, y):   # la couleur du terrain peint sous la case (x, y) du monde
@@ -52,6 +52,7 @@ for a, b in PONTS:
             ya = max((y for y in range(H_['oy'], H_['oy'] + H_['h']) if M[y][x] == '.'), default=None); yb = min((y for y in range(Bs['oy'], Bs['oy'] + Bs['h']) if M[y][x] == '.'), default=None)
             if ya is None or yb is None: continue
             mid = (max(H_['ox'], Bs['ox']) + min(H_['ox'] + H_['w'], Bs['ox'] + Bs['w'])) / 2; s = (yb - ya) + abs(x - mid) * .4
+            if (a, b) == ('foret', 'cabane'): s += 3 * (x - H_['ox'])   # le lac : le chemin peint vers la cabane longe le bord gauche
             if best is None or s < best[0]: best = (s, [(x, y) for y in range(ya + 1, yb)])
     for x, y in best[1]: M[y][x] = 'b'
     BOUTS += [best[1][0], best[1][-1]]
@@ -112,9 +113,10 @@ parc = poser('village', ['j?j?j', '?????', 'j?j?j'], loin=BATIS)
 bati('desert', maison(5, 3), cible=centre('desert'))                      # le ranch (RHD dans le désert : le saloon)
 bati('desert', maison(4, 3, 'W', 'W', 'W'), loin=BATIS)                   # Chupa la sopa
 bati('lande', maison(5, 4, 'F', 'F', 'F'), cible=centre('lande'))         # la ferme
-eau_foret = [(x, y) for y in range(WH) for x in range(WW) if M[y][x] == '~' and ZONE[y][x] == 'foret']
-bati('foret', maison(4, 4, 'C', 'C', 'C'), pres=eau_foret)                 # le chalet en A, au bord du lac
-poser('foret', ['ffffff', 'ft?t?f', 'f????f', 'ft?t?f', 'ff??ff'], loin=BATIS)   # le vieux cimetière
+# le lac (17/10) : le chalet en A sur la terre battue peinte, et le cromlech (cercle de pierres levées) dans un pré
+def repere(z, k): d = ILE[z]; x, y = iles[z][1]['reperes'][k]; return (d['ox'] + x, d['oy'] + y)
+bati('foret', maison(4, 4, 'C', 'C', 'C'), cible=repere('foret', 'terre'))
+poser('foret', ['??o??', 'o???o', '?????', 'o???o', '??o??'], cible=repere('foret', 'cromlech'))
 bati('cabane', ['KKKKKK'] * 3 + ['KKkKKK'], cible=centre('cabane'))       # la cabane de Sporran
 # les habitants et les panneaux : près du pont par lequel on arrive
 ENTREE = {'village': dep}

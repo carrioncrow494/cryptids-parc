@@ -669,6 +669,7 @@ function dioramaFlat() {
   // les objets
   const pose = (nom, x, z, o) => { const s = poserDecor(R, groupe, nom, x, z, o); if (s.userData.haut > 1.1) devant.push(s); return s; };
   const lampes = [], lueur = (x, z, h) => lampes.push({ x, z, h });
+  const PEINTES = new Set(MONDE.iles.filter(i => i.peint).map(i => i.zone));
   for (let y = 0; y < HAUT; y++) for (let x = 0; x < LARG; x++) {
     const ch = G[y][x], z = zoneJ(x, y), r = rnd(), m = rnd() < .5;
     if (ch === "T") {
@@ -678,6 +679,7 @@ function dioramaFlat() {
     }
     else if (ch === "A") pose("montagne", x, y, { miroir: m, haut: 2 + rnd() * .6 });
     else if (ch === "M") pose("falaise", x, y, { miroir: m, haut: 1.1 + rnd() * .3 });
+    else if (ch === "#" && PEINTES.has(z)) { }   // les rochers sont déjà peints sur les cartes en cube
     else if (ch === "#") pose(z === "desert" ? "falaise" : "rocher", x, y, { miroir: m, haut: z === "desert" ? .8 : .85 });
     else if (ch === "o") pose("rune", x, y, { miroir: m });
     else if (ch === "c") pose(ATLAS_DECOR.desert_a1 ? (r < .75 ? CACTUS_DESERT[Math.floor(rnd() * 4)] : "desert_p" + (1 + Math.floor(rnd() * 4))) : r < .6 ? "cactus" : "petitcactus", x, y, { miroir: m, haut: ATLAS_DECOR.desert_a1 ? (r < .75 ? 1.5 : .7) : undefined });
