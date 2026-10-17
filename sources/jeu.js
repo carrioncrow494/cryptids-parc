@@ -21,7 +21,7 @@ const LARG = CARTE[0].length, HAUT = CARTE.length;
 // Les régions de l'île : la première qui contient la case gagne. Chaque créature a la sienne (HABITAT).
 const ZONES = {
   cabane: { nom: "Le bois Biscornu", panneau: "Le bois Biscornu. Dans la cabane de travers vit… Sporran !" },
-  foret: { nom: "La forêt du Lac", panneau: "La forêt du Lac : le grand lac et sa statue de kelpie, le chalet et le cercle de pierres." },
+  foret: { nom: "Le lac Carcajou", panneau: "Le lac Carcajou : le grand lac et sa statue de kelpie, le chalet et le cercle de pierres." },
   bayou: { nom: "Le bayou", panneau: "Le bayou : passerelles, cyprès et eaux boueuses." },
   village: { nom: "Le vieux village", panneau: "Le vieux village et sa cathédrale. Un pont part vers chaque région." },
   lande: { nom: "Les Hautes-Terres", panneau: "Les Hautes-Terres : la lande, le lac et la ferme." },
@@ -29,7 +29,7 @@ const ZONES = {
 };
 const CODE_ZONE = { V: "village", F: "foret", K: "cabane", D: "desert", L: "lande", B: "bayou" };   // MONDE.zones : la région de chaque case
 const zoneJ = (x, y) => CODE_ZONE[(MONDE.zones[y] || "")[x]] || "village";
-const HABITAT = { barghest: "foret", mothman: "foret", nessie: "lande", kraken: "lande", yeti: "lande", swamp: "bayou", faery: "bayou",
+const HABITAT = { barghest: "lande", mothman: "lande", nessie: "foret", kraken: "foret", yeti: "lande", swamp: "bayou", faery: "bayou",
   gargouille: "village", lutins: "village", chupacabra: "desert", thunderbird: "desert", jackalope: "desert", catsith: "cabane" };
 const DIRS = { haut: [0, -1], bas: [0, 1], gauche: [-1, 0], droite: [1, 0] };
 const DUREE_PAS = 240;   // ms pour avancer d'une case
@@ -74,7 +74,7 @@ const libreJ = (x, y) => libreSol(x, y) && !occupeJ(x, y);           // et perso
 // Un habitant par région : on lui parle avec A, il donne les indices des cryptides cachés chez lui.
 const PNJ = [
   { x: MONDE.pnj.village[0], y: MONDE.pnj.village[1], zone: "village", nom: "Le maire Pistache", corps: 0xd99a3c, chapeau: 0x6b569b, bonjour: "Bienvenue au vieux village ! Un pont part d'ici vers chaque région." },
-  { x: MONDE.pnj.foret[0], y: MONDE.pnj.foret[1], zone: "foret", nom: "Lumignon le veilleur", corps: 0x3f8790, chapeau: 0x2a2a3a, bonjour: "Bienvenue dans la forêt du Lac ! Le lac est immense, et le bois Biscornu est juste après." },
+  { x: MONDE.pnj.foret[0], y: MONDE.pnj.foret[1], zone: "foret", nom: "Lumignon le veilleur", corps: 0x3f8790, chapeau: 0x2a2a3a, bonjour: "Bienvenue au lac Carcajou ! On dit que Nessie et le kraken nagent tout au fond. Le bois Biscornu est juste après." },
   { x: MONDE.pnj.lande[0], y: MONDE.pnj.lande[1], zone: "lande", nom: "Bergère Mousse", corps: 0x9a6fb0, chapeau: 0xf3e2c4, bonjour: "Le vent souffle fort sur les Hautes-Terres. Le lac cache bien des secrets." },
   { x: MONDE.pnj.desert[0], y: MONDE.pnj.desert[1], zone: "desert", nom: "Papy Coyote", corps: 0xc9573f, chapeau: 0xe2b77c, bonjour: "Fait chaud, hein ? Dans le désert, regarde bien autour des cactus et des rochers rouges." },
   { x: MONDE.pnj.bayou[0], y: MONDE.pnj.bayou[1], zone: "bayou", nom: "Tante Grenouille", corps: 0x6e8a44, chapeau: 0xff8fa3, bonjour: "Attention où tu mets les pieds, petit ! Le bayou, ça glisse." }
@@ -132,7 +132,8 @@ function cachettesJ(cle, prises, loinDe) {   // les meilleures cases de sa régi
 const auHasardJ = l => l[Math.floor(Math.random() * l.length)];
 function placerJeu(p) {   // chaque créature de l'aventure se cache dans sa région
   const j = p.jeu, prises = () => Object.values(j.pos).map(q => [q[1], q[2]]);
-  Object.keys(j.pos).forEach(k => { if (AQUATIQUES.includes(TRAQUES[k].cle) && tuileJ(j.pos[k][1], j.pos[k][2]) !== "~" && casesEau(HABITAT[TRAQUES[k].cle]).length) delete j.pos[k]; });   // une ancienne partie : on les remet dans l'eau
+  Object.keys(j.pos).forEach(k => { const c = TRAQUES[k].cle, [, x, y] = j.pos[k];   // une ancienne partie : on remet chacun dans sa région, et dans l'eau s'il y nage
+  if (zoneJ(x, y) !== (HABITAT[c] || "village") || AQUATIQUES.includes(c) && tuileJ(x, y) !== "~" && casesEau(HABITAT[c]).length) delete j.pos[k]; });
   p.liste.filter(k => !p.pris.includes(k) && !j.pos[k]).forEach(k => {
     const l = cachettesJ(TRAQUES[k].cle, prises(), DEPART), c = l.length ? auHasardJ(l) : auHasardJ(casesAccessibles());
     j.pos[k] = [0, c[0], c[1]];
@@ -175,7 +176,7 @@ function arriverJ(debut) {   // on entre dans une région : son nom, et combien 
   const z = JEU.zone = zoneJ(JEU.x, JEU.y), Z = ZONES[z], n = ciblesJ().filter(q => zoneJ(q.x, q.y) === z).length;
   $("jeuLieu").textContent = Z.nom;
   let txt = n ? n + (n > 1 ? " cryptides se cachent ici" : " cryptide se cache ici") : "Aucun cryptide ici. Cherche ailleurs !";
-  if (enBoss) txt = z === "cabane" ? "Sporran rôde autour de sa cabane…" : "Sporran t'attend dans le bois Biscornu, après la forêt du Lac !";
+  if (enBoss) txt = z === "cabane" ? "Sporran rôde autour de sa cabane…" : "Sporran t'attend dans le bois Biscornu, après le lac Carcajou !";
   titreJ(Z.nom, txt); if (!debut) sfx("page");
 }
 let minuterieTitre = 0;
