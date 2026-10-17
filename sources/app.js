@@ -331,7 +331,7 @@ function majChoix() {
   document.querySelectorAll("[data-n]").forEach(b => b.classList.toggle("cyan", +b.dataset.n === nombre));
   if (mode() === "qr") {
     $("aCacher").hidden = false;
-    $("listeQr").innerHTML = tirage.map(k => "<li><b>n° " + k + "</b> " + TRAQUES[k].nom.split(",")[0] + "</li>").join("");
+    $("listeQr").innerHTML = tirage.map(cheminIndices).join("");
   } else $("aCacher").hidden = true;
 }
 function preparerChoix() {
@@ -735,7 +735,7 @@ function lancerMembre() {
 /* ---------- Mode QR : lecture des codes ---------- */
 function scanner() {
   $("viseur").hidden = false; $("nomMonstre").textContent = "Œil magique";
-  $("consigne").textContent = "Vise le QR code d'une créature cachée.";
+  $("consigne").textContent = "Vise le QR code d'un indice ou d'une créature cachée.";
   const video = $("camera"), c = document.createElement("canvas"), g = c.getContext("2d", { willReadFrequently: true });
   const lireQR = () => {
     if ($("scene").hidden || $("viseur").hidden) return;
@@ -743,7 +743,14 @@ function scanner() {
       const l = 480, h = Math.round(l * video.videoHeight / video.videoWidth);
       c.width = l; c.height = h; g.drawImage(video, 0, 0, l, h);
       const code = jsQR(g.getImageData(0, 0, l, h).data, l, h, { inversionAttempts: "dontInvert" });
-      if (code && code.data) {
+      const ind = code && code.data ? lireIndice(code.data) : null;
+      if (ind) {
+        const p = partie() || { liste: ids, pris: [] };
+        if (navigator.vibrate) navigator.vibrate(80);
+        if (!p.liste.includes(ind.k)) $("consigne").textContent = "Cet indice est pour une créature qui ne fait pas partie de cette aventure. Cherche un autre QR code.";
+        else if (p.pris.includes(ind.k)) $("consigne").textContent = TRAQUES[ind.k].nom.split(",")[0] + " est déjà sauvé ! Cherche un autre QR code.";
+        else return montrerIndice(ind.k, ind.i, () => { $("viseur").hidden = false; $("consigne").textContent = "Cherche la carte suivante, puis vise-la avec l'œil magique."; setTimeout(lireQR, 900); });
+      } else if (code && code.data) {
         let k = null; try { k = new URL(code.data, location.href).searchParams.get("m"); } catch (e) {}
         if (k && TRAQUES[k]) {
           if (navigator.vibrate) navigator.vibrate(80);

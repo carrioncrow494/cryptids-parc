@@ -83,9 +83,9 @@
     </div>
     <p id="duree" class="etat"></p>
     <div id="aCacher" class="choix" hidden>
-      <h3>QR codes à cacher</h3>
-      <p>Pour les parents : cachez seulement ces QR codes de la planche.</p>
-      <ul id="listeQr" class="liste-qr"></ul>
+      <h3>Cartes à cacher</h3>
+      <p>Pour les parents : pour chaque cryptide, cachez ses 3 cartes indices puis sa carte, aux endroits indiqués. Chaque indice dit à l'enfant où chercher la carte suivante.</p>
+      <ul id="listeQr" class="liste-qr chemins"></ul>
       <div class="boutons"><button id="retirer" class="mini" type="button">Tirer d'autres créatures</button></div>
     </div>
     <button id="cestParti" class="planche principal" type="button">C'est parti !</button>
@@ -107,11 +107,11 @@
       <div class="choix">
         <h3>Les QR codes, comment ça marche ?</h3>
         <ol class="etapes">
-          <li>Un parent imprime la planche de QR codes et découpe les cartes : une carte par cryptide.</li>
-          <li>Au début de l'aventure, l'appli dit quels QR codes cacher. Le parent les cache dans la maison ou le jardin.</li>
-          <li>L'enfant cherche les cartes, puis les vise avec l'œil magique (la caméra) : le cryptide apparaît, il faut le capturer.</li>
+          <li>Un parent imprime les deux planches et découpe les cartes : pour chaque cryptide, 3 cartes indices et la carte du cryptide.</li>
+          <li>Au début de l'aventure, l'appli dit quelles cartes cacher, et où : près d'une lampe, sous une chaise… Ça marche dans la maison comme dans le jardin.</li>
+          <li>L'enfant vise chaque carte avec l'œil magique (la caméra). L'indice s'affiche et lui dit où trouver le suivant. Le 3ᵉ indice mène au cryptide : il faut le capturer !</li>
         </ol>
-        <div class="boutons"><a id="telechargerQr" class="mini cyan" href="qr-codes-cryptids.pdf" download="qr-codes-cryptids.pdf">Télécharger la planche</a></div>
+        <div class="boutons"><a id="telechargerIndices" class="mini cyan" href="indices-cryptids.pdf" download="indices-cryptids.pdf">Planche des indices</a><a id="telechargerQr" class="mini cyan" href="qr-codes-cryptids.pdf" download="qr-codes-cryptids.pdf">Planche des cryptides</a></div>
       </div>
       <button id="lancerReel" class="planche principal" type="button">Commencer l'aventure réelle</button>
     </div>
@@ -174,6 +174,18 @@
   <div id="gauche" class="fleche" hidden>❮</div>
   <div id="droite" class="fleche" hidden>❯</div>
   <div id="bandeau" hidden></div>
+  <div id="indice" class="indice" hidden>
+    <div class="indice-carte">
+      <div id="indiceNum" class="indice-num"></div>
+      <div id="indiceAvance" class="indice-avance"></div>
+      <div id="indiceVisuel" class="indice-visuel"></div>
+      <h3 id="indiceTitre"></h3>
+      <p id="indiceTexte"></p>
+      <div class="indice-lieu"><span id="indiceLieuTitre"></span><b id="indiceLieu"></b></div>
+      <p id="indiceAutre" class="indice-autre" hidden>Tu as sauté un indice, mais ce n'est pas grave !</p>
+      <button id="indiceOk" class="planche petit" type="button">Je cherche !</button>
+    </div>
+  </div>
   <div id="consigne" class="consigne"></div>
   <div class="barre-bas">
     <div><button class="rond ouvrir-grimoire" type="button" aria-label="Grimoire"><svg class="picto-livre" viewBox="0 0 48 36" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"><path d="M24 8C18 4 10 3 3 5v26c7-2 15-1 21 3 6-4 14-5 21-3V5c-7-2-15-1-21 3z"/><path d="M24 8v26"/><path d="M8 11c4-.6 8-.2 11.5 1.4M8 16c4-.6 8-.2 11.5 1.4M8 21c4-.6 8-.2 11.5 1.4M40 11c-4-.6-8-.2-11.5 1.4"/></g><path d="M34.5 16.5l1.3 2.8 3 .4-2.2 2 .6 3-2.7-1.5-2.7 1.5.6-3-2.2-2 3-.4z" fill="currentColor"/></svg></button></div>

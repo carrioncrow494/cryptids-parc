@@ -326,3 +326,31 @@
     box-shadow: 0 5px 0 #5c0f31; touch-action: none; }
   .boutons-ab button:active { transform: translateY(4px); box-shadow: 0 1px 0 #5c0f31; }
   .boutons-ab small { font-family: var(--deco); color: #8a909c; font-size: .85rem; letter-spacing: .06em; }
+
+  /* ---------- Aventure réelle : carte d'un indice, par-dessus la caméra ---------- */
+  .indice { position: absolute; inset: 0; z-index: 8; display: flex; align-items: center; justify-content: center; padding: 16px;
+    background: rgba(2,10,14,.62); animation: indiceVoile .35s ease-out; }
+  .indice-carte { width: 100%; max-width: 380px; max-height: 100%; overflow-y: auto; display: flex; flex-direction: column; align-items: center; gap: 10px;
+    padding: 18px 18px 20px; border-radius: 22px; text-align: center; background: radial-gradient(ellipse at 50% 20%, #0f4a57 0%, #06141a 75%);
+    border: 2px solid var(--cyan); box-shadow: 0 0 26px rgba(79,243,255,.45); animation: indiceEntre .45s cubic-bezier(.2,1.4,.4,1); }
+  .indice-num { font-family: var(--deco); letter-spacing: .1em; color: var(--cyan); font-size: 1.1rem; }
+  .indice-avance { display: flex; gap: 8px; }
+  .indice-avance i { width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--cyan); }
+  .indice-avance i.ok { background: var(--citrouille); border-color: var(--citrouille); box-shadow: 0 0 8px var(--citrouille); }
+  .indice-visuel { width: min(52vw, 210px); aspect-ratio: 1; border-radius: 50%; background: radial-gradient(circle, rgba(79,243,255,.18) 0%, rgba(4,18,26,.9) 70%);
+    border: 2px solid rgba(79,243,255,.5); display: flex; align-items: center; justify-content: center; }
+  .indice-visuel svg { width: 78%; height: 78%; animation: indiceFlotte 3s ease-in-out infinite; }
+  .indice-carte h3 { margin: 0; font-family: var(--nom); font-weight: 400; font-size: 1.7rem; letter-spacing: .04em; color: var(--menthe); line-height: 1.05; }
+  .indice-carte p { margin: 0; font-size: 1.1rem; line-height: 1.3; }
+  .indice-lieu { width: 100%; display: flex; flex-direction: column; gap: 2px; padding: 10px 12px; border-radius: 14px;
+    background: rgba(0,255,204,.12); border: 2px dashed var(--citrouille); }
+  .indice-lieu span { font-size: .95rem; opacity: .85; }
+  .indice-lieu b { font-family: var(--deco); font-weight: 400; font-size: 1.3rem; color: var(--citrouille); }
+  .indice-autre { font-size: .95rem !important; opacity: .8; }
+  @keyframes indiceVoile { from { opacity: 0; } }
+  @keyframes indiceEntre { from { opacity: 0; transform: scale(.7) rotate(-4deg); } }
+  @keyframes indiceFlotte { 50% { transform: translateY(-5px) rotate(2deg); } }
+  @media (prefers-reduced-motion: reduce) { .indice, .indice-carte, .indice-visuel svg { animation: none; } }
+  .liste-qr.chemins { grid-template-columns: 1fr; gap: 10px; }
+  .chemin { margin: 4px 0 0; padding-left: 1.2em; font-family: var(--texte); font-size: .95rem; letter-spacing: 0; }
+  .liste-qr .chemin li { font-family: var(--texte); letter-spacing: 0; }
