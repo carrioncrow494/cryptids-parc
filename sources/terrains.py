@@ -21,7 +21,7 @@ def rocher(z, a):
 # On repère les trois coins visibles du dessus (gauche, avant, droite) et on redresse l'image pour que le losange du dessus
 # ait exactement l'angle du jeu ; seul ce losange est découpé en cases.
 CUBES = {'foret': dict(fichier='/mnt/project-files/cryptids-parc/jeu-video/lac-essais/map-lac.png',
-                       gauche=(35, 581), avant=(885, 938), droite=(1637, 622), N=54,
+                       largeur=1672, gauche=(35, 581), avant=(885, 938), droite=(1637, 622), N=54,
                        passages=[((900, 495), (1085, 555), 22)],            # le pont de pierre (segment et demi-largeur, en pixels de l'image d'origine)
                        reperes=dict(terre=(1330, 600), cromlech=(470, 330), statue=(640, 690), barque=(370, 620)))}   # la terre battue (chalet) et un pré dégagé
 def couleurs_cube(a):
@@ -31,8 +31,11 @@ def couleurs_cube(a):
     return nd.binary_opening(eau, iterations=1), nd.binary_opening(gris, iterations=2)
 def grille_cube(z):
     c = CUBES[z]; im = Image.open(c['fichier']).convert('RGB'); N = c['N']
+    k = im.width / c.get('largeur', im.width); P_ = lambda p: (p[0] * k, p[1] * k)   # l'image a été agrandie : les points mesurés grandissent avec elle
+    c = dict(c, gauche=P_(c['gauche']), avant=P_(c['avant']), droite=P_(c['droite']), passages=[(P_(a), P_(b), w * k) for a, b, w in c.get('passages', [])],
+             reperes={n: P_(pt) for n, pt in c.get('reperes', {}).items()})
     (gx, gy), (ax, ay), (dx, dy) = c['gauche'], c['avant'], c['droite']
-    hwD = (dx - gx) / 2; hhD = hwD * R_ISO; m = 40
+    hwD = (dx - gx) / 2; hhD = hwD * R_ISO; m = round(40 * k)
     # le losange voulu : gauche (m, Yc), avant (m + hwD, Yc + hhD), droite (m + 2 hwD, Yc) ; Yc laisse la place aux montagnes au-dessus
     src = np.array([[gx, gy, 1], [ax, ay, 1], [dx, dy, 1]], float)
     def vers(Yc): return np.array([[m, Yc], [m + hwD, Yc + hhD], [m + 2 * hwD, Yc]], float)
