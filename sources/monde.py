@@ -116,7 +116,14 @@ bati('lande', maison(5, 4, 'F', 'F', 'F'), cible=centre('lande'))         # la f
 # le lac (17/10) : le chalet en A sur la terre battue peinte, et le cromlech (cercle de pierres levées) dans un pré
 def repere(z, k): d = ILE[z]; x, y = iles[z][1]['reperes'][k]; return (d['ox'] + x, d['oy'] + y)
 bati('foret', maison(4, 4, 'C', 'C', 'C'), cible=repere('foret', 'terre'))
+bati('foret', maison(4, 3, 'I', 'I', 'I'), pres=BATIS[-1:])               # l'atelier d'art, à côté du chalet
 poser('foret', ['??o??', 'o???o', '?????', 'o???o', '??o??'], cible=repere('foret', 'cromlech'))
+sx, sy = repere('foret', 'statue')   # la statue du kelpie, dans l'eau au milieu du lac (Sam y a retiré l'îlot)
+for y in range(round(sy) - 2, round(sy) + 2):
+    for x in range(round(sx) - 2, round(sx) + 2): M[y][x] = 'Z'
+bx, by = repere('foret', 'barque')   # la barque : sur l'eau, contre la plage de galets
+_, x, y = min((abs(x - bx) + abs(y - by), x, y) for y in range(ILE['foret']['oy'], ILE['foret']['oy'] + ILE['foret']['h'] - 1) for x in range(ILE['foret']['ox'], ILE['foret']['ox'] + ILE['foret']['w'] - 1) if M[y][x] == '~' and any(M[y + b][x + a] == '.' for a, b in ((1, 0), (-1, 0), (0, 1), (0, -1))))
+M[y][x] = 'v'
 bati('cabane', ['KKKKKK'] * 3 + ['KKkKKK'], cible=centre('cabane'))       # la cabane de Sporran
 # les habitants et les panneaux : près du pont par lequel on arrive
 ENTREE = {'village': dep}
@@ -141,6 +148,9 @@ for x, y in BATIS: PRIS.update((x + a, y + b) for a in (-1, 0, 1) for b in (0, 1
 semer('village', 'L', 10, ecart=5); semer('foret', 'L', 4, ecart=8); semer('cabane', 'L', 3, ecart=8)
 semer('desert', 'c', 18, ok=lambda x, y: surSol('desert', x, y), ecart=3)
 semer('lande', 'o', 4, ecart=8); semer('lande', ',', 30, ok=lambda x, y: surSol('lande', x, y), ecart=2)
+semer('foret', 'O', 9, ok=lambda x, y: surSol('foret', x, y), ecart=6); semer('foret', ',', 30, ok=lambda x, y: surSol('foret', x, y), ecart=2)
+rive = lambda x, y: sum(M[y + b][x + a] == '~' for a in (-1, 0, 1) for b in (-1, 0, 1)) >= 3   # au bord de l'eau
+semer('foret', 'J', 1, ok=lambda x, y: rive(x, y) and M[y - 1][x] != '~' and M[y][x - 1] != '~')
 semer('cabane', 'u', 6, ecart=4); semer('cabane', ',', 20, ecart=2); semer('bayou', ',', 30, ecart=2)
 # les arbres : surtout en lisière, quelques-uns au milieu ; jamais sur un chemin peint ni devant une porte
 def bordDist(x, y):

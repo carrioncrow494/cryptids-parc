@@ -1,11 +1,12 @@
 # La végétation de chaque zone (planches de lisière de Sam, 16/10) : 6 planches de 4 × 3, rangées dans jeu-nature.webp.
 # Noms : <zone>_a1 … a8 (les 8 grands, lignes 1 et 2) et <zone>_p1 … p4 (les 4 petits, ligne 3). La place de chacun est écrite
 # dans sources/nature-atlas.js (le 5e nombre, 1, dit que l'objet est dans jeu-nature.webp et pas dans jeu-decor.webp).
+# Plus les bâtiments, monuments et objets du lac (planches L1 et L3 du 17/10) : chalet, atelier, kelpie, menhirs, lac_*.
 # python3 sources/decoupe-nature.py <dossier d'aperçus>
 import sys; sys.path.insert(0, 'sources')
 from planches import *
 PL = [('055283de-image.png', 'cabane'), ('dee84dfb-image.png', 'desert'), ('7b2b9308-image.png', 'lande'),
-      ('d8c1dd00-image.png', 'bayou'), ('827249fe-image.png', 'foret'), ('cc4f60a9-image.png', 'village')]
+      ('d8c1dd00-image.png', 'bayou'), ('8bad5e73-image.png', 'foret'), ('cc4f60a9-image.png', 'village')]
 objs = []
 for f, z in PL:
     L = [x for row in cases(f, 3, 4) for x in row]
@@ -13,6 +14,11 @@ for f, z in PL:
         n = '%s_%s%d' % (z, 'a' if i < 8 else 'p', i + 1 if i < 8 else i - 7)
         t = 300 if i < 8 else 200; k = t / max(im.size)
         objs.append((n, im.resize((round(im.size[0] * k), round(im.size[1] * k)), Image.LANCZOS)))
+# le lac (17/10) : la planche L1 (bâtiments et monuments, 2 × 2) et la planche L3 (objets, 2 × 4) de Sam ; la L2 remplace la végétation de la forêt
+for f, r, c, noms, t in [('fc8e604c-image.png', 2, 2, ['chalet', 'atelier', 'kelpie', 'menhirs'], 560),
+                         ('4bbbb8dd-image.png', 2, 4, ['lac_rocher', 'lac_souche', 'lac_panneau', 'lac_lanterne', 'lac_banc', 'lac_barque', 'lac_buches', 'lac_cairn'], 256)]:
+    for n, im in zip(noms, [x for row in cases(f, r, c) for x in row]):
+        k = t / max(im.size); objs.append((n, im.resize((round(im.size[0] * k), round(im.size[1] * k)), Image.LANCZOS)))
 LW = 2048; objs.sort(key=lambda o: -o[1].size[1]); x = y = h = 0; place = {}
 for n, im in objs:
     if x + im.size[0] > LW: x, y, h = 0, y + h + 6, 0
