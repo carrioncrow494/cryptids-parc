@@ -9,20 +9,20 @@ const TUILES = {
   "T": {}, "~": {}, "#": {}, "f": {}, "R": {}, "H": {}, "D": {}, "L": {}, "S": {}, "o": {},
   "E": {}, "G": {}, "K": {}, "k": {}, "M": {}, "A": {}, "c": {}, "t": {}, "u": {},
   "X": {}, "Q": {}, "N": {}, "Y": {}, "W": {}, "F": {}, "C": {}, "j": {}, "x": {},
-  "I": {}, "Z": {}, "O": {}, "v": {}, "J": {}, "g": {}
+  "I": {}, "Z": {}, "z": {}, "O": {}, "v": {}, "J": {}, "g": {}
 };   // . sol  , hautes herbes (bruyère, fougères, roseaux)  = chemin  : sable  * fleurs  b passerelle  B pont couvert  n neige  P départ  p passage (arche)
      // T arbre  ~ eau  # rocher  f barrière  R toit  H mur  D porte  L lampadaire  S panneau  o pierre levée
      // E cathédrale  G sa porte  K cabane biscornue  k sa porte  M mesa  A montagne  c cactus  t tombe  u citrouille
      // (espace) hors de l'île   x bord peint de l'île (on n'y marche pas)
      // X Excalibook  Q Chez Bergamotte  N Ninamoto  Y supérette  W Chupa la sopa  F ferme  C chalet en A  j jeu du parc
      // g portail (au bout des chemins : il mène à l'île voisine, ou au village ; voir MONDE.portails)
-     // le lac : I atelier d'art  Z statue du kelpie  O petit objet (rocher, souche, bûches, cairn)  v bateau de pêche (son amarre)  J banc
+     // le lac : I atelier d'art  Z z les deux kelpies (celui de gauche regarde à droite)  O petit objet (rocher, souche, bûches, cairn)  v bateau de pêche (son amarre)  J banc
 const CARTE = MONDE.carte;   // fabriquée par sources/monde.py : 6 îles peintes reliées par des ponts
 const LARG = CARTE[0].length, HAUT = CARTE.length;
 // Les régions de l'île : la première qui contient la case gagne. Chaque créature a la sienne (HABITAT).
 const ZONES = {
   cabane: { nom: "Le bois Biscornu", panneau: "Le bois Biscornu. Dans la cabane de travers vit… Sporran !" },
-  foret: { nom: "Le lac Carcajou", panneau: "Le lac Carcajou : le grand lac et sa statue de kelpie, le chalet et le cercle de pierres." },
+  foret: { nom: "Le lac Carcajou", panneau: "Le lac Carcajou : le grand lac et ses deux kelpies de pierre, le chalet et le cercle de pierres." },
   bayou: { nom: "Le bayou", panneau: "Le bayou : passerelles, cyprès et eaux boueuses." },
   village: { nom: "Le vieux village", panneau: "Le vieux village et sa cathédrale. Un pont part vers chaque région." },
   lande: { nom: "Les Hautes-Terres", panneau: "Les Hautes-Terres : la lande, le lac et la ferme." },
@@ -48,7 +48,7 @@ function batimentsJ() {
     const w = b.x1 - b.x0 + 1, d = b.y1 - b.y0 + 1, nom = choix(b, i), base = (w + d) / Math.SQRT2;
     BATIS.push({ b, nom, w, d, large: Math.max(nom.startsWith("maison") ? 3.3 : 0, base * (nom === "pont" ? 1.15 : 1.08)), base });
   });
-  bloc("EG", () => "cathedrale"); bloc("Z", () => "kelpie"); bloc("Kk", () => "cabane"); bloc("B", () => "pont");
+  bloc("EG", () => "cathedrale"); bloc("Z", () => "kelpie_d"); bloc("z", () => "kelpie_g"); bloc("Kk", () => "cabane"); bloc("B", () => "pont");
   bloc("RHD", (b, i) => zoneJ(b.x0, b.y0) === "desert" ? "saloon" : "maison" + (1 + i % 4));
   // les nouveaux lieux : leur dessin s'il est arrivé, sinon une maison en attendant
   const NOUVEAUX = { X: "excalibook", Q: "bergamotte", N: "ninamoto", Y: "superette", W: "chupa", F: "ferme", C: "chalet", I: "atelier" };
@@ -220,7 +220,7 @@ function casesLarge() {   // l'eau qu'on atteint en bateau depuis l'amarre, à p
   if (largeJ) return largeJ; if (!BATEAU0) return largeJ = [];
   const vu = new Set([BATEAU0 + ""]), f = [BATEAU0];
   while (f.length) { const [x, y] = f.shift(); for (const [dx, dy] of Object.values(DIRS)) { const n = [x + dx, y + dy]; if (!vu.has(n + "") && "~v".includes(tuileJ(n[0], n[1]))) { vu.add(n + ""); f.push(n); } } }
-  return largeJ = [...vu].map(s => s.split(",").map(Number)).filter(([x, y]) => { for (let b = -2; b <= 2; b++) for (let a = -2; a <= 2; a++) if (!"~vZ".includes(tuileJ(x + a, y + b))) return false; return true; });
+  return largeJ = [...vu].map(s => s.split(",").map(Number)).filter(([x, y]) => { for (let b = -2; b <= 2; b++) for (let a = -2; a <= 2; a++) if (!"~vZz".includes(tuileJ(x + a, y + b))) return false; return true; });
 }
 function bateauJ(R, fx, fy, t) {   // l'image du bateau, tournée vers sa direction ; le héros est assis dessus quand il navigue
   const B = JEU.bateau; if (!B || !ATLAS_DECOR.bateau_haut) return;
@@ -657,7 +657,7 @@ const SOLS_ZONE = ["village", "foret", "cabane", "desert", "lande", "bayou"], SO
 const TAILLE_DECOR = { sapin: 2.4, sapinneige: 2.4, bouleau: 2.2, automne: 2.2, mort: 1.9, cypres: 2.5, fleuri: .8, rocher: .85, rune: 1.1, bruyere: .5, champignons: .5,
   montagne: 2.3, tronc: .6, roseaux: .65, nenuphar: .35, cactus: 1.3, petitcactus: .7, falaise: 1.25, tombe: .75, croix: .85, grille: .9, citrouille: .55, lampadaire: 1.6,
   souche: .55, arche: 2, panneau: 1, barriere: .75, banc: .6, puits: 1.2, tonneau: .6, caisse: .6, boite: .9, epouvantail: 1.3, lanterne: .7, panier: .45, fontaine: 1,
-  menhirs: 1.9, lac_rocher: .9, lac_souche: .7, lac_panneau: 1.1, lac_lanterne: 1.5, lac_banc: .7, lac_barque: 1, lac_buches: .7, lac_cairn: 1 };   // le lac (planches de Sam, 17/10)
+  lac_rocher: .9, lac_souche: .7, lac_panneau: 1.1, lac_lanterne: 1.5, lac_banc: .7, lac_barque: 1, lac_buches: .7, lac_cairn: 1 };   // le lac (planches de Sam, 17/10)
 const OBJETS_LAC = ["lac_rocher", "lac_souche", "lac_buches", "lac_cairn"];
 const JEUX_PARC = ["toboggan", "balancoire", "tourniquet", "bacasable", "cheval", "tour", "tapecul", "dome"];   // quand la planche du parc sera là
 const PROPS_VILLAGE = ["puits", "fontaine", "tonneau", "caisse", "banc", "boite", "epouvantail", "lanterne", "panier"];
@@ -743,7 +743,7 @@ function dioramaFlat() {
     else if (ch === "#" && PEINTES.has(z)) { }   // les rochers sont déjà peints sur les cartes en cube
     else if (ch === "#") pose(z === "desert" ? "falaise" : "rocher", x, y, { miroir: m, haut: z === "desert" ? .8 : .85 });
     else if (ch === "g") pose("arche", x, y, { pied: .05, haut: 2.2 });
-    else if (ch === "o") pose(z === "foret" && ATLAS_DECOR.menhirs ? "menhirs" : "rune", x, y, { miroir: m });
+    else if (ch === "o") { const k = (x * 7 + y * 3) % 3 + 1; z === "foret" && ATLAS_DECOR.menhir1 ? pose("menhir" + k, x, y, { miroir: m, haut: [1.9, 2.3, 1.6][k - 1] }) : pose("rune", x, y, { miroir: m }); }
     else if (ch === "O") pose(OBJETS_LAC[Math.floor(r * 4)], x, y, { miroir: m });
     else if (ch === "J") pose("lac_banc", x, y, { miroir: m });
     else if (ch === "c") pose(ATLAS_DECOR.desert_a1 ? (r < .75 ? CACTUS_DESERT[Math.floor(rnd() * 4)] : "desert_p" + (1 + Math.floor(rnd() * 4))) : r < .6 ? "cactus" : "petitcactus", x, y, { miroir: m, haut: ATLAS_DECOR.desert_a1 ? (r < .75 ? 1.5 : .7) : undefined });

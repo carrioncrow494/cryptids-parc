@@ -137,8 +137,11 @@ poser('foret', ['??o??', 'o???o', '?????', 'o???o', '??o??'], cible=repere('fore
 import scipy.ndimage as ndi
 d_ = ILE['foret']; eau = np.array([[M[y][x] == '~' for x in range(d_['ox'], d_['ox'] + d_['w'])] for y in range(d_['oy'], d_['oy'] + d_['h'])])
 dist_ = ndi.distance_transform_edt(np.pad(eau, 1))[1:-1, 1:-1]; sy, sx = np.unravel_index(dist_.argmax(), dist_.shape); sx += d_['ox'] + .5; sy += d_['oy'] + .5
-for y in range(round(sy) - 2, round(sy) + 2):
-    for x in range(round(sx) - 2, round(sx) + 2): M[y][x] = 'Z'
+sx, sy = round(sx), round(sy)   # deux kelpies face à face (comme à Falkirk) : Z à gauche à l'écran, z à droite
+for y in range(sy, sy + 4):
+    for x in range(sx - 4, sx): M[y][x] = 'Z'
+for y in range(sy - 4, sy):
+    for x in range(sx, sx + 4): M[y][x] = 'z'
 bx, by = repere('foret', 'barque')   # la bateau de pêche : sur l'eau, contre la plage de galets
 _, x, y = min((abs(x - bx) + abs(y - by), x, y) for y in range(ILE['foret']['oy'], ILE['foret']['oy'] + ILE['foret']['h'] - 1) for x in range(ILE['foret']['ox'], ILE['foret']['ox'] + ILE['foret']['w'] - 1) if M[y][x] == '~' and any(M[y + b][x + a] == '.' for a, b in ((1, 0), (-1, 0), (0, 1), (0, -1))))
 M[y][x] = 'v'; BATEAU = (x, y)   # le bateau de pêche est amarré là (jeu.js le fait naviguer)

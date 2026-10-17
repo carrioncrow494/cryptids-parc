@@ -15,11 +15,16 @@ for f, z in PL:
         t = 300 if i < 8 else 200; k = t / max(im.size)
         objs.append((n, im.resize((round(im.size[0] * k), round(im.size[1] * k)), Image.LANCZOS)))
 # le lac (17/10) : la planche L1 (bâtiments et monuments, 2 × 2) et la planche L3 (objets, 2 × 4) de Sam ; la L2 remplace la végétation de la forêt
-for f, r, c, noms, t in [('fc8e604c-image.png', 2, 2, ['chalet', 'atelier', 'kelpie', 'menhirs'], 560),
+for f, r, c, noms, t in [('fc8e604c-image.png', 2, 2, ['chalet', 'atelier', None, None], 560),
                          ('4bbbb8dd-image.png', 2, 4, ['lac_rocher', 'lac_souche', 'lac_panneau', 'lac_lanterne', 'lac_banc', 'lac_barque', 'lac_buches', 'lac_cairn'], 256),
                          ('88af266c-image.png', 1, 4, ['bateau_haut', 'bateau_gauche', 'bateau_bas', 'bateau_droite'], 400)]:   # planche L4 : la proue vers chaque direction du jeu
     for n, im in zip(noms, [x for row in cases(f, r, c) for x in row]):
+        if n is None: continue
         k = t / max(im.size); objs.append((n, im.resize((round(im.size[0] * k), round(im.size[1] * k)), Image.LANCZOS)))
+# la planche L1 bis de Sam (17/10) : deux kelpies (ligne 1, en 2 cases) et trois pierres levées gravées (ligne 2, en 3 cases)
+L1b = 'f25782d4-image.png'
+for n, im in zip(['kelpie_g', 'kelpie_d'], cases(L1b, 2, 2)[0]): k = 560 / max(im.size); objs.append((n, im.resize((round(im.size[0] * k), round(im.size[1] * k)), Image.LANCZOS)))
+for i, im in enumerate(cases(L1b, 2, 3)[1]): k = 300 / max(im.size); objs.append(('menhir%d' % (i + 1), im.resize((round(im.size[0] * k), round(im.size[1] * k)), Image.LANCZOS)))
 LW = 2048; objs.sort(key=lambda o: -o[1].size[1]); x = y = h = 0; place = {}
 for n, im in objs:
     if x + im.size[0] > LW: x, y, h = 0, y + h + 6, 0
