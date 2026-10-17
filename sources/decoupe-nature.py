@@ -32,7 +32,24 @@ def fondre_eau(im):   # le bassin turquoise peint au pied du kelpie prend le ble
     a[..., 3] = np.where(eau, al * bord, al)
     return Image.fromarray(a.round().astype('uint8'), 'RGBA')
 for n, im in zip(['kelpie_g', 'kelpie_d'], cases(L1b, 2, 2)[0]): k = 560 / max(im.size); objs.append((n, fondre_eau(im.resize((round(im.size[0] * k), round(im.size[1] * k)), Image.LANCZOS))))
-for i, im in enumerate(cases(L1b, 2, 3)[1]): k = 300 / max(im.size); objs.append(('menhir%d' % (i + 1), im.resize((round(im.size[0] * k), round(im.size[1] * k)), Image.LANCZOS)))
+def pierres(path, boite):
+    """les pierres levées d'une rangée, une par tache (la grille fixe coupait des bouts des voisines, 17/10) ;
+    deux pierres qui se touchent par leurs cailloux sont séparées là où la tache est la plus mince"""
+    im = detoure(Image.open(U + path)).crop(boite); A = np.array(im); m = A[..., 3] > 30
+    lab, n = nd.label(nd.binary_dilation(m, iterations=2)); t = nd.sum(m, lab, range(1, n + 1)); res = []
+    for i in range(n):
+        if t[i] < 3000: continue
+        k = (lab == i + 1) & m; ys, xs = np.nonzero(k); x0, x1 = xs.min(), xs.max(); morceaux = [k]
+        if x1 - x0 > .96 * (ys.max() - ys.min()):   # plus large qu'une pierre : deux pierres
+            col = k[:, x0:x1 + 1].sum(0); a, b = int(.3 * len(col)), int(.7 * len(col)); c = x0 + a + int(np.argmin(col[a:b]))
+            g = k.copy(); g[:, c:] = False; d = k.copy(); d[:, :c] = False; morceaux = [g, d]
+        for kk in morceaux:
+            ys, xs = np.nonzero(kk); B = A.copy(); B[..., 3] = B[..., 3] * kk
+            res.append((xs.min(), Image.fromarray(B, 'RGBA').crop((xs.min(), ys.min(), xs.max() + 1, ys.max() + 1))))
+    return [im for _, im in sorted(res, key=lambda r: r[0])]
+# 6 pierres : les 3 gravées de la L1 bis et les 3 de la case en bas à droite de la L1 ; jeu.js les dessine à la hauteur de leur image (HAUT_MENHIR)
+for i, im in enumerate(pierres(L1b, (0, 660, 1255, 1255)) + pierres('fc8e604c-image.png', (640, 680, 1255, 1255))):
+    k = 300 / 519; objs.append(('menhir%d' % (i + 1), im.resize((round(im.size[0] * k), round(im.size[1] * k)), Image.LANCZOS)))
 LW = 2048; objs.sort(key=lambda o: -o[1].size[1]); x = y = h = 0; place = {}
 for n, im in objs:
     if x + im.size[0] > LW: x, y, h = 0, y + h + 6, 0

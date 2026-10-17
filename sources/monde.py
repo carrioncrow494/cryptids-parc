@@ -130,8 +130,9 @@ bati('desert', maison(5, 3), cible=centre('desert'))                      # le r
 bati('desert', maison(4, 3, 'W', 'W', 'W'), loin=BATIS)                   # Chupa la sopa
 bati('lande', maison(5, 4, 'F', 'F', 'F'), cible=centre('lande'))         # la ferme
 # le lac (17/10) : le chalet en A sur la terre battue peinte, et le cromlech (cercle de pierres levées) dans un pré
-bati('foret', maison(5, 5, 'C', 'C', 'C'), cible=repere('foret', 'terre'))   # 5 × 5 depuis le 17/10 (Sam le voulait un peu plus grand)
-bati('foret', maison(4, 3, 'I', 'I', 'I'), pres=BATIS[-1:])               # l'atelier d'art, à côté du chalet
+# chalet 5 × 5 et atelier 4 × 3 posés ensemble, côte à côte (posés l'un après l'autre, l'atelier ne trouvait plus de place près du chalet agrandi)
+c = poser('foret', ['CCCCC?????', 'CCCCC?????', 'CCCCC?IIII', 'CCCCC?IIII', 'CCCCC?IIII'], cible=repere('foret', 'terre'))
+BATIS.extend([(c[0] + 2, c[1] + 5), (c[0] + 8, c[1] + 5)])   # la case devant chaque porte
 poser('foret', ['??oo??', 'o????o', '??????', '??????', 'o????o', '??oo??'], cible=repere('foret', 'cromlech'), marge=0)   # 8 pierres sur 6 × 6 (17/10 ; 7 × 7 ne tient pas dans le pré)
 # la statue du kelpie : au milieu du lac, la case d'eau la plus loin de toute rive (Sam y a retiré l'îlot)
 import scipy.ndimage as ndi

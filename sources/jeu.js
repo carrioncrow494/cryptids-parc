@@ -161,6 +161,8 @@ function ouvrirJeu() {
     if (p.jeu && p.jeu.v !== 4) delete p.jeu;   // une partie de l'ancien jeu (4 petites maps) : on repart du village, les créatures sauvées le restent
   if (!p.jeu) p.jeu = { v: 4, m: 0, x: DEPART[0], y: DEPART[1], dir: "haut", pos: {} };
   placerJeu(p);
+  const b = p.jeu.bateau;   // un bateau sauvé sur l'ancienne carte du lac (avant le 17/10, ou après un changement de carte) : il revient à l'amarre
+  if (b && !eauDuLac().has(b.x + "," + b.y)) { delete p.jeu.bateau; if (b.a) Object.assign(p.jeu, { x: DEPART[0], y: DEPART[1], dir: "bas" }); }
   if (!(p.jeu.bateau && p.jeu.bateau.a) && !libreSol(p.jeu.x, p.jeu.y)) Object.assign(p.jeu, { x: DEPART[0], y: DEPART[1], dir: "bas" });   // une ancienne partie arrêtée sur un pont qui n'existe plus
   JEU = { x: p.jeu.x, y: p.jeu.y, dir: p.jeu.dir || "bas", pas: null, tenu: null, revele: null, raf: 0, t: 0, dernierBip: 0, zone: null };
   JEU.bateau = BATEAU0 && (p.jeu.bateau ? { ...p.jeu.bateau } : { x: BATEAU0[0], y: BATEAU0[1], dir: "gauche", a: false });
@@ -216,11 +218,16 @@ function essayerPas(dir, essai) {   // essai : on regarde seulement si ça passe
 const BATEAU0 = MONDE.bateau || null;
 const eauJ = (x, y) => "~v".includes(tuileJ(x, y)) && !occupeJ(x, y);
 let largeJ = null;
+let lacJ = null;
+function eauDuLac() {   // toutes les cases d'eau qu'on atteint en bateau depuis l'amarre
+  if (lacJ) return lacJ; lacJ = new Set(); if (!BATEAU0) return lacJ;
+  const f = [BATEAU0]; lacJ.add(BATEAU0 + "");
+  while (f.length) { const [x, y] = f.shift(); for (const [dx, dy] of Object.values(DIRS)) { const n = [x + dx, y + dy]; if (!lacJ.has(n + "") && "~v".includes(tuileJ(n[0], n[1]))) { lacJ.add(n + ""); f.push(n); } } }
+  return lacJ;
+}
 function casesLarge() {   // l'eau qu'on atteint en bateau depuis l'amarre, à plus de 2 cases de toute rive
   if (largeJ) return largeJ; if (!BATEAU0) return largeJ = [];
-  const vu = new Set([BATEAU0 + ""]), f = [BATEAU0];
-  while (f.length) { const [x, y] = f.shift(); for (const [dx, dy] of Object.values(DIRS)) { const n = [x + dx, y + dy]; if (!vu.has(n + "") && "~v".includes(tuileJ(n[0], n[1]))) { vu.add(n + ""); f.push(n); } } }
-  return largeJ = [...vu].map(s => s.split(",").map(Number)).filter(([x, y]) => { for (let b = -2; b <= 2; b++) for (let a = -2; a <= 2; a++) if (!"~vZz".includes(tuileJ(x + a, y + b))) return false; return true; });
+  return largeJ = [...eauDuLac()].map(s => s.split(",").map(Number)).filter(([x, y]) => { for (let b = -2; b <= 2; b++) for (let a = -2; a <= 2; a++) if (!"~vZz".includes(tuileJ(x + a, y + b))) return false; return true; });
 }
 function bateauJ(R, fx, fy, t) {   // l'image du bateau, tournée vers sa direction ; le héros est assis dessus quand il navigue
   const B = JEU.bateau; if (!B || !ATLAS_DECOR.bateau_haut) return;
@@ -233,6 +240,7 @@ function bateauJ(R, fx, fy, t) {   // l'image du bateau, tournée vers sa direct
 }
 // ---------- les portails (17/10) : au bout des chemins, un portail mène à l'île voisine ; on peut aussi rentrer tout de suite au village ----------
 const portailEn = (x, y) => (MONDE.portails || []).find(q => q.x === x && q.y === y);
+const portailPres = () => (MONDE.portails || []).find(q => Math.max(Math.abs(q.x - JEU.x), Math.abs(q.y - JEU.y)) <= 2);
 function portailJ(q) {   // le choix : l'île voisine, le village (si on n'y va pas déjà), ou rester
   sfx("page"); JEU.portail = q;
   const el = $("jeuDialogue"); el.innerHTML = ""; el.hidden = false; clearTimeout(dialogueJ.t);
@@ -268,7 +276,7 @@ function boutonA() {
   if (JEU.revele) return trouveJ();
   if (JEU.portail) return voyagerJ(JEU.portail.vers);
   const [dx, dy] = DIRS[JEU.dir], fx = JEU.x + dx, fy = JEU.y + dy;
-  const g = portailEn(fx, fy); if (g) return portailJ(g);
+  const g = portailEn(fx, fy) || (!cachetteEn(fx, fy) && !pnjEn(fx, fy) && portailPres()); if (g) return portailJ(g);   // A ouvre un portail tout proche, pas besoin d'être collé devant (17/10)
   if (JEU.bateau && !JEU.bateau.a && fx === JEU.bateau.x && fy === JEU.bateau.y) return essayerPas(JEU.dir);   // A devant le bateau : on monte
   // comme dans Zelda : on fouille ce qu'on a devant soi. Un buisson qui bouge cache un cryptide.
   const q = cachetteEn(fx, fy);
@@ -657,7 +665,7 @@ const SOLS_ZONE = ["village", "foret", "cabane", "desert", "lande", "bayou"], SO
 const TAILLE_DECOR = { sapin: 2.4, sapinneige: 2.4, bouleau: 2.2, automne: 2.2, mort: 1.9, cypres: 2.5, fleuri: .8, rocher: .85, rune: 1.1, bruyere: .5, champignons: .5,
   montagne: 2.3, tronc: .6, roseaux: .65, nenuphar: .35, cactus: 1.3, petitcactus: .7, falaise: 1.25, tombe: .75, croix: .85, grille: .9, citrouille: .55, lampadaire: 1.6,
   souche: .55, arche: 2, panneau: 1, barriere: .75, banc: .6, puits: 1.2, tonneau: .6, caisse: .6, boite: .9, epouvantail: 1.3, lanterne: .7, panier: .45, fontaine: 1,
-  lac_rocher: .9, lac_souche: .7, lac_panneau: 1.1, lac_lanterne: 1.5, lac_banc: .7, lac_barque: 1, lac_buches: .7, lac_cairn: 1 };   // le lac (planches de Sam, 17/10)
+  lac_rocher: .9, lac_souche: .7, lac_panneau: 1.1, lac_lanterne: 1.5, lac_banc: 1.3, lac_barque: 1, lac_buches: .7, lac_cairn: 1 };   // le lac (planches de Sam, 17/10)
 const OBJETS_LAC = ["lac_rocher", "lac_souche", "lac_buches", "lac_cairn"];
 const JEUX_PARC = ["toboggan", "balancoire", "tourniquet", "bacasable", "cheval", "tour", "tapecul", "dome"];   // quand la planche du parc sera là
 const PROPS_VILLAGE = ["puits", "fontaine", "tonneau", "caisse", "banc", "boite", "epouvantail", "lanterne", "panier"];
@@ -742,8 +750,8 @@ function dioramaFlat() {
     else if (ch === "M") pose("falaise", x, y, { miroir: m, haut: 1.1 + rnd() * .3 });
     else if (ch === "#" && PEINTES.has(z)) { }   // les rochers sont déjà peints sur les cartes en cube
     else if (ch === "#") pose(z === "desert" ? "falaise" : "rocher", x, y, { miroir: m, haut: z === "desert" ? .8 : .85 });
-    else if (ch === "g") pose("arche", x, y, { pied: .05, haut: 2.2 });
-    else if (ch === "o") { const k = (x * 7 + y * 3) % 3 + 1; z === "foret" && ATLAS_DECOR.menhir1 ? pose("menhir" + k, x, y, { miroir: m, haut: [2.3, 2.8, 2.0][k - 1] }) : pose("rune", x, y, { miroir: m }); }
+    else if (ch === "g") { const q = portailEn(x, y); pose("arche", x, y, { miroir: !q || q.ax === x, pied: .05, haut: 2.2 }); }   // l'arche s'ouvre dans le sens du chemin (comme les « p »)
+    else if (ch === "o") { const k = (x * 7 + y * 3) % 6 + 1; z === "foret" && ATLAS_DECOR.menhir6 ? pose("menhir" + k, x, y, { miroir: m, haut: 2.8 * ATLAS_DECOR["menhir" + k][3] / 300 }) : pose("rune", x, y, { miroir: m }); }
     else if (ch === "O") pose(OBJETS_LAC[Math.floor(r * 4)], x, y, { miroir: m });
     else if (ch === "J") pose("lac_banc", x, y, { miroir: m });
     else if (ch === "c") pose(ATLAS_DECOR.desert_a1 ? (r < .75 ? CACTUS_DESERT[Math.floor(rnd() * 4)] : "desert_p" + (1 + Math.floor(rnd() * 4))) : r < .6 ? "cactus" : "petitcactus", x, y, { miroir: m, haut: ATLAS_DECOR.desert_a1 ? (r < .75 ? 1.5 : .7) : undefined });
@@ -777,6 +785,7 @@ function dioramaFlat() {
   const vx = vortexJ(R); if ((MONDE.portails || []).length) anim.push(vx.tourner);
   (MONDE.portails || []).forEach((q, i) => {   // les portails : un vortex de couleur tourne dans l'arche, et une lueur respire autour
     const [, , aw, ah] = ATLAS_DECOR.arche, H = 2.2, v = new THREE.Sprite(vx.mat); v.scale.set(H * aw / ah, H, 1); v.center.set(.5, .05 * SIN_CAM / H);
+    if (q.ax === q.x) v.scale.x *= -1;   // arche retournée (voir « g » dans decorJ) : le vortex aussi
     v.position.set(q.x, 0, q.y); v.renderOrder = -1; groupe.add(v);   // derrière l'arche : ses piliers le bordent
     const m = lueurJ(0x4ff3e0).clone(), s = new THREE.Sprite(m); s.scale.set(2.4, 2.4, 1); s.position.set(q.x, .9, q.y); s.renderOrder = 3; groupe.add(s);
     anim.push(tt => { m.opacity = .35 + .2 * Math.sin(tt / 500 + i); });
@@ -1083,7 +1092,7 @@ addEventListener("keydown", e => {
 addEventListener("keyup", e => { if (JEU && TOUCHES[e.key] === JEU.tenu) JEU.tenu = null; });
 $("jeuQuitter").addEventListener("click", () => { fermerJeu(); enBoss = false; majAccueil(); montrer("accueil"); });
 
-window.__jeu = { zoom: () => ZOOM.demi, etat: () => JEU && { x: JEU.x, y: JEU.y, dir: JEU.dir, zone: zoneJ(JEU.x, JEU.y), revele: JEU.revele && JEU.revele.q.k, cibles: ciblesJ() },
+window.__jeu = { zoom: () => ZOOM.demi, etat: () => JEU && { x: JEU.x, y: JEU.y, dir: JEU.dir, zone: zoneJ(JEU.x, JEU.y), revele: JEU.revele && JEU.revele.q.k, bateau: JEU.bateau, cibles: ciblesJ() },
   aller: (x, y, dir) => { JEU.x = x; JEU.y = y; JEU.pas = null; if (dir) JEU.dir = dir; arriverJ(true); }, pnj: PNJ, libreSol, pas: d => essayerPas(d), A: () => boutonA(), B: () => boutonB(),
   sousBati: () => { sousBatiment(0, 0); return [...SOUS_BATI].filter(k => { const [x, y] = k.split(",").map(Number); return !!(TUILES[tuileJ(x, y)] || {}).libre; }); },
   decor: () => R3 && R3.ile && R3.ile.flat ? { objets: R3.ile.groupe.children.length, dessins: R3.rendu.info.render.calls } : null,
