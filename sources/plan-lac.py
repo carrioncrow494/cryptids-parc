@@ -72,7 +72,7 @@ N=54
 G=[[G[int(j*H/N)][int(i*W/N)] for i in range(N)] for j in range(N)]
 W=H=N
 hw=30; hh=hw*.543
-T=int(N/3*hw*(1-.543**2)**.5/.7071)   # épaisseur = un tiers du côté, vue sous le même angle
+T=int(N/6*hw*(1-.543**2)**.5/.7071)   # épaisseur = un sixième du côté, vue sous le même angle
 X0=H*hw+40; Y0=100
 img=Image.new('RGB',(int((W+H)*hw+80),int((W+H)*hh+T+160)),(0,255,0))
 d=ImageDraw.Draw(img)
@@ -83,12 +83,12 @@ for j in range(H):
     for i in range(W):
         d.polygon([P(i,j),P(i+1,j),P(i+1,j+1),P(i,j+1)],fill=col[G[j][i]])
 # faces avant : herbe, terre, roche ; l'eau du lac en coupe
-COUCHES=[(.06,(90,140,75)),(.5,(122,86,60)),(1,(96,88,84))]
+COUCHES=[(.12,(90,140,75)),(.8,(122,86,60)),(1,(110,78,55))]
 def face(a,b,eau,sombre):
     k=.86 if sombre else 1
     t0=0
     for t1,c in COUCHES:
-        if eau and t1<=.5: c=(110,185,220) if t1<.1 else (70,150,200)
+        if eau and t1<=.8: c=(110,185,220) if t1<.2 else (70,150,200)
         c=tuple(int(v*k) for v in c)
         d.polygon([(a[0],a[1]+T*t0),(b[0],b[1]+T*t0),(b[0],b[1]+T*t1),(a[0],a[1]+T*t1)],fill=c)
         t0=t1
