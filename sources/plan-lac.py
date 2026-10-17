@@ -78,7 +78,7 @@ img=Image.new('RGB',(int((W+H)*hw+80),int((W+H)*hh+T+160)),(0,255,0))
 d=ImageDraw.Draw(img)
 def P(i,j): return (X0+(i-j)*hw, Y0+(i+j)*hh)
 col={'g':(108,158,92),'M':(140,140,150),'~':(80,170,215),'C':(200,235,250),'K':(150,150,160),'p':(200,175,225),
-'P':(150,120,95),'A':(150,150,160),'E':(150,150,160),'T':(108,158,92),'O':(108,158,92),'b':(190,95,160),'y':(230,195,60)}
+'P':(150,120,95),'A':(150,150,160),'E':(150,150,160),'T':(108,158,92),'O':(108,158,92),'b':(108,158,92),'y':(108,158,92)}   # végétation : pas sur le plan du terrain
 for j in range(H):
     for i in range(W):
         d.polygon([P(i,j),P(i+1,j),P(i+1,j+1),P(i,j+1)],fill=col[G[j][i]])
@@ -119,7 +119,7 @@ for j in range(H):
     for i in range(W):
         x,y=P(i+.5,j+.5)
         g=G[j][i]
-        if g=='T': d.ellipse([x-11,y-11,x+11,y+11],fill=(30,70,50))
+        if False and g=='T': d.ellipse([x-11,y-11,x+11,y+11],fill=(30,70,50))
         if g=='M' and (i+j)%2==0: d.ellipse([x-12,y-12,x+12,y+12],fill=(110,110,122))
         if g=='O': d.ellipse([x-8,y-8,x+8,y+8],fill=(120,150,110),outline=(60,80,60),width=2)
 f=ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf',22)
@@ -127,7 +127,7 @@ def lab(i,j,t):
     x,y=P(i*N/60,j*N/48); w=d.textlength(t,font=f)
     d.text((x-w/2,y-11),t,font=f,fill=(255,255,255),stroke_width=3,stroke_fill=(40,40,40))
 lab(29.5,19.5,'Pont de pierre'); lab(27,9,'Vasques et cascades')
-lab(48,14,'Bois'); lab(22,33,'Lac'); lab(3,22,'Montagnes'); lab(59,31.5,'vers le village'); lab(8,49.5,'vers la cabane')
+lab(22,33,'Lac'); lab(3,22,'Montagnes'); lab(59,31.5,'vers le village'); lab(8,49.5,'vers la cabane')
 def labxy(xy,t):
     x,y=xy; w=d.textlength(t,font=f)
     d.text((x-w/2,y-11),t,font=f,fill=(255,255,255),stroke_width=3,stroke_fill=(40,40,40))
