@@ -20,7 +20,7 @@ def rocher(z, a):
 # Les cartes en cube (17/10) : un bloc peint par ChatGPT, avec ses faces de terre et ses montagnes au fond.
 # On repère les trois coins visibles du dessus (gauche, avant, droite) et on redresse l'image pour que le losange du dessus
 # ait exactement l'angle du jeu ; seul ce losange est découpé en cases.
-CUBES = {'foret': dict(fichier='/mnt/project-files/cryptids-parc/jeu-video/lac-essais/lac-carcajou-upscale.jpg',   # agrandie et recolorée par Sam (17/10)
+CUBES = {'foret': dict(fichier='/mnt/project-files/cryptids-parc/jeu-video/lac-essais/map-lac-02.png',   # Map_Lac_02 de Sam (17/10 au soir) : même cadrage que lac-carcajou-upscale.jpg (vérifié pixel à pixel), chemins revus et place de sable à droite
                        gauche=(137, 2205), avant=(2635, 3535), droite=(5295, 2198), N=40,   # 40 cases de côté (et pas 54) : le héros et les objets à l'échelle du terrain peint (le pont fait environ 5 héros)
                        passages=[((2640, 2000), (3340, 2220), 60)],            # le pont de pierre (segment et demi-largeur, en pixels de l'image)
                        reperes=dict(terre=(4000, 2240), cromlech=(1560, 1640), barque=(1320, 2500),   # la terre battue (chalet), un pré dégagé…
