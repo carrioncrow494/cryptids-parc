@@ -133,7 +133,10 @@ bati('lande', maison(5, 4, 'F', 'F', 'F'), cible=centre('lande'))         # la f
 bati('foret', maison(4, 4, 'C', 'C', 'C'), cible=repere('foret', 'terre'))
 bati('foret', maison(4, 3, 'I', 'I', 'I'), pres=BATIS[-1:])               # l'atelier d'art, à côté du chalet
 poser('foret', ['??o??', 'o???o', '?????', 'o???o', '??o??'], cible=repere('foret', 'cromlech'))
-sx, sy = repere('foret', 'statue')   # la statue du kelpie, dans l'eau au milieu du lac (Sam y a retiré l'îlot)
+# la statue du kelpie : au milieu du lac, la case d'eau la plus loin de toute rive (Sam y a retiré l'îlot)
+import scipy.ndimage as ndi
+d_ = ILE['foret']; eau = np.array([[M[y][x] == '~' for x in range(d_['ox'], d_['ox'] + d_['w'])] for y in range(d_['oy'], d_['oy'] + d_['h'])])
+dist_ = ndi.distance_transform_edt(np.pad(eau, 1))[1:-1, 1:-1]; sy, sx = np.unravel_index(dist_.argmax(), dist_.shape); sx += d_['ox'] + .5; sy += d_['oy'] + .5
 for y in range(round(sy) - 2, round(sy) + 2):
     for x in range(round(sx) - 2, round(sx) + 2): M[y][x] = 'Z'
 bx, by = repere('foret', 'barque')   # la barque : sur l'eau, contre la plage de galets

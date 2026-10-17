@@ -20,11 +20,11 @@ def rocher(z, a):
 # Les cartes en cube (17/10) : un bloc peint par ChatGPT, avec ses faces de terre et ses montagnes au fond.
 # On repère les trois coins visibles du dessus (gauche, avant, droite) et on redresse l'image pour que le losange du dessus
 # ait exactement l'angle du jeu ; seul ce losange est découpé en cases.
-CUBES = {'foret': dict(fichier='/mnt/project-files/cryptids-parc/jeu-video/lac-essais/map-lac.png',
-                       largeur=1672, gauche=(35, 581), avant=(885, 938), droite=(1637, 622), N=54,
-                       passages=[((900, 495), (1085, 555), 22)],            # le pont de pierre (segment et demi-largeur, en pixels de l'image d'origine)
-                       reperes=dict(terre=(1330, 600), cromlech=(470, 330), statue=(640, 690), barque=(370, 620),
-                                    vers_village=(1555, 590), vers_cabane=(110, 580)))}   # le bout des chemins peints : les portails   # la terre battue (chalet) et un pré dégagé
+CUBES = {'foret': dict(fichier='/mnt/project-files/cryptids-parc/jeu-video/lac-essais/lac-carcajou-upscale.jpg',   # agrandie et recolorée par Sam (17/10)
+                       gauche=(137, 2205), avant=(2635, 3535), droite=(5295, 2198), N=54,
+                       passages=[((2640, 2000), (3340, 2220), 60)],            # le pont de pierre (segment et demi-largeur, en pixels de l'image)
+                       reperes=dict(terre=(4000, 2240), cromlech=(1560, 1640), barque=(1320, 2500),   # la terre battue (chalet), un pré dégagé…
+                                    vers_village=(4900, 2280), vers_cabane=(440, 2380)))}   # le bout des chemins peints : les portails
 def couleurs_cube(a):
     r, g, b = a[..., 0], a[..., 1], a[..., 2]
     eau = (b > r + 70) & (b > 120)
@@ -32,11 +32,8 @@ def couleurs_cube(a):
     return nd.binary_opening(eau, iterations=1), nd.binary_opening(gris, iterations=2)
 def grille_cube(z):
     c = CUBES[z]; im = Image.open(c['fichier']).convert('RGB'); N = c['N']
-    k = im.width / c.get('largeur', im.width); P_ = lambda p: (p[0] * k, p[1] * k)   # l'image a été agrandie : les points mesurés grandissent avec elle
-    c = dict(c, gauche=P_(c['gauche']), avant=P_(c['avant']), droite=P_(c['droite']), passages=[(P_(a), P_(b), w * k) for a, b, w in c.get('passages', [])],
-             reperes={n: P_(pt) for n, pt in c.get('reperes', {}).items()})
     (gx, gy), (ax, ay), (dx, dy) = c['gauche'], c['avant'], c['droite']
-    hwD = (dx - gx) / 2; hhD = hwD * R_ISO; m = round(40 * k)
+    hwD = min((dx - gx) / 2, 1950); hhD = hwD * R_ISO; m = 40   # au plus 3980 px de large : l'iPhone n'accepte pas d'image plus grande que 4096
     # le losange voulu : gauche (m, Yc), avant (m + hwD, Yc + hhD), droite (m + 2 hwD, Yc) ; Yc laisse la place aux montagnes au-dessus
     src = np.array([[gx, gy, 1], [ax, ay, 1], [dx, dy, 1]], float)
     def vers(Yc): return np.array([[m, Yc], [m + hwD, Yc + hhD], [m + 2 * hwD, Yc]], float)
