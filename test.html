@@ -2329,7 +2329,8 @@ function casesLarge() {   // l'eau qu'on atteint en bateau depuis l'amarre, à p
 function bateauJ(R, fx, fy, t) {   // l'image du bateau, tournée vers sa direction ; le héros est assis dessus quand il navigue
   const B = JEU.bateau; if (!B || !ATLAS_DECOR.bateau_haut) return;
   if (!R.bateau) { R.bateau = new THREE.Sprite(matDecor(R, "bateau_haut")); R.bateau.center.set(.5, .36); R.scene.add(R.bateau); }
-  const nom = "bateau_" + B.dir, [, , w, h] = ATLAS_DECOR[nom], s = R.bateau, m = matDecor(R, nom);
+  // vers le bas-droite : l'image « bas » retournée (dans l'image « droite » de la planche, la proue pointue se lit vers le haut-gauche, 17/10)
+  const inv = B.dir === "droite", nom = inv ? "bateau_bas" : "bateau_" + B.dir, [, , w, h] = ATLAS_DECOR[nom], s = R.bateau, m = matDecor(R, nom, inv);
   if (s.material !== m) s.material = m;
   s.scale.set(4.2, 4.2 * h / w, 1);
   const x = B.a ? fx : B.x, z = B.a ? fy : B.y, houle = Math.sin(t / 600) * .03;
@@ -2847,7 +2848,7 @@ function dioramaFlat() {
     else if (ch === "M") pose("falaise", x, y, { miroir: m, haut: 1.1 + rnd() * .3 });
     else if (ch === "#" && PEINTES.has(z)) { }   // les rochers sont déjà peints sur les cartes en cube
     else if (ch === "#") pose(z === "desert" ? "falaise" : "rocher", x, y, { miroir: m, haut: z === "desert" ? .8 : .85 });
-    else if (ch === "g") { const q = portailEn(x, y); pose("arche", x, y, { miroir: !q || q.ax === x, pied: .05, haut: 2.2 }); }   // l'arche s'ouvre dans le sens du chemin (comme les « p »)
+    else if (ch === "g") { const q = portailEn(x, y); pose("arche", x, y, { miroir: !!q && q.ay === y, pied: .05, haut: 2.2 }); }   // l'arche s'ouvre face au chemin : son image passe en y (bas-gauche), retournée en x
     else if (ch === "o") { const k = (x * 7 + y * 3) % 6 + 1; z === "foret" && ATLAS_DECOR.menhir6 ? pose("menhir" + k, x, y, { miroir: m, haut: 2.8 * ATLAS_DECOR["menhir" + k][3] / 300 }) : pose("rune", x, y, { miroir: m }); }
     else if (ch === "O") pose(OBJETS_LAC[Math.floor(r * 4)], x, y, { miroir: m });
     else if (ch === "J") pose("lac_banc", x, y, { miroir: tuileJ(x, y + 1) !== "~" });   // face au lac : son image regarde vers le bas-gauche (y + 1), retournée vers le bas-droite (x + 1)
@@ -2859,7 +2860,7 @@ function dioramaFlat() {
     else if (ch === "L" && z === "foret" && ATLAS_DECOR.lac_lanterne) { pose("lac_lanterne", x, y, { miroir: m }); lueur(x, y, 1); }
     else if (ch === "L") { pose("lampadaire", x, y); lueur(x, y, 1.35); }
     else if (ch === "f") pose(z === "foret" ? "grille" : "barriere", x, y, { miroir: "fT".includes(tuileJ(x, y - 1)) || "fT".includes(tuileJ(x, y + 1)) });
-    else if (ch === "p") { pose("arche", x, y, { miroir: libreSol(x - 1, y) && libreSol(x + 1, y) && !(libreSol(x, y - 1) && libreSol(x, y + 1)) ? false : true, pied: .05 }).userData.passage = true; }
+    else if (ch === "p") { pose("arche", x, y, { miroir: libreSol(x - 1, y) && libreSol(x + 1, y) && !(libreSol(x, y - 1) && libreSol(x, y + 1)), pied: .05 }).userData.passage = true; }
     else if (ch === "," && (z === "lande" || z === "cabane")) pose("bruyere", x + (rnd() - .5) * .3, y + (rnd() - .5) * .3, { miroir: m, haut: .4 + rnd() * .2 });
     else if (ch === "," && z === "bayou") pose("roseaux", x, y, { miroir: m });
     else if (ch === "," && z === "foret") pose("foret_p" + (1 + Math.floor(r * 4)), x + (rnd() - .5) * .3, y + (rnd() - .5) * .3, { miroir: m, haut: .45 + rnd() * .2 });
@@ -2882,7 +2883,7 @@ function dioramaFlat() {
   const vx = vortexJ(R); if ((MONDE.portails || []).length) anim.push(vx.tourner);
   (MONDE.portails || []).forEach((q, i) => {   // les portails : un vortex de couleur tourne dans l'arche, et une lueur respire autour
     const [, , aw, ah] = ATLAS_DECOR.arche, H = 2.2, v = new THREE.Sprite(vx.mat); v.scale.set(H * aw / ah, H, 1); v.center.set(.5, .05 * SIN_CAM / H);
-    if (q.ax === q.x) v.scale.x *= -1;   // arche retournée (voir « g » dans decorJ) : le vortex aussi
+    if (q.ay === q.y) v.scale.x *= -1;   // arche retournée (voir « g » dans decorJ) : le vortex aussi
     v.position.set(q.x, 0, q.y); v.renderOrder = -1; groupe.add(v);   // derrière l'arche : ses piliers le bordent
     const m = lueurJ(0x4ff3e0).clone(), s = new THREE.Sprite(m); s.scale.set(2.4, 2.4, 1); s.position.set(q.x, .9, q.y); s.renderOrder = 3; groupe.add(s);
     anim.push(tt => { m.opacity = .35 + .2 * Math.sin(tt / 500 + i); });
