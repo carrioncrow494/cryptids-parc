@@ -67,9 +67,13 @@ fill(lambda i,j: (i-50)**2+(j-39)**2<9 and G[j][i]=='T','g')
 for (cx,cy,c) in [(8,13,'b'),(20,10,'b'),(34,30,'b'),(55,44,'b'),(30,44,'b'),(46,12,'b'),(10,44,'y'),(36,11,'y'),(56,33,'y'),(33,38,'y'),(21,15,'y')]:
     r=random.uniform(1.8,2.8)
     fill(lambda i,j: (i-cx)**2+((j-cy)*1.2)**2<r*r and G[j][i] in 'gT', c)
-# rendu iso
-hw=30; hh=hw*.543; T=95
-X0=H*hw+40; Y0=40+60
+# rendu iso : on ramène le plan dans un carré N×N
+N=54
+G=[[G[int(j*H/N)][int(i*W/N)] for i in range(N)] for j in range(N)]
+W=H=N
+hw=30; hh=hw*.543
+T=int(N/3*hw*(1-.543**2)**.5/.7071)   # épaisseur = un tiers du côté, vue sous le même angle
+X0=H*hw+40; Y0=100
 img=Image.new('RGB',(int((W+H)*hw+80),int((W+H)*hh+T+160)),(0,255,0))
 d=ImageDraw.Draw(img)
 def P(i,j): return (X0+(i-j)*hw, Y0+(i+j)*hh)
@@ -78,16 +82,18 @@ col={'g':(108,158,92),'M':(140,140,150),'~':(80,170,215),'C':(200,235,250),'K':(
 for j in range(H):
     for i in range(W):
         d.polygon([P(i,j),P(i+1,j),P(i+1,j+1),P(i,j+1)],fill=col[G[j][i]])
-# faces avant
-for i in range(W):
-    a,b=P(i,H),P(i+1,H); c=G[H-1][i]=='~'
-    d.polygon([a,b,(b[0],b[1]+T),(a[0],a[1]+T)],fill=(120,190,225) if c else (122,86,60))
-for j in range(H):
-    a,b=P(W,j),P(W,j+1); c=G[j][W-1]=='~'
-    d.polygon([a,b,(b[0],b[1]+T),(a[0],a[1]+T)],fill=(110,180,215) if c else (98,68,48))
-# strates
-for k in (.4,.75):
-    d.line([(P(0,H)[0],P(0,H)[1]+T*k),(P(W,H)[0],P(W,H)[1]+T*k),(P(W,0)[0],P(W,0)[1]+T*k)],fill=(85,60,42),width=3)
+# faces avant : herbe, terre, roche ; l'eau du lac en coupe
+COUCHES=[(.06,(90,140,75)),(.5,(122,86,60)),(1,(96,88,84))]
+def face(a,b,eau,sombre):
+    k=.86 if sombre else 1
+    t0=0
+    for t1,c in COUCHES:
+        if eau and t1<=.5: c=(110,185,220) if t1<.1 else (70,150,200)
+        c=tuple(int(v*k) for v in c)
+        d.polygon([(a[0],a[1]+T*t0),(b[0],b[1]+T*t0),(b[0],b[1]+T*t1),(a[0],a[1]+T*t1)],fill=c)
+        t0=t1
+for i in range(W): face(P(i,H),P(i+1,H),G[H-1][i]=='~',False)
+for j in range(H): face(P(W,j),P(W,j+1),G[j][W-1]=='~',True)
 # ronds
 for j in range(H):
     for i in range(W):
@@ -98,7 +104,7 @@ for j in range(H):
         if g=='O': d.ellipse([x-8,y-8,x+8,y+8],fill=(120,150,110),outline=(60,80,60),width=2)
 f=ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf',22)
 def lab(i,j,t):
-    x,y=P(i,j); w=d.textlength(t,font=f)
+    x,y=P(i*N/60,j*N/48); w=d.textlength(t,font=f)
     d.text((x-w/2,y-11),t,font=f,fill=(255,255,255),stroke_width=3,stroke_fill=(40,40,40))
 lab(46,24,'Chalet en A'); lab(52,23.5,"Atelier d'art"); lab(18,40,'Statue du kelpie')
 lab(29.5,19.5,'Pont de pierre'); lab(50,39,'Cromlech'); lab(27,9,'Vasques et cascades')
