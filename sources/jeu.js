@@ -227,7 +227,7 @@ function bateauJ(R, fx, fy, t) {   // l'image du bateau, tournée vers sa direct
   if (!R.bateau) { R.bateau = new THREE.Sprite(matDecor(R, "bateau_haut")); R.bateau.center.set(.5, .36); R.scene.add(R.bateau); }
   const nom = "bateau_" + B.dir, [, , w, h] = ATLAS_DECOR[nom], s = R.bateau, m = matDecor(R, nom);
   if (s.material !== m) s.material = m;
-  s.scale.set(2.6, 2.6 * h / w, 1);
+  s.scale.set(3.4, 3.4 * h / w, 1);
   const x = B.a ? fx : B.x, z = B.a ? fy : B.y, houle = Math.sin(t / 600) * .03;
   s.position.set(x - .05, houle, z - .05);   // un peu plus loin que le héros : il est dessiné par-dessus, sur le pont
 }
@@ -395,7 +395,7 @@ function creerHeros() {   // un enfant en sweat à capuche violet, masque de cha
   new THREE.TextureLoader().load(IMG_JEU + "jeu-heros-actions.webp", tex => { tex.colorSpace = THREE.SRGBColorSpace; tex.repeat.set(1 / 4, 1 / 4); g.userData.texActions = tex; g.userData.texActions2 = tex.clone(); });
   return g;
 }
-const TAILLE_HEROS = 1.2;   // un enfant : un peu plus petit qu'une porte, bien plus petit qu'un arbre
+const TAILLE_HEROS = 1.4;   // un enfant : un peu plus petit qu'une porte, bien plus petit qu'un arbre
 const lisse = f => f * f * (3 - 2 * f);   // départ et arrivée en douceur
 function fonduImages(a, b, texA, texB, posA, posB, f) {   // image a, puis l'image suivante b qui apparaît par-dessus (f de 0 à 1)
   if (a.material.map !== texA) { a.material.map = texA; a.material.needsUpdate = true; }
@@ -714,7 +714,7 @@ function dioramaFlat() {
     [0, 2, 1, 0, 3, 2].forEach(k => { pos.push(...C[k]); uv.push(...U[k]); });
     const g = new THREE.BufferGeometry(); g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute("uv", new THREE.Float32BufferAttribute(uv, 2));
     const mt = new THREE.MeshBasicMaterial({ map: R.texIles[n], transparent: true, depthWrite: false, depthTest: false, side: THREE.DoubleSide }); R.matsFlat.push(mt);
-    const ms = new THREE.Mesh(g, mt); ms.renderOrder = -11; ms.frustumCulled = false; groupe.add(ms);
+    const ms = new THREE.Mesh(g, mt); ms.renderOrder = -11; ms.frustumCulled = false; ms.userData.ile = d.zone; groupe.add(ms);
   });
   const cases = []; for (let y = 0; y < HAUT; y++) for (let x = 0; x < LARG; x++) if (G[y][x] === "b") cases.push([x, y]);
   cases.sort((a, b) => a[0] + a[1] - b[0] - b[1]);
@@ -783,6 +783,14 @@ function dioramaFlat() {
   });
   R.scene.add(groupe);
   return R.ile = { groupe, anim, lampes: [], devant, flat: true };
+}
+function vueZoneJ(R, d) {   // on ne voit que l'île où l'on est (17/10) : les autres restent cachées, même au bord
+  const z = zoneJ(JEU.x, JEU.y);
+  if (R.vueZone !== z) { R.vueZone = z;
+    d.groupe.children.forEach(o => { const u = o.userData; if (u.zoneVue === undefined) u.zoneVue = u.ile || zoneJ(Math.round(o.position.x), Math.round(o.position.z)); o.visible = u.zoneVue === z; }); }
+  (R.cach || []).forEach(c => c.g.visible = zoneJ(c.q.x, c.q.y) === z);
+  (R.pnj || []).forEach(({ n, g }) => g.visible = n.zone === z);
+  if (R.bateau && JEU.bateau) R.bateau.visible = zoneJ(JEU.bateau.x, JEU.bateau.y) === z;
 }
 function vortexJ(R) {   // le vortex des portails : une spirale turquoise, rose et violette dessinée dans l'ouverture de l'arche (même cadre que son image)
   if (R.vortex) return R.vortex;
@@ -995,7 +1003,7 @@ function boucleJeu(t) {
   }
   R.lampes.forEach(l => l.intensity = l.userData.ok ? .4 + 2.8 * R.nuit : 0);
   d.anim.forEach(f => f(t));
-  if (d.flat) { cachettesFlat(R, t); estomperJ(R, d, fx, fy); } else cachettesJ3D(R, t);
+  if (d.flat) { cachettesFlat(R, t); estomperJ(R, d, fx, fy); vueZoneJ(R, d); } else cachettesJ3D(R, t);
   creatureJ(R, t);
   habitantsJ(R).forEach(({ n, g, c }) => {   // les habitants respirent, et se tournent vers toi quand tu approches
     c.position.y = Math.abs(Math.sin(t / 500 + n.x)) * .04;

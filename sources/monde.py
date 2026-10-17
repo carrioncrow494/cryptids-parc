@@ -162,7 +162,7 @@ for x, y in BATIS: PRIS.update((x + a, y + b) for a in (-1, 0, 1) for b in (0, 1
 semer('village', 'L', 10, ecart=5); semer('foret', 'L', 4, ecart=8); semer('cabane', 'L', 3, ecart=8)
 semer('desert', 'c', 18, ok=lambda x, y: surSol('desert', x, y), ecart=3)
 semer('lande', 'o', 4, ecart=8); semer('lande', ',', 30, ok=lambda x, y: surSol('lande', x, y), ecart=2)
-semer('foret', 'O', 9, ok=lambda x, y: surSol('foret', x, y), ecart=6); semer('foret', ',', 30, ok=lambda x, y: surSol('foret', x, y), ecart=2)
+semer('foret', 'O', 7, ok=lambda x, y: surSol('foret', x, y), ecart=6); semer('foret', ',', 20, ok=lambda x, y: surSol('foret', x, y), ecart=2)
 rive = lambda x, y: sum(M[y + b][x + a] == '~' for a in (-1, 0, 1) for b in (-1, 0, 1)) >= 3   # au bord de l'eau
 semer('foret', 'J', 1, ok=lambda x, y: rive(x, y) and M[y - 1][x] != '~' and M[y][x - 1] != '~')
 semer('cabane', 'u', 6, ecart=4); semer('cabane', ',', 20, ecart=2); semer('bayou', ',', 30, ecart=2)
@@ -209,7 +209,7 @@ for tour in range(30):
             if not (0 <= c[0] < WW and 0 <= c[1] < WH): continue
             ch = M[c[1]][c[0]]
             if ch in LIBRE: w = 0
-            elif ch in '~#x': w = 1
+            elif ch in '~#x' and not (ZONE[c[1]][c[0]] and ILE[ZONE[c[1]][c[0]]]['peint']): w = 1   # pas de planches sur une carte peinte : un coin coupé y reste hors d'atteinte
             else: continue
             nd_ = dist[(a, b)] + w
             if nd_ < dist.get(c, 1e9):
