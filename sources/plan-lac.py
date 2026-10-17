@@ -132,5 +132,10 @@ def labxy(xy,t):
     x,y=xy; w=d.textlength(t,font=f)
     d.text((x-w/2,y-11),t,font=f,fill=(255,255,255),stroke_width=3,stroke_fill=(40,40,40))
 labxy(FG(19.5,.88),'Épave pirate'); labxy(FG(7,.92),'Terrier'); labxy(FG(35,.85),'Squelette de dino'); labxy(FD(30,.92),'Grotte')
+# repère d'échelle : le héros fait environ une case
+hx,hy=P(44.5*N/60+.5,36*N/48+.5)
+d.ellipse([hx-9,hy-4,hx+9,hy+4],fill=(40,60,40))
+d.rectangle([hx-5,hy-26,hx+5,hy-2],fill=(120,70,160)); d.ellipse([hx-7,hy-40,hx+7,hy-24],fill=(230,200,160))
+labxy((hx+110,hy-20),'héros (échelle)')
 img.save('/mnt/project-files/cryptids-parc/biomes/lac/plan-lac.png')
 s=img.copy(); s.thumbnail((1400,1400)); s.save('/tmp/claude-0/-home-claude-cryptids-parc/af7a31c2-4253-517e-b27c-20e579b50415/scratchpad/pl.png')
