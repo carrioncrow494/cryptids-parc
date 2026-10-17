@@ -23,7 +23,8 @@ def rocher(z, a):
 CUBES = {'foret': dict(fichier='/mnt/project-files/cryptids-parc/jeu-video/lac-essais/map-lac.png',
                        largeur=1672, gauche=(35, 581), avant=(885, 938), droite=(1637, 622), N=54,
                        passages=[((900, 495), (1085, 555), 22)],            # le pont de pierre (segment et demi-largeur, en pixels de l'image d'origine)
-                       reperes=dict(terre=(1330, 600), cromlech=(470, 330), statue=(640, 690), barque=(370, 620)))}   # la terre battue (chalet) et un pré dégagé
+                       reperes=dict(terre=(1330, 600), cromlech=(470, 330), statue=(640, 690), barque=(370, 620),
+                                    vers_village=(1555, 590), vers_cabane=(110, 580)))}   # le bout des chemins peints : les portails   # la terre battue (chalet) et un pré dégagé
 def couleurs_cube(a):
     r, g, b = a[..., 0], a[..., 1], a[..., 2]
     eau = (b > r + 70) & (b > 120)

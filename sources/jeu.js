@@ -9,12 +9,13 @@ const TUILES = {
   "T": {}, "~": {}, "#": {}, "f": {}, "R": {}, "H": {}, "D": {}, "L": {}, "S": {}, "o": {},
   "E": {}, "G": {}, "K": {}, "k": {}, "M": {}, "A": {}, "c": {}, "t": {}, "u": {},
   "X": {}, "Q": {}, "N": {}, "Y": {}, "W": {}, "F": {}, "C": {}, "j": {}, "x": {},
-  "I": {}, "Z": {}, "O": {}, "v": {}, "J": {}
+  "I": {}, "Z": {}, "O": {}, "v": {}, "J": {}, "g": {}
 };   // . sol  , hautes herbes (bruyère, fougères, roseaux)  = chemin  : sable  * fleurs  b passerelle  B pont couvert  n neige  P départ  p passage (arche)
      // T arbre  ~ eau  # rocher  f barrière  R toit  H mur  D porte  L lampadaire  S panneau  o pierre levée
      // E cathédrale  G sa porte  K cabane biscornue  k sa porte  M mesa  A montagne  c cactus  t tombe  u citrouille
      // (espace) hors de l'île   x bord peint de l'île (on n'y marche pas)
      // X Excalibook  Q Chez Bergamotte  N Ninamoto  Y supérette  W Chupa la sopa  F ferme  C chalet en A  j jeu du parc
+     // g portail (au bout des chemins : il mène à l'île voisine, ou au village ; voir MONDE.portails)
      // le lac : I atelier d'art  Z statue du kelpie  O petit objet (rocher, souche, bûches, cairn)  v barque  J banc
 const CARTE = MONDE.carte;   // fabriquée par sources/monde.py : 6 îles peintes reliées par des ponts
 const LARG = CARTE[0].length, HAUT = CARTE.length;
@@ -85,9 +86,9 @@ const occupeJ = (x, y) => !!(pnjEn(x, y) || cachetteEn(x, y));
 function trouverJ(ch) { for (let y = 0; y < HAUT; y++) { const x = CARTE[y].indexOf(ch); if (x >= 0) return [x, y]; } return null; }
 const DEPART = trouverJ("P");
 let accessiblesJ = null;
-function casesAccessibles() {   // toutes les cases où l'on peut aller à pied depuis le départ
+function casesAccessibles() {   // toutes les cases où l'on peut aller à pied depuis le départ, ou depuis l'arrivée d'un portail
   if (accessiblesJ) return accessiblesJ;
-  const vu = new Set([DEPART + ""]), file = [DEPART];
+  const file = [DEPART, ...(MONDE.portails || []).map(q => [q.ax, q.ay])], vu = new Set(file.map(c => c + ""));
   while (file.length) { const [x, y] = file.shift(); for (const [dx, dy] of Object.values(DIRS)) { const n = [x + dx, y + dy];
     if (!vu.has(n + "") && libreSol(n[0], n[1]) && !pnjEn(n[0], n[1])) { vu.add(n + ""); file.push(n); } } }
   return accessiblesJ = [...vu].map(s => s.split(",").map(Number));
@@ -158,6 +159,7 @@ function ouvrirJeu() {
     if (p.jeu && p.jeu.v !== 4) delete p.jeu;   // une partie de l'ancien jeu (4 petites maps) : on repart du village, les créatures sauvées le restent
   if (!p.jeu) p.jeu = { v: 4, m: 0, x: DEPART[0], y: DEPART[1], dir: "haut", pos: {} };
   placerJeu(p);
+  if (!libreSol(p.jeu.x, p.jeu.y)) Object.assign(p.jeu, { x: DEPART[0], y: DEPART[1], dir: "bas" });   // une ancienne partie arrêtée sur un pont qui n'existe plus
   JEU = { x: p.jeu.x, y: p.jeu.y, dir: p.jeu.dir || "bas", pas: null, tenu: null, revele: null, raf: 0, t: 0, dernierBip: 0, zone: null };
   if (p.jeu.nPris !== undefined && p.pris.length > p.jeu.nPris) JEU.action = { ligne: 3, t0: performance.now() + 300, duree: 1900, vitesse: 120 };   // un cryptide de plus : on saute de joie
   p.jeu.nPris = p.pris.length;
@@ -194,8 +196,28 @@ function dialogueJ(texte, duree) {
 function essayerPas(dir, essai) {   // essai : on regarde seulement si ça passe (sans se tourner ni cogner)
   if (!JEU || JEU.pas || JEU.revele) return false;
   const [dx, dy] = DIRS[dir], x = JEU.x + dx, y = JEU.y + dy;
-  if (!libreJ(x, y)) { if (essai) return false; JEU.dir = dir; if (performance.now() - (JEU.tCogne || 0) > 350) { JEU.tCogne = performance.now(); sfx("clic"); } return false; }
+  if (!libreJ(x, y)) { if (essai) return false; JEU.dir = dir; const g = portailEn(x, y); if (g && !JEU.portail) return portailJ(g), false; if (performance.now() - (JEU.tCogne || 0) > 350) { JEU.tCogne = performance.now(); sfx("clic"); } return false; }
+  if (JEU.portail) { JEU.portail = null; $("jeuDialogue").hidden = true; }   // on s'éloigne du portail : on reste
   JEU.dir = dir; JEU.pas = { de: [JEU.x, JEU.y], t0: performance.now() }; JEU.x = x; JEU.y = y; JEU.action = null; return true;
+}
+// ---------- les portails (17/10) : au bout des chemins, un portail mène à l'île voisine ; on peut aussi rentrer tout de suite au village ----------
+const portailEn = (x, y) => (MONDE.portails || []).find(q => q.x === x && q.y === y);
+function portailJ(q) {   // le choix : l'île voisine, le village (si on n'y va pas déjà), ou rester
+  sfx("page"); JEU.portail = q;
+  const el = $("jeuDialogue"); el.innerHTML = ""; el.hidden = false; clearTimeout(dialogueJ.t);
+  const t = document.createElement("div"); t.textContent = "Un portail magique ! Où veux-tu aller ?"; el.appendChild(t);
+  const l = document.createElement("div"), choix = [[q.vers, ZONES[q.vers].nom]]; l.className = "jeu-choix";
+  if (q.zone !== "village" && q.vers !== "village") choix.push(["village", "Retour au village"]);
+  choix.push([null, "Rester ici"]);
+  choix.forEach(([z, nom]) => { const b = document.createElement("button"); b.type = "button"; b.textContent = nom; b.onclick = () => z ? voyagerJ(z) : boutonB(); l.appendChild(b); });
+  el.appendChild(l);
+}
+function voyagerJ(z) {   // on arrive devant le portail d'en face (ou devant la cathédrale, pour le retour au village)
+  const q = JEU.portail; if (!q) return; JEU.portail = null; $("jeuDialogue").hidden = true;
+  const p = z === q.vers && (MONDE.portails || []).find(o => o.zone === z && o.vers === q.zone);
+  if (p) { JEU.x = p.ax; JEU.y = p.ay; JEU.dir = Object.keys(DIRS).find(d => DIRS[d][0] === p.ax - p.x && DIRS[d][1] === p.ay - p.y) || "bas"; }
+  else { JEU.x = DEPART[0]; JEU.y = DEPART[1]; JEU.dir = "bas"; }
+  JEU.pas = null; JEU.action = null; sfx("fuite"); sauverJ(); arriverJ();
 }
 // Le joystick : pousser tout droit vers le haut (ou le bas, la gauche, la droite de l'écran) fait marcher en zigzag sur les 2 diagonales voisines,
 // et si la diagonale choisie est bouchée, on glisse sur la voisine. Comme ça on monte même quand un arbre est devant.
@@ -213,7 +235,9 @@ function finPas() {
 function boutonA() {
   if (!JEU) return;
   if (JEU.revele) return trouveJ();
+  if (JEU.portail) return voyagerJ(JEU.portail.vers);
   const [dx, dy] = DIRS[JEU.dir], fx = JEU.x + dx, fy = JEU.y + dy;
+  const g = portailEn(fx, fy); if (g) return portailJ(g);
   // comme dans Zelda : on fouille ce qu'on a devant soi. Un buisson qui bouge cache un cryptide.
   const q = cachetteEn(fx, fy);
   if (q) { JEU.revele = { q, t0: performance.now() + 400 }; fouilleJ({ ligne: 2, boucle: true, vitesse: 160 }); sfx("revele"); if (navigator.vibrate) navigator.vibrate([60, 40, 60]);
@@ -238,7 +262,7 @@ function texteSigne(x, y) {   // le panneau d'une région donne les indices des 
 function boutonB() {
   if (!JEU) return;
   if (JEU.revele) return fuirJ();
-  $("jeuDialogue").hidden = true;
+  JEU.portail = null; $("jeuDialogue").hidden = true;
 }
 
 // ---------- capture : on repasse à l'œil magique (RA), comme sur la carte GPS ----------
@@ -686,6 +710,7 @@ function dioramaFlat() {
     else if (ch === "M") pose("falaise", x, y, { miroir: m, haut: 1.1 + rnd() * .3 });
     else if (ch === "#" && PEINTES.has(z)) { }   // les rochers sont déjà peints sur les cartes en cube
     else if (ch === "#") pose(z === "desert" ? "falaise" : "rocher", x, y, { miroir: m, haut: z === "desert" ? .8 : .85 });
+    else if (ch === "g") pose("arche", x, y, { pied: .05, haut: 2.2 });
     else if (ch === "o") pose(z === "foret" && ATLAS_DECOR.menhirs ? "menhirs" : "rune", x, y, { miroir: m });
     else if (ch === "O") pose(OBJETS_LAC[Math.floor(r * 4)], x, y, { miroir: m });
     else if (ch === "v") pose("lac_barque", x, y, { miroir: m });
@@ -718,6 +743,10 @@ function dioramaFlat() {
     s.scale.set(t, t, 1); s.position.set(x + (rnd() - .5) * .8, h, y + (rnd() - .5) * .8); s.renderOrder = 3; groupe.add(s);
     anim.push(tt => { m.opacity = Math.min(1, moteurJeu().nuit || 0) * (.6 + .4 * Math.sin(tt / 900 + ph)); });
   }
+  (MONDE.portails || []).forEach((q, i) => {   // les portails brillent, de jour comme de nuit
+    const m = lueurJ(0x4ff3e0).clone(), s = new THREE.Sprite(m); s.scale.set(2.4, 2.4, 1); s.position.set(q.x, .9, q.y); s.renderOrder = 3; groupe.add(s);
+    anim.push(tt => { m.opacity = .55 + .3 * Math.sin(tt / 500 + i); });
+  });
   R.scene.add(groupe);
   return R.ile = { groupe, anim, lampes: [], devant, flat: true };
 }

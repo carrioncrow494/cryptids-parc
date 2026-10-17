@@ -34,8 +34,22 @@ for z, d in ILE.items():
     cs = [couleur(z, x, y) for y in range(d['oy'], d['oy'] + d['h']) for x in range(d['ox'], d['ox'] + d['w']) if M[y][x] == '.']
     q = np.array(cs) // 16; k = q[:, 0] * 1e4 + q[:, 1] * 1e2 + q[:, 2]; v, n = np.unique(k, return_counts=True); SOLC[z] = np.array(cs)[k == v[n.argmax()]].mean(0)
 def surSol(z, x, y): return np.abs(couleur(z, x, y) - SOLC[z]).sum() < 75
-# ---------- les ponts entre îles ----------
-BOUTS = []
+# ---------- les portails entre îles (17/10) : au bout des chemins, un portail mène à l'île voisine, ou au village ----------
+BOUTS = []; PORTAILS = []; PRIS = set()
+def repere(z, k): d = ILE[z]; x, y = iles[z][1]['reperes'][k]; return (d['ox'] + x, d['oy'] + y)
+def portail(z, vers, pt):   # la case du portail la plus proche de pt, et la case d'arrivée juste devant, côté île
+    d = ILE[z]; best = None
+    for y in range(d['oy'] + 1, d['oy'] + d['h'] - 1):
+        for x in range(d['ox'] + 1, d['ox'] + d['w'] - 1):
+            if M[y][x] != '.' or (x, y) in PRIS: continue
+            for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+                ax, ay = x + dx, y + dy
+                if M[ay][ax] != '.' or abs(ax - pt[0]) + abs(ay - pt[1]) <= abs(x - pt[0]) + abs(y - pt[1]): continue
+                if sum(M[ay + b][ax + a] == '.' for a in (-1, 0, 1) for b in (-1, 0, 1)) < 8: continue
+                s = abs(x - pt[0]) + abs(y - pt[1])
+                if best is None or s < best[0]: best = (s, x, y, ax, ay)
+    _, x, y, ax, ay = best; M[y][x] = 'g'; BOUTS.append((x, y)); PORTAILS.append(dict(x=x, y=y, zone=z, vers=vers, ax=ax, ay=ay))
+    PRIS.update((x + a, y + b) for a in range(-2, 3) for b in range(-2, 3))
 for a, b in PONTS:
     A, B = ILE[a], ILE[b]; (ca, la), (cb, lb) = PLACE[a], PLACE[b]
     horiz = la == lb; best = None
@@ -54,19 +68,21 @@ for a, b in PONTS:
             mid = (max(H_['ox'], Bs['ox']) + min(H_['ox'] + H_['w'], Bs['ox'] + Bs['w'])) / 2; s = (yb - ya) + abs(x - mid) * .4
             if (a, b) == ('foret', 'cabane'): s += 3 * (x - H_['ox'])   # le lac : le chemin peint vers la cabane longe le bord gauche
             if best is None or s < best[0]: best = (s, [(x, y) for y in range(ya + 1, yb)])
-    for x, y in best[1]: M[y][x] = 'b'
-    BOUTS += [best[1][0], best[1][-1]]
-    for x, y in best[1]:
-        if ZONE[y][x] is None: ZONE[y][x] = a   # le pont appartient à l'île d'où l'on vient
+    # chaque bout de l'ancien pont devient un portail ; sur une carte peinte, le portail va au bout de son chemin (repère vers_<île>)
+    p0, p1 = best[1][0], best[1][-1]
+    for z, vers, pt in ((a, b, p0), (b, a, p1)):
+        if horiz: pt = p0 if (ILE[z]['ox'] < ILE[vers]['ox']) == (p0[0] < p1[0]) else p1
+        else: pt = p0 if (ILE[z]['oy'] < ILE[vers]['oy']) == (p0[1] < p1[1]) else p1
+        if 'vers_' + vers in iles[z][1].get('reperes', {}): pt = repere(z, 'vers_' + vers)
+        portail(z, vers, pt)
 # ---------- les éléments posés ----------
-rnd = random.Random(7)
-PRIS = set()   # cases déjà prises (bâtiments, et une marge autour)
+rnd = random.Random(7)   # PRIS : les cases déjà prises (portails, bâtiments, et une marge autour)
 def proche(x, y, l, d): return any(max(abs(x - a), abs(y - b)) <= d for a, b in l)
 def libreRect(z, x0, y0, w, h, marge=1):
     for y in range(y0 - marge, y0 + h + marge + 1):   # + 1 : la rangée devant la porte reste libre
         for x in range(x0 - marge, x0 + w + marge):
             if not (0 <= y < WH and 0 <= x < WW) or M[y][x] != '.' or ZONE[y][x] != z or (x, y) in PRIS: return False
-    return not proche(x0 + w // 2, y0 + h // 2, BOUTS, 6 + max(w, h) // 2)
+    return not proche(x0 + w // 2, y0 + h // 2, BOUTS, 3 + max(w, h) // 2)
 def poser(z, motif, cible=None, pres=None, loin=None):
     """pose un motif (liste de lignes) sur l'île z : le plus près de la cible (x, y), ou au hasard ; renvoie le coin"""
     d = ILE[z]; h, w = len(motif), len(motif[0]); cands = []
@@ -114,7 +130,6 @@ bati('desert', maison(5, 3), cible=centre('desert'))                      # le r
 bati('desert', maison(4, 3, 'W', 'W', 'W'), loin=BATIS)                   # Chupa la sopa
 bati('lande', maison(5, 4, 'F', 'F', 'F'), cible=centre('lande'))         # la ferme
 # le lac (17/10) : le chalet en A sur la terre battue peinte, et le cromlech (cercle de pierres levées) dans un pré
-def repere(z, k): d = ILE[z]; x, y = iles[z][1]['reperes'][k]; return (d['ox'] + x, d['oy'] + y)
 bati('foret', maison(4, 4, 'C', 'C', 'C'), cible=repere('foret', 'terre'))
 bati('foret', maison(4, 3, 'I', 'I', 'I'), pres=BATIS[-1:])               # l'atelier d'art, à côté du chalet
 poser('foret', ['??o??', 'o???o', '?????', 'o???o', '??o??'], cible=repere('foret', 'cromlech'))
@@ -127,14 +142,7 @@ M[y][x] = 'v'
 bati('cabane', ['KKKKKK'] * 3 + ['KKkKKK'], cible=centre('cabane'))       # la cabane de Sporran
 # les habitants et les panneaux : près du pont par lequel on arrive
 ENTREE = {'village': dep}
-for (a, b), i in zip(PONTS, range(len(PONTS))):
-    p0, p1 = BOUTS[2 * i], BOUTS[2 * i + 1]
-    for e in (p0, p1):
-        zz = ZONE[e[1]][e[0]] if M[e[1]][e[0]] != 'b' else None
-        # le bout du pont touche l'île b (l'arrivée) si la case voisine hors du pont est sur b
-        for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
-            x, y = e[0] + dx, e[1] + dy
-            if M[y][x] == '.' and ZONE[y][x] == b: ENTREE.setdefault(b, (x, y))
+for q in PORTAILS: ENTREE.setdefault(q['zone'], (q['ax'], q['ay']))   # on arrive dans une île devant son portail
 PNJ = {}
 for z, (ex, ey) in ENTREE.items():
     if z == 'cabane': continue
@@ -177,15 +185,15 @@ def composantes():
                         if 0 <= c[0] < WW and 0 <= c[1] < WH and c not in vu and M[c[1]][c[0]] in LIBRE: vu[c] = n; f.append(c)
     return vu
 for tour in range(30):
-    vu = composantes(); principal = vu[dep]; tailles = {}
+    vu = composantes(); principaux = {vu[dep]} | {vu[(q['ax'], q['ay'])] for q in PORTAILS}; tailles = {}   # chaque île : le morceau où l'on arrive
     for c, n in vu.items(): tailles[n] = tailles.get(n, 0) + 1
-    autres = [n for n, t in tailles.items() if n != principal and t >= 12]
+    autres = [n for n, t in tailles.items() if n not in principaux and t >= 12]
     if not autres: break
     cible = autres[0]
     # 0-1 : on traverse l'eau, les rochers et le bord à coût 1 ; le sol coûte 0
     dist = {}; prec = {}; dq = deque()
     for c, n in vu.items():
-        if n == principal: dist[c] = 0; dq.append(c)
+        if n in principaux: dist[c] = 0; dq.append(c)
     fin = None
     while dq:
         a, b = dq.popleft()
@@ -206,14 +214,14 @@ for tour in range(30):
     while c in prec:
         if M[c[1]][c[0]] in '~#x': M[c[1]][c[0]] = 'b'
         c = prec[c]
-vu = composantes(); principal = vu[dep]
-print('cases accessibles :', sum(1 for n in vu.values() if n == principal), '/', len(vu))
+vu = composantes(); principaux = {vu[dep]} | {vu[(q['ax'], q['ay'])] for q in PORTAILS}
+print('cases accessibles :', sum(1 for n in vu.values() if n in principaux), '/', len(vu), '; portails :', len(PORTAILS))
 carte = [''.join(l) for l in M]
 CODE = {'village': 'V', 'foret': 'F', 'cabane': 'K', 'desert': 'D', 'lande': 'L', 'bayou': 'B'}   # comme CODE_ZONE dans jeu.js
 ZG = [''.join('_' if ZONE[y][x] is None else CODE[ZONE[y][x]] for x in range(WW)) for y in range(WH)]
 with open('sources/monde.js', 'w') as o:
     o.write('// fabriqué par sources/monde.py : les 6 îles peintes, reliées par des ponts. Chaque case : voir TUILES dans jeu.js.\n')
-    o.write('const MONDE = ' + json.dumps(dict(carte=carte, iles=INFO, pnj=PNJ, zones=ZG), ensure_ascii=False) + ';\n')
+    o.write('const MONDE = ' + json.dumps(dict(carte=carte, iles=INFO, pnj=PNJ, zones=ZG, portails=PORTAILS), ensure_ascii=False) + ';\n')
 # un aperçu : la carte entière en petits carrés
 C = {' ': (12, 30, 40), 'x': (120, 100, 140), '.': (130, 170, 100), '~': (60, 140, 220), 'b': (170, 110, 70), 'T': (30, 90, 50), '#': (150, 60, 50), 'P': (255, 255, 0)}
 im = Image.new('RGB', (WW * 4, WH * 4)); d = ImageDraw.Draw(im)
