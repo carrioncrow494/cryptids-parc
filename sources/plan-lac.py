@@ -94,6 +94,26 @@ def face(a,b,eau,sombre):
         t0=t1
 for i in range(W): face(P(i,H),P(i+1,H),G[H-1][i]=='~',False)
 for j in range(H): face(P(W,j),P(W,j+1),G[j][W-1]=='~',True)
+# détails dans l'épaisseur (jamais marchés, peints sur les faces)
+def FG(i,t): x,y=P(i,H); return (x,y+T*t)   # face avant gauche
+def FD(j,t): x,y=P(W,j); return (x,y+T*t)   # face avant droite
+OS=(235,228,205); NOIR=(45,30,22)
+# épave pirate vue à travers l'eau
+d.polygon([FG(16,.55),FG(23,.55),FG(22,.78),FG(17,.78)],fill=(110,70,40))
+d.line([FG(19.5,.55),FG(19.5,.25)],fill=(90,60,35),width=5)
+d.polygon([FG(19.6,.27),FG(22,.33),FG(19.6,.45)],fill=(60,60,60))
+# terrier : entrée près du haut, galerie qui descend
+d.ellipse([FG(6,.25)[0]-14,FG(6,.25)[1]-10,FG(6,.25)[0]+14,FG(6,.25)[1]+10],fill=NOIR)
+d.line([FG(6,.25),FG(8,.45),FG(5,.6),FG(8,.75)],fill=NOIR,width=12,joint='curve')
+d.ellipse([FG(8,.75)[0]-22,FG(8,.75)[1]-14,FG(8,.75)[0]+22,FG(8,.75)[1]+14],fill=NOIR)
+# squelette de dinosaure couché
+col_=[FG(32+k*.5,.62-.12*math.sin(k/14*math.pi)) for k in range(15)]
+d.line(col_,fill=OS,width=6)
+for (x,y) in col_[3:11:2]: d.line([(x,y),(x+4,y+22)],fill=OS,width=4)
+x,y=col_[-1]; d.ellipse([x-6,y-14,x+22,y+6],fill=OS)
+d.line([col_[4],(col_[4][0]-6,col_[4][1]+30)],fill=OS,width=4); d.line([col_[10],(col_[10][0]+4,col_[10][1]+30)],fill=OS,width=4)
+# grotte dans la face droite
+gx,gy=FD(30,.5); d.ellipse([gx-55,gy-40,gx+55,gy+60],fill=NOIR); d.rectangle([gx-55,gy+10,gx+55,gy+60],fill=NOIR)
 # ronds
 for j in range(H):
     for i in range(W):
@@ -109,5 +129,9 @@ def lab(i,j,t):
 lab(46,24,'Chalet en A'); lab(52,23.5,"Atelier d'art"); lab(18,40,'Statue du kelpie')
 lab(29.5,19.5,'Pont de pierre'); lab(50,39,'Cromlech'); lab(27,9,'Vasques et cascades')
 lab(48,14,'Bois'); lab(22,33,'Lac'); lab(3,22,'Montagnes'); lab(59,31.5,'vers le village'); lab(8,49.5,'vers la cabane')
+def labxy(xy,t):
+    x,y=xy; w=d.textlength(t,font=f)
+    d.text((x-w/2,y-11),t,font=f,fill=(255,255,255),stroke_width=3,stroke_fill=(40,40,40))
+labxy(FG(19.5,.88),'Épave pirate'); labxy(FG(7,.92),'Terrier'); labxy(FG(35,.85),'Squelette de dino'); labxy(FD(30,.92),'Grotte')
 img.save('/mnt/project-files/cryptids-parc/biomes/lac/plan-lac.png')
 s=img.copy(); s.thumbnail((1400,1400)); s.save('/tmp/claude-0/-home-claude-cryptids-parc/af7a31c2-4253-517e-b27c-20e579b50415/scratchpad/pl.png')
