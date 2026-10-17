@@ -753,7 +753,7 @@ function dioramaFlat() {
     else if (ch === "g") { const q = portailEn(x, y); pose("arche", x, y, { miroir: !q || q.ax === x, pied: .05, haut: 2.2 }); }   // l'arche s'ouvre dans le sens du chemin (comme les « p »)
     else if (ch === "o") { const k = (x * 7 + y * 3) % 6 + 1; z === "foret" && ATLAS_DECOR.menhir6 ? pose("menhir" + k, x, y, { miroir: m, haut: 2.8 * ATLAS_DECOR["menhir" + k][3] / 300 }) : pose("rune", x, y, { miroir: m }); }
     else if (ch === "O") pose(OBJETS_LAC[Math.floor(r * 4)], x, y, { miroir: m });
-    else if (ch === "J") pose("lac_banc", x, y, { miroir: m });
+    else if (ch === "J") pose("lac_banc", x, y, { miroir: tuileJ(x, y + 1) !== "~" });   // face au lac : son image regarde vers le bas-gauche (y + 1), retournée vers le bas-droite (x + 1)
     else if (ch === "c") pose(ATLAS_DECOR.desert_a1 ? (r < .75 ? CACTUS_DESERT[Math.floor(rnd() * 4)] : "desert_p" + (1 + Math.floor(rnd() * 4))) : r < .6 ? "cactus" : "petitcactus", x, y, { miroir: m, haut: ATLAS_DECOR.desert_a1 ? (r < .75 ? 1.5 : .7) : undefined });
     else if (ch === "t") pose(r < .6 ? "tombe" : "croix", x, y, { miroir: m });
     else if (ch === "u") pose("citrouille", x, y, { miroir: m });

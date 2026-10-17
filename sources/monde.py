@@ -34,6 +34,7 @@ for z, d in ILE.items():
     cs = [couleur(z, x, y) for y in range(d['oy'], d['oy'] + d['h']) for x in range(d['ox'], d['ox'] + d['w']) if M[y][x] == '.']
     q = np.array(cs) // 16; k = q[:, 0] * 1e4 + q[:, 1] * 1e2 + q[:, 2]; v, n = np.unique(k, return_counts=True); SOLC[z] = np.array(cs)[k == v[n.argmax()]].mean(0)
 def surSol(z, x, y): return np.abs(couleur(z, x, y) - SOLC[z]).sum() < 75
+def chemin(z, x, y): c = couleur(z, x, y); return bool(c[2] > c[1] + 15 and c[0] > c[1] - 10)   # les pavés violets peints (sur toutes les îles en pavés)
 # ---------- les portails entre îles (17/10) : au bout des chemins, un portail mène à l'île voisine, ou au village ----------
 BOUTS = []; PORTAILS = []; PRIS = set()
 def repere(z, k): d = ILE[z]; x, y = iles[z][1]['reperes'][k]; return (d['ox'] + x, d['oy'] + y)
@@ -47,6 +48,8 @@ def portail(z, vers, pt):   # la case du portail la plus proche de pt, et la cas
                 if M[ay][ax] != '.' or abs(ax - pt[0]) + abs(ay - pt[1]) <= abs(x - pt[0]) + abs(y - pt[1]): continue
                 if sum(M[ay + b][ax + a] == '.' for a in (-1, 0, 1) for b in (-1, 0, 1)) < 8: continue
                 s = abs(x - pt[0]) + abs(y - pt[1])
+                if not d['peint']:   # sur les îles en pavés : le portail au bout d'un chemin pavé, son entrée face au chemin (17/10)
+                    s -= 5 * sum(chemin(z, ax + k * dx, ay + k * dy) for k in range(4)) + 3 * chemin(z, x, y)
                 if best is None or s < best[0]: best = (s, x, y, ax, ay)
     _, x, y, ax, ay = best; M[y][x] = 'g'; BOUTS.append((x, y)); PORTAILS.append(dict(x=x, y=y, zone=z, vers=vers, ax=ax, ay=ay))
     PRIS.update((x + a, y + b) for a in range(-2, 3) for b in range(-2, 3))
@@ -166,7 +169,7 @@ semer('desert', 'c', 18, ok=lambda x, y: surSol('desert', x, y), ecart=3)
 semer('lande', 'o', 4, ecart=8); semer('lande', ',', 30, ok=lambda x, y: surSol('lande', x, y), ecart=2)
 semer('foret', 'O', 7, ok=lambda x, y: surSol('foret', x, y), ecart=6); semer('foret', ',', 20, ok=lambda x, y: surSol('foret', x, y), ecart=2)
 rive = lambda x, y: sum(M[y + b][x + a] == '~' for a in (-1, 0, 1) for b in (-1, 0, 1)) >= 3   # au bord de l'eau
-semer('foret', 'J', 1, ok=lambda x, y: rive(x, y) and M[y - 1][x] != '~' and M[y][x - 1] != '~')
+semer('foret', 'J', 1, ok=lambda x, y: rive(x, y) and M[y - 1][x] != '~' and M[y][x - 1] != '~' and '~' in (M[y + 1][x], M[y][x + 1]))   # le dos au pré, l'eau juste devant (jeu.js le tourne vers elle)
 semer('cabane', 'u', 6, ecart=4); semer('cabane', ',', 20, ecart=2); semer('bayou', ',', 30, ecart=2)
 # les arbres : surtout en lisière, quelques-uns au milieu ; jamais sur un chemin peint ni devant une porte
 def bordDist(x, y):
