@@ -126,8 +126,7 @@ f=ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf',22)
 def lab(i,j,t):
     x,y=P(i*N/60,j*N/48); w=d.textlength(t,font=f)
     d.text((x-w/2,y-11),t,font=f,fill=(255,255,255),stroke_width=3,stroke_fill=(40,40,40))
-lab(46,24,'Chalet en A'); lab(52,23.5,"Atelier d'art"); lab(18,40,'Statue du kelpie')
-lab(29.5,19.5,'Pont de pierre'); lab(50,39,'Cromlech'); lab(27,9,'Vasques et cascades')
+lab(29.5,19.5,'Pont de pierre'); lab(27,9,'Vasques et cascades')
 lab(48,14,'Bois'); lab(22,33,'Lac'); lab(3,22,'Montagnes'); lab(59,31.5,'vers le village'); lab(8,49.5,'vers la cabane')
 def labxy(xy,t):
     x,y=xy; w=d.textlength(t,font=f)
