@@ -227,7 +227,7 @@ function bateauJ(R, fx, fy, t) {   // l'image du bateau, tournée vers sa direct
   if (!R.bateau) { R.bateau = new THREE.Sprite(matDecor(R, "bateau_haut")); R.bateau.center.set(.5, .36); R.scene.add(R.bateau); }
   const nom = "bateau_" + B.dir, [, , w, h] = ATLAS_DECOR[nom], s = R.bateau, m = matDecor(R, nom);
   if (s.material !== m) s.material = m;
-  s.scale.set(3.4, 3.4 * h / w, 1);
+  s.scale.set(4.2, 4.2 * h / w, 1);
   const x = B.a ? fx : B.x, z = B.a ? fy : B.y, houle = Math.sin(t / 600) * .03;
   s.position.set(x - .05, houle, z - .05);   // un peu plus loin que le héros : il est dessiné par-dessus, sur le pont
 }
@@ -743,7 +743,7 @@ function dioramaFlat() {
     else if (ch === "#" && PEINTES.has(z)) { }   // les rochers sont déjà peints sur les cartes en cube
     else if (ch === "#") pose(z === "desert" ? "falaise" : "rocher", x, y, { miroir: m, haut: z === "desert" ? .8 : .85 });
     else if (ch === "g") pose("arche", x, y, { pied: .05, haut: 2.2 });
-    else if (ch === "o") { const k = (x * 7 + y * 3) % 3 + 1; z === "foret" && ATLAS_DECOR.menhir1 ? pose("menhir" + k, x, y, { miroir: m, haut: [1.9, 2.3, 1.6][k - 1] }) : pose("rune", x, y, { miroir: m }); }
+    else if (ch === "o") { const k = (x * 7 + y * 3) % 3 + 1; z === "foret" && ATLAS_DECOR.menhir1 ? pose("menhir" + k, x, y, { miroir: m, haut: [2.3, 2.8, 2.0][k - 1] }) : pose("rune", x, y, { miroir: m }); }
     else if (ch === "O") pose(OBJETS_LAC[Math.floor(r * 4)], x, y, { miroir: m });
     else if (ch === "J") pose("lac_banc", x, y, { miroir: m });
     else if (ch === "c") pose(ATLAS_DECOR.desert_a1 ? (r < .75 ? CACTUS_DESERT[Math.floor(rnd() * 4)] : "desert_p" + (1 + Math.floor(rnd() * 4))) : r < .6 ? "cactus" : "petitcactus", x, y, { miroir: m, haut: ATLAS_DECOR.desert_a1 ? (r < .75 ? 1.5 : .7) : undefined });
@@ -982,7 +982,7 @@ function boucleJeu(t) {
   if (h.userData.dessin.visible) {   // le dessin regarde toujours la caméra : on change seulement d'image
     const nav = JEU.bateau && JEU.bateau.a;   // en bateau : assis sur le pont, sans marcher
     imageHeros(h, t, !nav && !!(JEU.pas || JEU.tenu)); h.position.y = nav ? .22 + Math.sin(t / 600) * .03 : Math.max(0, sol);   // pas de petit saut : les images de marche bougent déjà
-    h.userData.ombre.visible = !nav; if (d.flat) bateauJ(R, fx, fy, t);
+    h.visible = !nav; if (d.flat) bateauJ(R, fx, fy, t);   // à bord, le héros est dans la cabine : on ne voit plus que le bateau (17/10)
     h.userData.dessin.material.color.setRGB(1 - .18 * R.nuit, 1 - .22 * R.nuit, 1 - .08 * R.nuit);
   } else {
     const cible = ANGLE[JEU.dir], da = Math.atan2(Math.sin(cible - h.rotation.y), Math.cos(cible - h.rotation.y)); h.rotation.y += da * .35;

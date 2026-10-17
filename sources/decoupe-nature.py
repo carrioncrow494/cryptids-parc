@@ -23,7 +23,15 @@ for f, r, c, noms, t in [('fc8e604c-image.png', 2, 2, ['chalet', 'atelier', None
         k = t / max(im.size); objs.append((n, im.resize((round(im.size[0] * k), round(im.size[1] * k)), Image.LANCZOS)))
 # la planche L1 bis de Sam (17/10) : deux kelpies (ligne 1, en 2 cases) et trois pierres levées gravées (ligne 2, en 3 cases)
 L1b = 'f25782d4-image.png'
-for n, im in zip(['kelpie_g', 'kelpie_d'], cases(L1b, 2, 2)[0]): k = 560 / max(im.size); objs.append((n, im.resize((round(im.size[0] * k), round(im.size[1] * k)), Image.LANCZOS)))
+def fondre_eau(im):   # le bassin turquoise peint au pied du kelpie prend le bleu du lac de Sam, et son bord s'efface dans l'eau (17/10)
+    import numpy as np; from scipy.ndimage import distance_transform_edt
+    a = np.array(im.convert('RGBA')).astype(float); h = a.shape[0]; r, g, b, al = a[..., 0], a[..., 1], a[..., 2], a[..., 3]
+    eau = (al > 0) & (b > r + 50) & (b >= g - 15); eau[:int(.66 * h)] = False
+    for c, f in enumerate((.4, .91, 1.26)): a[..., c] = np.where(eau, np.clip(a[..., c] * f, 0, 255), a[..., c])
+    bord = np.clip(distance_transform_edt(al > 0) / 14, 0, 1)   # 14 px de fondu vers l'extérieur
+    a[..., 3] = np.where(eau, al * bord, al)
+    return Image.fromarray(a.round().astype('uint8'), 'RGBA')
+for n, im in zip(['kelpie_g', 'kelpie_d'], cases(L1b, 2, 2)[0]): k = 560 / max(im.size); objs.append((n, fondre_eau(im.resize((round(im.size[0] * k), round(im.size[1] * k)), Image.LANCZOS))))
 for i, im in enumerate(cases(L1b, 2, 3)[1]): k = 300 / max(im.size); objs.append(('menhir%d' % (i + 1), im.resize((round(im.size[0] * k), round(im.size[1] * k)), Image.LANCZOS)))
 LW = 2048; objs.sort(key=lambda o: -o[1].size[1]); x = y = h = 0; place = {}
 for n, im in objs:

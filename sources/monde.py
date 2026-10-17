@@ -83,12 +83,12 @@ def libreRect(z, x0, y0, w, h, marge=1):
         for x in range(x0 - marge, x0 + w + marge):
             if not (0 <= y < WH and 0 <= x < WW) or M[y][x] != '.' or ZONE[y][x] != z or (x, y) in PRIS: return False
     return not proche(x0 + w // 2, y0 + h // 2, BOUTS, 3 + max(w, h) // 2)
-def poser(z, motif, cible=None, pres=None, loin=None):
+def poser(z, motif, cible=None, pres=None, loin=None, marge=1):
     """pose un motif (liste de lignes) sur l'île z : le plus près de la cible (x, y), ou au hasard ; renvoie le coin"""
     d = ILE[z]; h, w = len(motif), len(motif[0]); cands = []
     for y0 in range(d['oy'], d['oy'] + d['h'] - h):
         for x0 in range(d['ox'], d['ox'] + d['w'] - w):
-            if not libreRect(z, x0, y0, w, h): continue
+            if not libreRect(z, x0, y0, w, h, marge): continue
             cx, cy = x0 + w / 2, y0 + h / 2
             s = rnd.random() * 8
             if cible: s += abs(cx - cible[0]) + abs(cy - cible[1])
@@ -130,9 +130,9 @@ bati('desert', maison(5, 3), cible=centre('desert'))                      # le r
 bati('desert', maison(4, 3, 'W', 'W', 'W'), loin=BATIS)                   # Chupa la sopa
 bati('lande', maison(5, 4, 'F', 'F', 'F'), cible=centre('lande'))         # la ferme
 # le lac (17/10) : le chalet en A sur la terre battue peinte, et le cromlech (cercle de pierres levées) dans un pré
-bati('foret', maison(4, 4, 'C', 'C', 'C'), cible=repere('foret', 'terre'))
+bati('foret', maison(5, 5, 'C', 'C', 'C'), cible=repere('foret', 'terre'))   # 5 × 5 depuis le 17/10 (Sam le voulait un peu plus grand)
 bati('foret', maison(4, 3, 'I', 'I', 'I'), pres=BATIS[-1:])               # l'atelier d'art, à côté du chalet
-poser('foret', ['??o??', 'o???o', '?????', 'o???o', '??o??'], cible=repere('foret', 'cromlech'))
+poser('foret', ['??oo??', 'o????o', '??????', '??????', 'o????o', '??oo??'], cible=repere('foret', 'cromlech'), marge=0)   # 8 pierres sur 6 × 6 (17/10 ; 7 × 7 ne tient pas dans le pré)
 # la statue du kelpie : au milieu du lac, la case d'eau la plus loin de toute rive (Sam y a retiré l'îlot)
 import scipy.ndimage as ndi
 d_ = ILE['foret']; eau = np.array([[M[y][x] == '~' for x in range(d_['ox'], d_['ox'] + d_['w'])] for y in range(d_['oy'], d_['oy'] + d_['h'])])
@@ -145,6 +145,7 @@ for y in range(sy - 4, sy):
 bx, by = repere('foret', 'barque')   # la bateau de pêche : sur l'eau, contre la plage de galets
 _, x, y = min((abs(x - bx) + abs(y - by), x, y) for y in range(ILE['foret']['oy'], ILE['foret']['oy'] + ILE['foret']['h'] - 1) for x in range(ILE['foret']['ox'], ILE['foret']['ox'] + ILE['foret']['w'] - 1) if M[y][x] == '~' and any(M[y + b][x + a] == '.' for a, b in ((1, 0), (-1, 0), (0, 1), (0, -1))))
 M[y][x] = 'v'; BATEAU = (x, y)   # le bateau de pêche est amarré là (jeu.js le fait naviguer)
+PRIS.update((x + a, y + b) for a in range(-2, 3) for b in range(-2, 3))   # rien de semé contre lui : la rive d'où l'on monte reste libre
 bati('cabane', ['KKKKKK'] * 3 + ['KKkKKK'], cible=centre('cabane'))       # la cabane de Sporran
 # les habitants et les panneaux : près du pont par lequel on arrive
 ENTREE = {'village': dep}
