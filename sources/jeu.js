@@ -223,14 +223,17 @@ function dirLac() {   // le sens du lac à l'amarre : la direction où l'eau s'�
 }
 // le bouton « Monter » / « Descendre » (17/10) : à côté du bateau, plus besoin de pousser pile dessus
 function boutonBateauJ() {
-  const B = JEU && JEU.bateau, el = $("jeuBateau"); if (!el) return;
+  const B = JEU && JEU.bateau, el = $("jeuBateau"); if (!el || !JEU) return;
   let quoi = "";
   if (B && !B.a && !JEU.pas && Math.max(Math.abs(B.x - JEU.x), Math.abs(B.y - JEU.y)) <= 2 && zoneJ(B.x, B.y) === zoneJ(JEU.x, JEU.y)) quoi = "Monter dans le bateau";
   else if (B && B.a && !JEU.pas && rivePres()) quoi = "Descendre";
+  else if (!(B && B.a) && !JEU.portail && !JEU.revele && portailPres()) quoi = "Utiliser le portail";   // le même bouton sert aux portails (17/10)
+  el.classList.toggle("portail", quoi === "Utiliser le portail");
   if (el.textContent !== quoi) el.textContent = quoi; el.hidden = !quoi;
 }
 function rivePres() { return Object.entries(DIRS).map(([d, [dx, dy]]) => [d, JEU.x + dx, JEU.y + dy]).sort(([a], [b]) => (b === JEU.dir) - (a === JEU.dir)).find(([, x, y]) => libreJ(x, y)); }
 function bateauBoutonJ() {
+  if ($("jeuBateau").classList.contains("portail")) { const g = portailPres(); if (g) portailJ(g); return boutonBateauJ(); }
   const B = JEU && JEU.bateau; if (!B || JEU.pas || JEU.revele) return;
   if (!B.a) { B.a = true; JEU.pas = { de: [JEU.x, JEU.y], t0: performance.now() }; JEU.x = B.x; JEU.y = B.y; JEU.dir = B.dir; JEU.action = null; sfx("page");
     dialogueJ("Tu montes dans le bateau de pêche ! Navigue sur le lac. Pousse vers la rive ou appuie sur « Descendre ».", 3600); }
@@ -262,15 +265,15 @@ function bateauJ(R, fx, fy, t) {   // l'image du bateau, tournée vers sa direct
 }
 // ---------- les portails (17/10) : au bout des chemins, un portail mène à l'île voisine ; on peut aussi rentrer tout de suite au village ----------
 const portailEn = (x, y) => (MONDE.portails || []).find(q => q.x === x && q.y === y);
-const portailPres = () => (MONDE.portails || []).find(q => Math.max(Math.abs(q.x - JEU.x), Math.abs(q.y - JEU.y)) <= 2);
+const portailPres = () => (MONDE.portails || []).find(q => Math.max(Math.abs(q.x - JEU.x), Math.abs(q.y - JEU.y)) <= 3);   // 3 cases autour, dans tous les sens
 function portailJ(q) {   // le choix : l'île voisine, le village (si on n'y va pas déjà), ou rester
-  sfx("page"); JEU.portail = q;
+  sfx("page"); JEU.portail = q; const t0 = performance.now();
   const el = $("jeuDialogue"); el.innerHTML = ""; el.hidden = false; clearTimeout(dialogueJ.t);
   const t = document.createElement("div"); t.textContent = "Un portail magique ! Où veux-tu aller ?"; el.appendChild(t);
   const l = document.createElement("div"), choix = [[q.vers, ZONES[q.vers].nom]]; l.className = "jeu-choix";
   if (q.zone !== "village" && q.vers !== "village") choix.push(["village", "Retour au village"]);
   choix.push([null, "Rester ici"]);
-  choix.forEach(([z, nom]) => { const b = document.createElement("button"); b.type = "button"; b.textContent = nom; b.onclick = () => z ? voyagerJ(z) : boutonB(); l.appendChild(b); });
+  choix.forEach(([z, nom]) => { const b = document.createElement("button"); b.type = "button"; b.textContent = nom; b.onclick = () => { if (performance.now() - t0 < 450) return; z ? voyagerJ(z) : boutonB(); }; l.appendChild(b); });   // t0 : le toucher qui a ouvert le menu ne choisit pas aussi
   el.appendChild(l);
 }
 function voyagerJ(z) {   // on arrive devant le portail d'en face (ou devant la cathédrale, pour le retour au village)
@@ -1104,7 +1107,7 @@ stick.addEventListener("pointermove", e => { if (e.pointerId === doigtStick) bou
 $("jeuA").addEventListener("pointerdown", e => { e.preventDefault(); if (!(JEU && JEU.revele)) boutonA(); });
 $("jeuA").addEventListener("click", () => { if (JEU && JEU.revele && performance.now() - JEU.revele.t0 > 350) trouveJ(); });   // ouvrir la caméra demande un vrai clic sur iPhone
 $("jeuB").addEventListener("pointerdown", e => { e.preventDefault(); boutonB(); });
-$("jeuBateau").addEventListener("pointerdown", e => { e.preventDefault(); bateauBoutonJ(); });
+$("jeuBateau").addEventListener("pointerup", e => { e.preventDefault(); bateauBoutonJ(); });   // au lever du doigt : appuyé, le même toucher appuyait aussi sur le menu qui apparaît dessous
 const TOUCHES = { ArrowUp: "haut", ArrowDown: "bas", ArrowLeft: "gauche", ArrowRight: "droite", z: "haut", s: "bas", q: "gauche", d: "droite", w: "haut", a: "gauche" };
 addEventListener("keydown", e => {
   if (!JEU || $("jeu").hidden) return;
