@@ -78,7 +78,7 @@ const ecrire = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } c
 const pris = () => lire(CLES.pris, []).filter(k => TRAQUES[k]);
 const relaches = () => lire(CLES.relache, []);
 const ajouter = (cle, val) => { const l = lire(cle, []); if (!l.includes(val)) { l.push(val); ecrire(cle, l); } };
-const mode = () => lire(CLES.mode, "qr");
+const mode = () => lire(CLES.mode, "qr") === "virtuel" ? "virtuel" : "qr";   // la géolocalisation est retirée pour l'instant : ses anciens réglages reviennent aux QR codes
 // une partie = une sélection de créatures à sauver (la collection du grimoire, elle, se garde d'une partie à l'autre)
 const partie = () => lire(CLES.partie, null);
 const enCours = () => { const p = partie(); return p && p.pris.length < p.liste.length ? p : null; };
@@ -242,19 +242,21 @@ document.addEventListener("pointerdown", e => { const b = e.target.closest("butt
   b.classList.remove("appuye"); void b.offsetWidth; b.classList.add("appuye"); setTimeout(() => b.classList.remove("appuye"), 450); if (navigator.vibrate) navigator.vibrate(12); }, true);
 
 /* ===================== Accueil, parents ===================== */
-const LIBELLES = { qr: "Mode : QR codes cachés", interieur: "Mode : intérieur (10 m)", exterieur: "Mode : extérieur (20 m)" };
-function majModes() {
-  majAccueil(); $("modeParents").textContent = LIBELLES[mode()];
-  document.querySelectorAll(".carte-mode").forEach(c => { c.classList.toggle("actif", c.dataset.mode === mode()); c.classList.toggle("eteint", c.dataset.mode !== mode()); });
+const LIBELLES = { qr: "Mode : QR codes cachés", interieur: "Mode : intérieur (10 m)", exterieur: "Mode : extérieur (20 m)", virtuel: "Mode : aventure virtuelle (jeu vidéo)" };
+function majModes() { majAccueil(); $("modeParents").textContent = LIBELLES[mode()]; }
+function genre(virtuel) {   // « Choisir son aventure » : réelle (QR codes à imprimer) ou virtuelle (jeu vidéo)
+  $("choixReel").hidden = virtuel;
+  $("genreReel").classList.toggle("actif", !virtuel); $("genreVirtuel").classList.toggle("actif", virtuel);
 }
-$("ouvrirParents").addEventListener("click", () => { majModes(); montrer("parents"); });
+$("genreReel").addEventListener("click", () => { ecrire(CLES.mode, "qr"); majModes(); genre(false); });
+$("genreVirtuel").addEventListener("click", () => {   // vers le jeu vidéo : on reprend la partie en cours, sinon on choisit d'abord combien de cryptides (sans l'intro)
+  ecrire(CLES.mode, "virtuel"); majModes();
+  if (enCours()) return lancerAventure();
+  ecrire(CLES.intro, true); preparerChoix(); montrer("partie");
+});
+$("lancerReel").addEventListener("click", () => { ecrire(CLES.mode, "qr"); majModes(); enCours() ? lancerAventure() : nouvelleAventure(); });
+$("ouvrirParents").addEventListener("click", () => { majModes(); $("choixReel").hidden = true; ["genreReel", "genreVirtuel"].forEach(k => $(k).classList.remove("actif")); montrer("parents"); });
 $("fermerParents").addEventListener("click", () => { majModes(); montrer("accueil"); });
-document.querySelectorAll(".carte-mode").forEach(b => b.addEventListener("click", e => {
-  if (e.target.closest("a")) return;   // le lien de la planche reste un lien
-  ecrire(CLES.mode, b.dataset.mode); majModes(); sfx("valider");
-  if (e.target.closest("[data-placer]")) return setTimeout(ouvrirCarteParents, 300);
-  setTimeout(() => { majAccueil(); montrer("accueil"); }, 900);
-}));
 $("raz").addEventListener("click", () => {
   const b = $("raz");
   if (!b.dataset.ok) { b.dataset.ok = "1"; b.textContent = "Touchez encore pour tout effacer"; setTimeout(() => { delete b.dataset.ok; b.textContent = "Remettre toute l'aventure à zéro"; }, 4000); return; }
@@ -284,8 +286,10 @@ function afficherIntro(i) {
   $("suiteIntro").textContent = i === textesIntro.length - 1 ? (textesIntro === INTRO ? "À l'aventure !" : "Relever le défi !") : "Suite";
   sfx("page");
 }
-function lancerAventure() { initAudio(); ouvrirOeil(); }
-$("commencer").addEventListener("click", () => { initAudio(); pageIntro = 0; textesIntro = INTRO; finIntro = apresIntro; montrer("intro"); afficherIntro(0); });
+function lancerAventure() { initAudio(); if (mode() === "virtuel") return ouvrirJeu(); ouvrirOeil(); }
+function nouvelleAventure() { initAudio(); pageIntro = 0; textesIntro = INTRO; finIntro = apresIntro; montrer("intro"); afficherIntro(0); }
+$("commencer").addEventListener("click", () => enCours() ? lancerAventure() : nouvelleAventure());   // partie en cours : on reprend où l'on était, sans l'intro
+$("nouvelle").addEventListener("click", nouvelleAventure);
 function apresIntro() { clearInterval(ecrit); taire(); ecrire(CLES.intro, true); preparerChoix(); montrer("partie"); }
 
 /* ===================== Nouvelle partie : combien de cryptides ? ===================== */
@@ -327,7 +331,7 @@ function majChoix() {
   document.querySelectorAll("[data-n]").forEach(b => b.classList.toggle("cyan", +b.dataset.n === nombre));
   if (mode() === "qr") {
     $("aCacher").hidden = false;
-    $("listeQr").innerHTML = tirage.map(k => "<li><b>n° " + k + "</b> " + TRAQUES[k].nom.split(",")[0] + "</li>").join("");
+    $("listeQr").innerHTML = tirage.map(cheminIndices).join("");
   } else $("aCacher").hidden = true;
 }
 function preparerChoix() {
@@ -350,6 +354,7 @@ $("cestParti").addEventListener("click", () => {
 });
 function majAccueil() {
   const p = enCours();
+  $("commencer").textContent = p ? "Reprendre l'aventure" : "Commencer l'aventure"; $("nouvelle").hidden = !p;
   $("defiAccueil").hidden = !bossDispo();
   $("modeActuel").textContent = LIBELLES[mode()] + (p ? " · partie en cours " + p.pris.length + " / " + p.liste.length : "");
 }
@@ -658,8 +663,12 @@ function apresCapture() {
     membreIdx++; bandeau(fait + " est sauvé ! Mais " + suivant + " se cache encore… Cherche-le !", 3200);
     sfx("victoire"); setTimeout(lancerMembre, 1500); return;
   }
-  ajouter(CLES.pris, traque.id); majPartie(p => { if (!p.pris.includes(traque.id)) p.pris.push(traque.id); }); sfx("victoire");
-  $("portrait").src = traque.image; $("ficheNom").textContent = traque.nom; $("ficheTexte").textContent = traque.texte;
+  sauve(traque.id);
+}
+function sauve(id) {   // la créature rejoint la collection : écran « Sauvé ! »
+  const t = TRAQUES[id];
+  ajouter(CLES.pris, id); majPartie(p => { if (!p.pris.includes(id)) p.pris.push(id); }); sfx("victoire");
+  $("portrait").src = t.image; $("ficheNom").textContent = t.nom; $("ficheTexte").textContent = t.texte;
   const p = partie() || { liste: ids, pris: pris() }, n = p.pris.length, total = p.liste.length;
   $("compteur").textContent = n >= total ? "" : n + " / " + total + " cryptides sauvés dans cette aventure.";
   $("final").hidden = n < total; $("continuer").hidden = n >= total; $("rejouer").hidden = n < total;
@@ -671,7 +680,7 @@ function bandeau(texte, duree) { $("bandeau").textContent = texte; $("bandeau").
 
 /* ---------- Ouverture de l'œil (caméra, mouvements) ---------- */
 function erreur(msg) { bandeau(msg, 6000); }
-async function ouvrirOeil() {
+async function ouvrirOeil(suite) {   // suite : ce qui démarre une fois l'œil ouvert (par défaut, la prochaine traque)
   initAudio(); sfx("oeil"); taire(); changerAmbiance("chasse");
   let attente = Promise.resolve("granted");
   if (window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission === "function")
@@ -688,10 +697,11 @@ async function ouvrirOeil() {
   if (!gyroOK) bandeau("Capteurs de mouvement non autorisés : fais glisser ton doigt pour regarder autour de toi. (Pour les réactiver : ferme Safari complètement et rouvre l'application.)", 7000);
   if (gyroOK && !orientation.branche) { addEventListener("deviceorientation", orientation); orientation.branche = true; }
   moteur.taille();
-  prochaineTraque();
+  suite ? suite() : prochaineTraque();
 }
 function prochaineTraque() {
   $("viseur").hidden = true; $("radar").hidden = true; $("gauche").hidden = $("droite").hidden = true; $("jauge").hidden = true;
+  if (mode() === "virtuel") return ouvrirJeu();
   if (enBoss) return mode() === "qr" ? demarrerBossAR() : ouvrirPixel();
   const demande = new URLSearchParams(location.search).get("m");
   const p = partie() || { liste: ids, pris: [] };
@@ -725,7 +735,7 @@ function lancerMembre() {
 /* ---------- Mode QR : lecture des codes ---------- */
 function scanner() {
   $("viseur").hidden = false; $("nomMonstre").textContent = "Œil magique";
-  $("consigne").textContent = "Vise le QR code d'une créature cachée.";
+  $("consigne").textContent = "Vise le QR code d'un indice ou d'une créature cachée.";
   const video = $("camera"), c = document.createElement("canvas"), g = c.getContext("2d", { willReadFrequently: true });
   const lireQR = () => {
     if ($("scene").hidden || $("viseur").hidden) return;
@@ -733,7 +743,14 @@ function scanner() {
       const l = 480, h = Math.round(l * video.videoHeight / video.videoWidth);
       c.width = l; c.height = h; g.drawImage(video, 0, 0, l, h);
       const code = jsQR(g.getImageData(0, 0, l, h).data, l, h, { inversionAttempts: "dontInvert" });
-      if (code && code.data) {
+      const ind = code && code.data ? lireIndice(code.data) : null;
+      if (ind) {
+        const p = partie() || { liste: ids, pris: [] };
+        if (navigator.vibrate) navigator.vibrate(80);
+        if (!p.liste.includes(ind.k)) $("consigne").textContent = "Cet indice est pour une créature qui ne fait pas partie de cette aventure. Cherche un autre QR code.";
+        else if (p.pris.includes(ind.k)) $("consigne").textContent = TRAQUES[ind.k].nom.split(",")[0] + " est déjà sauvé ! Cherche un autre QR code.";
+        else return montrerIndice(ind.k, ind.i, () => { $("viseur").hidden = false; $("consigne").textContent = "Cherche la carte suivante, puis vise-la avec l'œil magique."; setTimeout(lireQR, 900); });
+      } else if (code && code.data) {
         let k = null; try { k = new URL(code.data, location.href).searchParams.get("m"); } catch (e) {}
         if (k && TRAQUES[k]) {
           if (navigator.vibrate) navigator.vibrate(80);
@@ -909,7 +926,8 @@ function lancerDefi() {
 }
 function demarrerBoss() {
   clearInterval(ecrit); enBoss = true; bossPhase = 0; textesIntro = INTRO; finIntro = apresIntro;
-  const p = partie(); if (p) { delete p.posBoss; ecrire(CLES.partie, p); }
+  const p = partie(); if (p) { delete p.posBoss; if (p.jeu) delete p.jeu.boss; ecrire(CLES.partie, p); }
+  if (mode() === "virtuel") return ouvrirJeu();
   if (!$("camera").srcObject) return ouvrirOeil();     // l'œil magique n'est pas encore ouvert
   montrer(null); $("scene").hidden = false; changerAmbiance("chasse"); prochaineTraque();
 }
