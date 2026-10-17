@@ -743,12 +743,33 @@ function dioramaFlat() {
     s.scale.set(t, t, 1); s.position.set(x + (rnd() - .5) * .8, h, y + (rnd() - .5) * .8); s.renderOrder = 3; groupe.add(s);
     anim.push(tt => { m.opacity = Math.min(1, moteurJeu().nuit || 0) * (.6 + .4 * Math.sin(tt / 900 + ph)); });
   }
-  (MONDE.portails || []).forEach((q, i) => {   // les portails brillent, de jour comme de nuit
+  const vx = vortexJ(R); if ((MONDE.portails || []).length) anim.push(vx.tourner);
+  (MONDE.portails || []).forEach((q, i) => {   // les portails : un vortex de couleur tourne dans l'arche, et une lueur respire autour
+    const [, , aw, ah] = ATLAS_DECOR.arche, H = 2.2, v = new THREE.Sprite(vx.mat); v.scale.set(H * aw / ah, H, 1); v.center.set(.5, .05 * SIN_CAM / H);
+    v.position.set(q.x, 0, q.y); v.renderOrder = -1; groupe.add(v);   // derrière l'arche : ses piliers le bordent
     const m = lueurJ(0x4ff3e0).clone(), s = new THREE.Sprite(m); s.scale.set(2.4, 2.4, 1); s.position.set(q.x, .9, q.y); s.renderOrder = 3; groupe.add(s);
-    anim.push(tt => { m.opacity = .55 + .3 * Math.sin(tt / 500 + i); });
+    anim.push(tt => { m.opacity = .35 + .2 * Math.sin(tt / 500 + i); });
   });
   R.scene.add(groupe);
   return R.ile = { groupe, anim, lampes: [], devant, flat: true };
+}
+function vortexJ(R) {   // le vortex des portails : une spirale turquoise, rose et violette dessinée dans l'ouverture de l'arche (même cadre que son image)
+  if (R.vortex) return R.vortex;
+  const cv = document.createElement("canvas"); cv.width = 256; cv.height = 255; const g = cv.getContext("2d"), t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace;
+  const mat = new THREE.SpriteMaterial({ map: t, transparent: true, depthWrite: false, depthTest: false }); R.matsFlat.push(mat);
+  const cx = 136, cy = 130, rx = 44, ry = 62, bras = ["#4ff3e0", "#ff7ad9", "#9a7bff"];   // l'ouverture de l'arche, en pixels de son image
+  let tPrec = -1e9;
+  const tourner = tt => { if (tt - tPrec < 33) return; tPrec = tt;   // 30 images par seconde suffisent
+    g.clearRect(0, 0, 256, 255); g.save(); g.beginPath(); g.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2); g.clip();
+    const f = g.createRadialGradient(cx, cy, 2, cx, cy, ry); f.addColorStop(0, "#fff6ff"); f.addColorStop(.25, "#b45cff"); f.addColorStop(.7, "#3a1f7a"); f.addColorStop(1, "#1fb7c9");
+    g.fillStyle = f; g.fillRect(0, 0, 256, 255);
+    g.translate(cx, cy); g.scale(rx / ry, 1); g.rotate(-tt / 420); g.lineCap = "round";
+    bras.forEach((c, k) => { g.strokeStyle = c; g.lineWidth = 7; g.globalAlpha = .85; g.beginPath();
+      for (let a = 0; a < 7.5; a += .15) { const r = 3 + a * 8.2, b = a + k * Math.PI * 2 / 3; a ? g.lineTo(Math.cos(b) * r, Math.sin(b) * r) : g.moveTo(Math.cos(b) * r, Math.sin(b) * r); }
+      g.stroke(); });
+    g.restore(); t.needsUpdate = true; };
+  tourner(0);
+  return R.vortex = { mat, tourner };
 }
 function lueurJ(c) {   // un petit rond de lumière colorée, qui s'ajoute à l'image
   const R = moteurJeu(), k = "lueur" + c; if (R[k]) return R[k];
