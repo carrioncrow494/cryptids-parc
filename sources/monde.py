@@ -227,6 +227,15 @@ for tour in range(30):
         c = prec[c]
 vu = composantes(); principaux = {vu[dep]} | {vu[(q['ax'], q['ay'])] for q in PORTAILS}
 print('cases accessibles :', sum(1 for n in vu.values() if n in principaux), '/', len(vu), '; portails :', len(PORTAILS))
+# 17/10 (fin) : Sam refait la carte du lac (une version propre et une annotée) : en attendant, le lac est vidé de ses éléments posés
+# (bâtiments, kelpies, pierres levées, arbres, plantes, objets, banc, lanternes, panneau). Restent les portails, le bateau et son amarre.
+LAC_VIDE = True
+if LAC_VIDE:
+    d = ILE['foret']
+    for y in range(d['oy'], d['oy'] + d['h']):
+        for x in range(d['ox'], d['ox'] + d['w']):
+            if M[y][x] in 'Zz': M[y][x] = '~'
+            elif M[y][x] in 'LT,OSCIoJ': M[y][x] = '.'
 carte = [''.join(l) for l in M]
 CODE = {'village': 'V', 'foret': 'F', 'cabane': 'K', 'desert': 'D', 'lande': 'L', 'bayou': 'B'}   # comme CODE_ZONE dans jeu.js
 ZG = [''.join('_' if ZONE[y][x] is None else CODE[ZONE[y][x]] for x in range(WW)) for y in range(WH)]
