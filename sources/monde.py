@@ -245,19 +245,34 @@ if LAC_VIDE:
         return False
     for lx, ly in ((2, 14), (2, 19), (4, 17), (6, 16), (6, 19)): met(lx, ly, 'o')          # le cercle de pierres (5 pierres, en haut à gauche)
     for ly in range(11, 16):
-        for lx in range(28, 33): met(lx, ly, 'C')                                       # le chalet en A, sur la place de sable
+        for lx in range(30, 35): met(lx, ly + 1, 'C')                                   # le chalet en A, sur la place de sable (18/10 : décalé de 2 vers l'avant-droite, pour laisser le bois derrière)
     for ly in range(5, 8):
         for lx in range(31, 35): met(lx, ly, 'I')                                       # l'atelier, au fond de la place
     for lx, ly in ((26, 5), (28, 4), (27, 7), (25, 7), (29, 6), (26, 9)): met(lx, ly, 'T')   # le bois, derrière la place (sans arbre tordu ni à baies : ARBRES.foret)
+    def sable(lx, ly): c = couleur('foret', OX + lx, OY + ly); return c[0] > 200 and c[2] > 100 and c[0] > c[2] + 60
+    def bois(zone):   # 18/10 : « plus d'arbres dans les zones blanches » : des arbres serrés, pas sur les chemins de sable ni contre eux
+        for lx, ly in zone:
+            if (lx * 7 + ly * 11) % 5 == 0 or sable(lx, ly): continue
+            met(lx, ly, 'T')
+    bois([(lx, ly) for ly in range(21, 35) for lx in range(1, next((k for k in range(1, 7) if sable(k, ly)), 3))])   # le long du bord gauche, entre le bord et le chemin du portail
+    bois([(lx, ly) for ly in range(12, 16) for lx in range(9, 14)])                    # la petite clairière à côté du cercle de pierres
+    bois([(lx, ly) for ly in range(1, 13) for lx in range(22, 29) if abs((lx - 23) + (ly - 12) * .4) < 2.5])   # derrière le chalet, le long de la place
     for ly in range(4):                                                                 # les deux kelpies au milieu du lac, face à face
         for k in range(4): met(28 - 4 + k, 34 + ly, 'Z', '~'); met(28 + k, 34 - 4 + ly, 'z', '~')
     bx, by = 34, 22   # le banc sur la rive, l'eau devant (jeu.js le tourne vers elle)
     _, bx, by = min((abs(lx - bx) + abs(ly - by), lx, ly) for ly in range(d['h'] - 1) for lx in range(d['w'] - 1)
                     if M[OY + ly][OX + lx] == '.' and '~' in (M[OY + ly + 1][OX + lx], M[OY + ly][OX + lx + 1]) and M[OY + ly - 1][OX + lx] != '~' and M[OY + ly][OX + lx - 1] != '~')
+    bx, by = 33, 20   # 18/10 (2e retour) : Sam l'a redessiné ici, en long dans le sens du chemin (jeu.js le retourne : pas d'eau juste devant en y)
     met(bx, by, 'J')
     for ly in range(22, d['h'] - 1):                                                    # les bruyères : la bande d'herbe entre le lac et le bord avant-droit
         for lx in range(36, d['w'] - 1):
             if lx >= 38 and (lx * 7 + ly * 13) % 10 < 8: met(lx, ly, ',')
+    for ly in range(1, d['h'] - 1):                                                     # 18/10 : un peu d'ajonc jaune partout (« ; »), hors des chemins
+        for lx in range(1, d['w'] - 1):
+            if (lx * 31 + ly * 17) % 23 == 0 and not (lx >= 36 and ly >= 21) and not sable(lx, ly) and (OX + lx, OY + ly) not in PRIS: met(lx, ly, ';')
+    q = next(q for q in PORTAILS if q['zone'] == 'foret' and q['vers'] == 'village')    # 18/10 : le portail du village tourné d'un quart (Sam : « portail dans ce sens »)
+    for dy in (1, -1):
+        if M[q['y'] + dy][q['x']] == '.': q.update(ax=q['x'], ay=q['y'] + dy); break
     q = next(q for q in PORTAILS if q['zone'] == 'foret' and q['vers'] == 'cabane')      # le portail du bois Biscornu : au bout du chemin, en bas à gauche
     nx, ny = OX + 4, OY + 38
     if M[ny][nx] == '.' and M[ny - 1][nx] == '.':

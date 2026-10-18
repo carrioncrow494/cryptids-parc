@@ -4,7 +4,7 @@
 // par quelques passages marqués d'une arche (p). La carte est une grille de lettres : une lettre = une case (voir TUILES).
 // Le décor en 3D est construit à partir de la grille (dioramaJ). Pour changer la carte, un plan dessiné à la main suffit : on le recopie en lettres.
 const TUILES = {
-  ".": { libre: true }, ",": { libre: true }, "=": { libre: true }, ":": { libre: true }, "*": { libre: true }, "b": { libre: true },
+  ".": { libre: true }, ",": { libre: true }, ";": { libre: true }, "=": { libre: true }, ":": { libre: true }, "*": { libre: true }, "b": { libre: true },
   "B": { libre: true }, "n": { libre: true }, "P": { libre: true }, "p": { libre: true },
   "T": {}, "~": {}, "#": {}, "f": {}, "R": {}, "H": {}, "D": {}, "L": {}, "S": {}, "o": {},
   "E": {}, "G": {}, "K": {}, "k": {}, "M": {}, "A": {}, "c": {}, "t": {}, "u": {},
@@ -791,7 +791,8 @@ function dioramaFlat() {
     else if (ch === "p") { pose("arche", x, y, { miroir: libreSol(x - 1, y) && libreSol(x + 1, y) && !(libreSol(x, y - 1) && libreSol(x, y + 1)), pied: .05 }).userData.passage = true; }
     else if (ch === "," && (z === "lande" || z === "cabane")) pose("bruyere", x + (rnd() - .5) * .3, y + (rnd() - .5) * .3, { miroir: m, haut: .4 + rnd() * .2 });
     else if (ch === "," && z === "bayou") pose("roseaux", x, y, { miroir: m });
-    else if (ch === "," && z === "foret") pose(r < .8 ? "foret_p1" : "foret_p2", x + (rnd() - .5) * .4, y + (rnd() - .5) * .4, { miroir: m, haut: .45 + rnd() * .25 });   // les bruyères (et un peu d'ajonc jaune)
+    else if (ch === "," && z === "foret") pose("foret_p1", x + (rnd() - .5) * .4, y + (rnd() - .5) * .4, { miroir: m, haut: .75 + rnd() * .3 });   // les bruyères : que des violettes, plus grosses (18/10)
+    else if (ch === ";" && z === "foret") pose("foret_p2", x + (rnd() - .5) * .4, y + (rnd() - .5) * .4, { miroir: m, haut: .5 + rnd() * .25 });   // l'ajonc jaune, un peu partout
     else if (ch === "~" && z === "bayou" && r < .12) pose("nenuphar", x, y, { miroir: m, pied: 0 });
   }
   // les bâtiments : une image pour tout le bloc de cases (maison, cathédrale, cabane, ranch, pont couvert)
