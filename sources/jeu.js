@@ -47,7 +47,8 @@ function batimentsJ() {
   if (BATIS) return BATIS; BATIS = [];
   const bloc = (lettres, choix) => blocsJ(lettres).forEach((b, i) => {
     const w = b.x1 - b.x0 + 1, d = b.y1 - b.y0 + 1, nom = choix(b, i), base = (w + d) / Math.SQRT2;
-    BATIS.push({ b, nom, w, d, large: Math.max(nom.startsWith("maison") ? 3.3 : 0, base * (nom === "pont" ? 1.15 : 1.08)), base });
+    const k = /^(maison|saloon|excalibook|bergamotte|ninamoto|superette|chupa|ferme|ranch_)/.test(nom) ? 1.3 : 1;   // maisons, boutiques et ranch : leur porte à la taille d'un adulte, à côté du héros de 6 ans (18/10)
+    BATIS.push({ b, nom, w, d, large: Math.max(nom.startsWith("maison") ? 3.3 : 0, base * (nom === "pont" ? 1.15 : 1.08)) * k, base });
   });
   bloc("EG", () => "cathedrale"); bloc("Z", () => "kelpie_d"); bloc("z", () => "kelpie_g"); bloc("Kk", () => "cabane"); bloc("B", () => "pont");
   bloc("RHD", (b, i) => zoneJ(b.x0, b.y0) === "desert" ? "saloon" : "maison" + (1 + i % 4));
@@ -78,25 +79,26 @@ const PNJ = [
   { x: MONDE.pnj.desert[0], y: MONDE.pnj.desert[1], zone: "desert", nom: "Papy Coyote", corps: 0xc9573f, chapeau: 0xe2b77c, bonjour: "Fait chaud, hein ? Dans les plaines, regarde bien autour des cactus et des rochers rouges." },
   { x: MONDE.pnj.bayou[0], y: MONDE.pnj.bayou[1], zone: "bayou", nom: "Tante Grenouille", corps: 0x6e8a44, chapeau: 0xff8fa3, bonjour: "Attention où tu mets les pieds, petit ! Le bayou, ça glisse." }
 ];
-// les habitants dessinés par Sam (18/10) : leur place vient de monde.py (MONDE.habitants) ; haut : leur taille, d'après la fiche de groupe (le héros fait 1,2)
+// les habitants dessinés par Sam (18/10) : leur place vient de monde.py (MONDE.habitants) ; haut : leur taille, d'après la fiche de groupe ; le héros a 6 ans et fait 1,2 (Sam, 18/10 : un adulte fait une fois et demie sa taille)
 const HABITANTS = {
-  sam: { nom: "Sam", haut: 1.56, bonjour: "Salut ! Bienvenue au lac Carcajou. Le chalet, c'est chez moi. Prends le bateau de pêche si tu veux voir le large !" },
-  gaelle: { nom: "Gaelle", haut: 1.56, bonjour: "Bonjour ! Je peins le lac depuis mon atelier. Je vois passer de drôles d'ombres dans l'eau…" },
-  finn: { nom: "Finn", haut: 1.04, bonjour: "Coucou ! Tu as vu les pierres levées ? Elles sont gravées de spirales magiques !" },
-  siobhan: { nom: "Siobhán", haut: 1.2, bonjour: "Chut… Assieds-toi sur le banc et regarde les kelpies. Parfois, l'eau fait des bulles." },
-  max: { nom: "Max", haut: 1.54, bonjour: "Salut, l'aventurier ! Si tu cherches un bon livre, Excalibook est juste là." },
-  simon: { nom: "Simon", haut: 1.44, bonjour: "Bonjour ! Depuis la cathédrale, on voit tout le village. Les portails mènent à chaque région." },
-  lynda: { nom: "Lynda", haut: 1.46, bonjour: "Bienvenue au Bonnie Ranch ! Parle doucement, le bébé fait la sieste." },
-  vivien: { nom: "Vivien", haut: 1.6, bonjour: "Salut ! Je m'occupe de la grange et des bêtes du ranch. Il fait frais, sur le mont Ben Glagla !" },
-  nina: { nom: "Nina", haut: .94, bonjour: "Coucou ! Tu veux voir le corral ? Un jour, j'aurai mon cheval à moi !" }
+  sam: { nom: "Sam", haut: 1.85, bonjour: "Salut ! Bienvenue au lac Carcajou. Le chalet, c'est chez moi. Prends le bateau de pêche si tu veux voir le large !" },
+  gaelle: { nom: "Gaelle", haut: 1.85, bonjour: "Bonjour ! Je peins le lac depuis mon atelier. Je vois passer de drôles d'ombres dans l'eau…" },
+  finn: { nom: "Finn", haut: 1.22, bonjour: "Coucou ! Tu as vu les pierres levées ? Elles sont gravées de spirales magiques !" },
+  siobhan: { nom: "Siobhán", haut: 1.42, bonjour: "Chut… Assieds-toi sur le banc et regarde les kelpies. Parfois, l'eau fait des bulles." },
+  max: { nom: "Max", haut: 1.82, bonjour: "Salut, l'aventurier ! Si tu cherches un bon livre, Excalibook est juste là." },
+  simon: { nom: "Simon", haut: 1.72, bonjour: "Bonjour ! Depuis la cathédrale, on voit tout le village. Les portails mènent à chaque région." },
+  lynda: { nom: "Lynda", haut: 1.74, bonjour: "Bienvenue au Bonnie Ranch ! Parle doucement, le bébé fait la sieste." },
+  vivien: { nom: "Vivien", haut: 1.9, bonjour: "Salut ! Je m'occupe de la grange et des bêtes du ranch. Il fait frais, sur le mont Ben Glagla !" },
+  nina: { nom: "Nina", haut: 1.12, bonjour: "Coucou ! Tu veux voir le corral ? Un jour, j'aurai mon cheval à moi !" }
 };
 (MONDE.habitants || []).forEach(h => { const H = HABITANTS[h.nom]; if (H) PNJ.push({ x: h.x, y: h.y, zone: h.zone, nom: H.nom, bonjour: H.bonjour, image: h.nom === "lynda" ? "linda" : h.nom, haut: H.haut, corps: 0x6b569b, chapeau: 0x3a2a4a }); });
 const pnjEn = (x, y) => PNJ.find(n => n.x === x && n.y === y);
 const cachetteEn = (x, y) => ciblesJ().find(q => q.x === x && q.y === y);
 // les animaux (18/10) : chacun garde sa case ; ceux de l'eau (truites, alligators) ne gênent pas le bateau
 const ANIMAUX = (MONDE.animaux || []).map((a, i) => ({ ...a, i }));
-const TAILLE_ANIMAL = { mouton_blanc: .8, mouton_noir: .8, chevre: .85, cheval: 1.35, vache: 1.15, vache_ecossaise: 1.1, cerf: 1.4, biche: 1.1, loup: .95, ours: 1.3, renard: .7, ecureuil: .5,
-  loutre: .6, castor: .6, lezard: .5, truite: .45, corbeau: .5, rouge_gorge: .35, mesange: .35, raton: .6, opossum: .5, coyote: .85, alligator: .6, serpent: .55, grenouille: .4 };
+const TAILLE_ANIMAL = {   // en cases, à côté du héros de 6 ans (1,2) : un cheval ou un cerf le dépasse, un mouton lui arrive à l'épaule (18/10)
+  mouton_blanc: 1, mouton_noir: 1, chevre: 1, cheval: 1.9, vache: 1.6, vache_ecossaise: 1.5, cerf: 1.9, biche: 1.4, loup: 1.1, ours: 1.6, renard: .75, ecureuil: .5,
+  loutre: .7, castor: .65, lezard: .55, truite: .55, corbeau: .55, rouge_gorge: .4, mesange: .4, raton: .65, opossum: .55, coyote: 1, alligator: .75, serpent: .6, grenouille: .45 };
 const CRIS = { mouton_blanc: "Bêêê !", mouton_noir: "Bêêê !", chevre: "Mêêê !", cheval: "Hiiii !", vache: "Meuuuh !", vache_ecossaise: "Meuuuh !", cerf: "Le cerf brame.", biche: "La biche te regarde, curieuse.",
   loup: "Ahouuu !", ours: "Grrr… (c'est un gros câlin, en fait)", renard: "Le renard agite sa queue.", ecureuil: "L'écureuil grignote une noisette.", loutre: "La loutre se frotte les moustaches.",
   castor: "Le castor tape l'eau avec sa queue.", lezard: "Le lézard prend le soleil.", truite: "Plouf !", corbeau: "Croâ ! Croâ !", rouge_gorge: "Cui-cui !", mesange: "Tsi-tsi-tsi !", raton: "Le raton laveur se lave les pattes.",

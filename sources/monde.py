@@ -332,6 +332,12 @@ print('habitants :', [(h['nom'], h['x'], h['y']) for h in HAB])
 # les animaux de Sam (18/10) : chacun dans sa région ; ceux de la ferme autour du ranch, les poissons et les alligators dans l'eau libre, loutres, castors et grenouilles sur la rive
 import random as _r
 ANI = []; ra = _r.Random(18)
+def bleu(z, x, y): c = couleur(z, x, y); return z != 'foret' or c[2] > c[0] + 60   # le bayou a une eau verte
+def sol_ok(z, x, y):   # de l'herbe (ou le sol de la région) : pas un chemin, pas un rocher, pas de l'eau
+    if chemin(z, x, y) or M[y][x] not in LIBRE: return False
+    c = couleur(z, x, y)
+    if z == 'foret': return c[0] > c[2] + 40 and c[1] > c[2] + 25 and not (c[0] > 200 and c[2] > 100)
+    return np.abs(c - SOLC[z]).sum() < 120 or (c[1] > c[2] + 20 and c[1] >= c[0] - 30)   # le sol de l'île, ou de l'herbe
 LIBRE = '.,;'
 def animal(nom, z, ou='sol', pres=None, rayon=12, n=1):
     d = ILE[z]; occ = [(h['x'], h['y']) for h in HAB] + [(a['x'], a['y']) for a in ANI] + [(q['x'], q['y']) for q in PORTAILS] + [(q['ax'], q['ay']) for q in PORTAILS] + [dep]
@@ -341,13 +347,16 @@ def animal(nom, z, ou='sol', pres=None, rayon=12, n=1):
             for x in range(d['ox'] + 2, d['ox'] + d['w'] - 2):
                 if ZONE[y][x] != z or (pres and abs(x - pres[0]) + abs(y - pres[1]) > rayon) or any(abs(x - a) + abs(y - b) < 4 for a, b in occ): continue
                 v = [M[y + b][x + a] for a in (-1, 0, 1) for b in (-1, 0, 1)]
-                if ou == 'eau' and all(c == '~' for c in v): cs.append((x, y))
+                if ou == 'eau':   # l'eau libre, loin des rochers peints de la rive
+                    r = 2 if z == 'foret' else 1
+                    if all(M[y + b][x + a] == '~' for a in range(-r, r + 1) for b in range(-r, r + 1)) and bleu(z, x, y): cs.append((x, y))
+                elif not sol_ok(z, x, y): continue   # 18/10 : jamais sur un chemin peint ni sur un rocher (Sam : des animaux mal placés)
                 elif ou == 'rive' and M[y][x] in LIBRE and '~' in v and sum(c in LIBRE for c in v) >= 4: cs.append((x, y))
-                elif ou == 'sol' and all(c in LIBRE for c in v) and (x, y) not in PRIS: cs.append((x, y))
+                elif ou == 'sol' and all(c in LIBRE for c in v) and all(sol_ok(z, x + a, y + b) for a, b in ((1, 0), (-1, 0), (0, 1), (0, -1))) and (x, y) not in PRIS: cs.append((x, y))
         if not cs: print('  pas de place pour', nom, z); return
         x, y = ra.choice(cs); ANI.append(dict(nom=nom, zone=z, x=x, y=y, eau=ou == 'eau')); occ.append((x, y))
 ranch = (rm[0] + 6, rm[1] + 5)
-for nom, k in (('mouton_blanc', 3), ('mouton_noir', 1), ('chevre', 2), ('cheval', 2), ('vache', 2), ('vache_ecossaise', 2)): animal(nom, 'lande', pres=ranch, rayon=14, n=k)
+for nom, k in (('mouton_blanc', 3), ('mouton_noir', 1), ('chevre', 2), ('cheval', 2), ('vache', 2), ('vache_ecossaise', 2)): animal(nom, 'lande', pres=ranch, rayon=18, n=k)
 for nom in ('cerf', 'biche', 'renard', 'ecureuil', 'rouge_gorge', 'mesange', 'corbeau'): animal(nom, 'foret')
 animal('loutre', 'foret', 'rive'); animal('castor', 'foret', 'rive'); animal('truite', 'foret', 'eau', n=2)
 for nom, k in (('loup', 2), ('ours', 1), ('corbeau', 2), ('renard', 1)): animal(nom, 'cabane', n=k)
