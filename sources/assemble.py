@@ -22,9 +22,9 @@ html='''<!doctype html>
 <body>
 '''+open(P+'corps.html').read()+'''
 <script type="module">
-'''+open(P+'app.js').read()+open(P+'indices.js').read()+open(P+'decor-atlas.js').read()+open(P+'nature-atlas.js').read()+open(P+'monde.js').read()+open(P+'jeu.js').read()+'''</script>
+'''+open(P+'app.js').read()+open(P+'indices.js').read()+open(P+'decor-atlas.js').read()+open(P+'nature-atlas.js').read()+open(P+'habitants-atlas.js').read()+open(P+'monde.js').read()+open(P+'jeu.js').read()+'''</script>
 </body>
 </html>
 '''
 open(P+'../index.html','w').write(html)
-open(P+'check.mjs','w').write(open(P+'app.js').read()+open(P+'indices.js').read()+open(P+'decor-atlas.js').read()+open(P+'nature-atlas.js').read()+open(P+'monde.js').read()+open(P+'jeu.js').read())   # puis : node --check check.mjs
+open(P+'check.mjs','w').write(open(P+'app.js').read()+open(P+'indices.js').read()+open(P+'decor-atlas.js').read()+open(P+'nature-atlas.js').read()+open(P+'habitants-atlas.js').read()+open(P+'monde.js').read()+open(P+'jeu.js').read())   # puis : node --check check.mjs

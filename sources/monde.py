@@ -279,12 +279,62 @@ if LAC_VIDE:
     nx, ny = OX + 4, OY + 38
     if M[ny][nx] == '.' and M[ny - 1][nx] == '.':
         M[q['y']][q['x']] = '.'; M[ny][nx] = 'g'; q.update(x=nx, y=ny, ax=nx, ay=ny - 1)
+# ---------- 18/10 : les habitants de Sam et le Bonnie Ranch (posés à la fin : le reste de l'île ne bouge pas) ----------
+def bloc_de(l):   # les cases d'une lettre : (x0, y0, x1, y1)
+    cs = [(x, y) for y in range(WH) for x in range(WW) if M[y][x] == l]
+    return (min(c[0] for c in cs), min(c[1] for c in cs), max(c[0] for c in cs), max(c[1] for c in cs)) if cs else None
+def rect_libre(z, x0, y0, w, h, m=1):
+    return all(0 <= y < WH and 0 <= x < WW and M[y][x] in '.,;' and ZONE[y][x] == z for y in range(y0 - m, y0 + h + m) for x in range(x0 - m, x0 + w + m))
+def poser_pres(z, motif, cible, m=1):   # le motif au plus près de la cible, sans hasard
+    h, w = len(motif), len(motif[0]); d = ILE[z]
+    cs = sorted((abs(x0 + w / 2 - cible[0]) + abs(y0 + h / 2 - cible[1]), x0, y0) for y0 in range(d['oy'], d['oy'] + d['h'] - h) for x0 in range(d['ox'], d['ox'] + d['w'] - w) if rect_libre(z, x0, y0, w, h, m))
+    if not cs: print('  pas de place pour', motif[0]); return None
+    _, x0, y0 = cs[0]
+    for yy, ligne in enumerate(motif):
+        for xx, ch in enumerate(ligne): M[y0 + yy][x0 + xx] = ch
+    return (x0, y0)
+# Ninamoto quitte le village pour le mont Ben Glagla (Sam, 18/10)
+b = bloc_de('N')
+for y in range(b[1], b[3] + 1):
+    for x in range(b[0], b[2] + 1): M[y][x] = '.'
+# la ferme devient le Bonnie Ranch : la maison à sa place, la grange et le corral à côté, le portail en rondins devant la maison
+f = bloc_de('F')
+for y in range(f[1], f[3] + 1):
+    for x in range(f[0], f[2] + 1): M[y][x] = '.'
+rm = poser_pres('lande', ['UUUUU'] * 4, ((f[0] + f[2]) / 2 + .5, (f[1] + f[3]) / 2 + .5), m=0)
+rg = poser_pres('lande', ['VVVV'] * 4, (rm[0] + 9, rm[1] + 2))
+rc = poser_pres('lande', ['rrrr'] * 4, (rm[0] + 9, rm[1] + 8))
+porte_ranch = (rm[0] + 2, rm[1] + 4)
+for k in (-1, 0, 1):
+    if M[porte_ranch[1] + 3][porte_ranch[0] + k] in '.,;': M[porte_ranch[1] + 3][porte_ranch[0] + k] = 'h'
+entree_lande = next((q['ax'], q['ay']) for q in PORTAILS if q['zone'] == 'lande')
+rn = poser_pres('lande', ['NNNNN'] * 3, (entree_lande[0] - 7, entree_lande[1] - 6))
+# les habitants : chacun près d'un lieu (dans l'ordre de la liste), sur une case libre entourée de cases libres
+HAB = []
+def habitant(nom, z, cible):
+    d = ILE[z]; pris = {(h['x'], h['y']) for h in HAB}
+    cs = sorted((abs(x - cible[0]) + abs(y - cible[1]), x, y) for y in range(d['oy'] + 1, d['oy'] + d['h'] - 1) for x in range(d['ox'] + 1, d['ox'] + d['w'] - 1)
+                if M[y][x] == '.' and ZONE[y][x] == z and all(M[y + b][x + a] in '.,;' for a in (-1, 0, 1) for b in (-1, 0, 1))
+                and all(abs(x - a) + abs(y - b) > 2 for a, b in pris) and abs(x - cible[0]) + abs(y - cible[1]) >= 1)
+    _, x, y = cs[0]; HAB.append(dict(nom=nom, zone=z, x=x, y=y))
+c = bloc_de('C'); a = bloc_de('I'); jb = bloc_de('J'); X = bloc_de('X'); E = bloc_de('E')
+o = ILE['foret']
+habitant('sam', 'foret', ((c[0] + c[2]) / 2 + 1, c[3] + 3))           # devant le chalet en A
+habitant('gaelle', 'foret', ((a[0] + a[2]) / 2, a[3] + 3))            # devant l'atelier d'art
+habitant('finn', 'foret', (o['ox'] + 9, o['oy'] + 17))                # près du cercle de pierres
+habitant('siobhan', 'foret', (jb[0] - 2, jb[1] + 1))                  # à côté du banc, au bord du lac
+habitant('max', 'village', ((X[0] + X[2]) / 2 + .5, X[3] + 2))        # devant Excalibook (Sam, 18/10)
+habitant('simon', 'village', (dep[0] + 2, dep[1] + 1))                # devant la cathédrale
+habitant('lynda', 'lande', (porte_ranch[0] + 2, porte_ranch[1] + 1))  # sur le perron du ranch
+habitant('vivien', 'lande', (rg[0] - 1, rg[1] + 5))                   # devant la grange
+habitant('nina', 'lande', (rc[0] - 2, rc[1] + 2))                     # près du corral
+print('habitants :', [(h['nom'], h['x'], h['y']) for h in HAB])
 carte = [''.join(l) for l in M]
 CODE = {'village': 'V', 'foret': 'F', 'cabane': 'K', 'desert': 'D', 'lande': 'L', 'bayou': 'B'}   # comme CODE_ZONE dans jeu.js
 ZG = [''.join('_' if ZONE[y][x] is None else CODE[ZONE[y][x]] for x in range(WW)) for y in range(WH)]
 with open('sources/monde.js', 'w') as o:
     o.write('// fabriqué par sources/monde.py : les 6 îles peintes, reliées par des ponts. Chaque case : voir TUILES dans jeu.js.\n')
-    o.write('const MONDE = ' + json.dumps(dict(carte=carte, iles=INFO, pnj=PNJ, zones=ZG, portails=PORTAILS, bateau=BATEAU), ensure_ascii=False) + ';\n')
+    o.write('const MONDE = ' + json.dumps(dict(carte=carte, iles=INFO, pnj=PNJ, habitants=HAB, zones=ZG, portails=PORTAILS, bateau=BATEAU), ensure_ascii=False) + ';\n')
 # un aperçu : la carte entière en petits carrés
 C = {' ': (12, 30, 40), 'x': (120, 100, 140), '.': (130, 170, 100), '~': (60, 140, 220), 'b': (170, 110, 70), 'T': (30, 90, 50), '#': (150, 60, 50), 'P': (255, 255, 0)}
 im = Image.new('RGB', (WW * 4, WH * 4)); d = ImageDraw.Draw(im)

@@ -9,13 +9,14 @@ const TUILES = {
   "T": {}, "~": {}, "#": {}, "f": {}, "R": {}, "H": {}, "D": {}, "L": {}, "S": {}, "o": {},
   "E": {}, "G": {}, "K": {}, "k": {}, "M": {}, "A": {}, "c": {}, "t": {}, "u": {},
   "X": {}, "Q": {}, "N": {}, "Y": {}, "W": {}, "F": {}, "C": {}, "j": {}, "x": {},
-  "I": {}, "Z": {}, "z": {}, "O": {}, "v": {}, "J": {}, "g": {}
+  "I": {}, "Z": {}, "z": {}, "O": {}, "v": {}, "J": {}, "g": {}, "U": {}, "V": {}, "r": {}, "h": { libre: true }
 };   // . sol  , hautes herbes (bruyère, fougères, roseaux)  = chemin  : sable  * fleurs  b passerelle  B pont couvert  n neige  P départ  p passage (arche)
      // T arbre  ~ eau  # rocher  f barrière  R toit  H mur  D porte  L lampadaire  S panneau  o pierre levée
      // E cathédrale  G sa porte  K cabane biscornue  k sa porte  M mesa  A montagne  c cactus  t tombe  u citrouille
      // (espace) hors de l'île   x bord peint de l'île (on n'y marche pas)
      // X Excalibook  Q Chez Bergamotte  N Ninamoto  Y supérette  W Chupa la sopa  F ferme  C chalet en A  j jeu du parc
      // g portail (au bout des chemins : il mène à l'île voisine, ou au village ; voir MONDE.portails)
+     // le mont Ben Glagla : U maison du Bonnie Ranch  V sa grange  r son corral  h son portail en rondins (on passe dessous)
      // le lac : I atelier d'art  Z z les deux kelpies (celui de gauche regarde à droite)  O petit objet (rocher, souche, bûches, cairn)  v bateau de pêche (son amarre)  J banc
 const CARTE = MONDE.carte;   // fabriquée par sources/monde.py : 6 îles peintes reliées par des ponts
 const LARG = CARTE[0].length, HAUT = CARTE.length;
@@ -25,7 +26,7 @@ const ZONES = {
   foret: { nom: "Le lac Carcajou", panneau: "Le lac Carcajou : le grand lac et ses deux kelpies de pierre, le chalet et le cercle de pierres." },
   bayou: { nom: "Le bayou Barbouille", panneau: "Le bayou Barbouille : passerelles, cyprès et eaux boueuses." },
   village: { nom: "Le vieux village", panneau: "Le vieux village et sa cathédrale. Un pont part vers chaque région." },
-  lande: { nom: "Le mont Ben Glagla", panneau: "Le mont Ben Glagla : la lande, la neige et la ferme." },
+  lande: { nom: "Le mont Ben Glagla", panneau: "Le mont Ben Glagla : la lande, la neige, le Bonnie Ranch et Ninamoto." },
   desert: { nom: "Les plaines Rabougri", panneau: "Les plaines Rabougri : cactus, rochers rouges et le vieux ranch." }
 };
 const CODE_ZONE = { V: "village", F: "foret", K: "cabane", D: "desert", L: "lande", B: "bayou" };   // MONDE.zones : la région de chaque case
@@ -51,14 +52,14 @@ function batimentsJ() {
   bloc("EG", () => "cathedrale"); bloc("Z", () => "kelpie_d"); bloc("z", () => "kelpie_g"); bloc("Kk", () => "cabane"); bloc("B", () => "pont");
   bloc("RHD", (b, i) => zoneJ(b.x0, b.y0) === "desert" ? "saloon" : "maison" + (1 + i % 4));
   // les nouveaux lieux : leur dessin s'il est arrivé, sinon une maison en attendant
-  const NOUVEAUX = { X: "excalibook", Q: "bergamotte", N: "ninamoto", Y: "superette", W: "chupa", F: "ferme", C: "chalet", I: "atelier" };
+  const NOUVEAUX = { X: "excalibook", Q: "bergamotte", N: "ninamoto", Y: "superette", W: "chupa", F: "ferme", C: "chalet", I: "atelier", U: "ranch_maison", V: "ranch_grange", r: "ranch_corral", h: "ranch_portail" };
   Object.entries(NOUVEAUX).forEach(([l, nom], i) => bloc(l, () => typeof ATLAS_DECOR !== "undefined" && ATLAS_DECOR[nom] ? nom : "maison" + (1 + i % 4)));
   return BATIS;
 }
 function sousBatiment(x, y) {
   if (!SOUS_BATI) {
     SOUS_BATI = new Set();
-    batimentsJ().forEach(({ b, nom, w, d, large, base }) => { if (nom === "pont") return;
+    batimentsJ().forEach(({ b, nom, w, d, large, base }) => { if (nom === "pont" || nom === "ranch_portail") return;   // on passe sous le portail du ranch
       const k = large / base, cx = (b.x0 + b.x1) / 2, cz = (b.y0 + b.y1) / 2, ex = w * k / 2 - .25, ez = d * k / 2 - .25;
       for (let yy = Math.ceil(cz - ez); yy <= Math.floor(cz + ez); yy++) for (let xx = Math.ceil(cx - ex); xx <= Math.floor(cx + ex); xx++) SOUS_BATI.add(xx + "," + yy);
       // derrière le bâtiment, là où son image cacherait tout le héros : on ne passe pas non plus (sinon on a l'air de marcher dans les murs)
@@ -74,12 +75,22 @@ function sousBatiment(x, y) {
 const libreJ = (x, y) => libreSol(x, y) && !occupeJ(x, y);           // et personne dessus (habitant, cachette)
 // Un habitant par région : on lui parle avec A, il donne les indices des cryptides cachés chez lui.
 const PNJ = [
-  { x: MONDE.pnj.village[0], y: MONDE.pnj.village[1], zone: "village", nom: "Le maire Pistache", corps: 0xd99a3c, chapeau: 0x6b569b, bonjour: "Bienvenue au vieux village ! Un pont part d'ici vers chaque région." },
-  { x: MONDE.pnj.foret[0], y: MONDE.pnj.foret[1], zone: "foret", nom: "Lumignon le veilleur", corps: 0x3f8790, chapeau: 0x2a2a3a, bonjour: "Bienvenue au lac Carcajou ! On dit que Nessie nage près des rives, et le kraken tout au large : prends le bateau de pêche ! Le bois Biscornu est juste après." },
-  { x: MONDE.pnj.lande[0], y: MONDE.pnj.lande[1], zone: "lande", nom: "Bergère Mousse", corps: 0x9a6fb0, chapeau: 0xf3e2c4, bonjour: "Le vent souffle fort sur le mont Ben Glagla. Le lac cache bien des secrets." },
-  { x: MONDE.pnj.desert[0], y: MONDE.pnj.desert[1], zone: "desert", nom: "Papy Coyote", corps: 0xc9573f, chapeau: 0xe2b77c, bonjour: "Fait chaud, hein ? Dans le désert, regarde bien autour des cactus et des rochers rouges." },
+  { x: MONDE.pnj.desert[0], y: MONDE.pnj.desert[1], zone: "desert", nom: "Papy Coyote", corps: 0xc9573f, chapeau: 0xe2b77c, bonjour: "Fait chaud, hein ? Dans les plaines, regarde bien autour des cactus et des rochers rouges." },
   { x: MONDE.pnj.bayou[0], y: MONDE.pnj.bayou[1], zone: "bayou", nom: "Tante Grenouille", corps: 0x6e8a44, chapeau: 0xff8fa3, bonjour: "Attention où tu mets les pieds, petit ! Le bayou, ça glisse." }
 ];
+// les habitants dessinés par Sam (18/10) : leur place vient de monde.py (MONDE.habitants) ; haut : leur taille, d'après la fiche de groupe (le héros fait 1,2)
+const HABITANTS = {
+  sam: { nom: "Sam", haut: 1.56, bonjour: "Salut ! Bienvenue au lac Carcajou. Le chalet, c'est chez moi. Prends le bateau de pêche si tu veux voir le large !" },
+  gaelle: { nom: "Gaelle", haut: 1.56, bonjour: "Bonjour ! Je peins le lac depuis mon atelier. Je vois passer de drôles d'ombres dans l'eau…" },
+  finn: { nom: "Finn", haut: 1.04, bonjour: "Coucou ! Tu as vu les pierres levées ? Elles sont gravées de spirales magiques !" },
+  siobhan: { nom: "Siobhán", haut: 1.2, bonjour: "Chut… Assieds-toi sur le banc et regarde les kelpies. Parfois, l'eau fait des bulles." },
+  max: { nom: "Max", haut: 1.54, bonjour: "Salut, l'aventurier ! Si tu cherches un bon livre, Excalibook est juste là." },
+  simon: { nom: "Simon", haut: 1.44, bonjour: "Bonjour ! Depuis la cathédrale, on voit tout le village. Les portails mènent à chaque région." },
+  lynda: { nom: "Lynda", haut: 1.46, bonjour: "Bienvenue au Bonnie Ranch ! Parle doucement, le bébé fait la sieste." },
+  vivien: { nom: "Vivien", haut: 1.6, bonjour: "Salut ! Je m'occupe de la grange et des bêtes du ranch. Il fait frais, sur le mont Ben Glagla !" },
+  nina: { nom: "Nina", haut: .94, bonjour: "Coucou ! Tu veux voir le corral ? Un jour, j'aurai mon cheval à moi !" }
+};
+(MONDE.habitants || []).forEach(h => { const H = HABITANTS[h.nom]; if (H) PNJ.push({ x: h.x, y: h.y, zone: h.zone, nom: H.nom, bonjour: H.bonjour, image: h.nom === "lynda" ? "linda" : h.nom, haut: H.haut, corps: 0x6b569b, chapeau: 0x3a2a4a }); });
 const pnjEn = (x, y) => PNJ.find(n => n.x === x && n.y === y);
 const cachetteEn = (x, y) => ciblesJ().find(q => q.x === x && q.y === y);
 const occupeJ = (x, y) => !!(pnjEn(x, y) || cachetteEn(x, y));
@@ -848,17 +859,18 @@ const CACTUS_DESERT = ["desert_a1", "desert_a4", "desert_a5", "desert_a7"];
 const SIN_CAM = .543;   // un écart au sol (dx + dz) / √2 se voit SIN_CAM fois plus court à l'écran, en hauteur
 function chargerFlat(R) {   // les 3 planches du décor ; si l'une manque, on garde l'île en volumes
   R.flat = "attente"; R.tFlat = performance.now(); let n = 0;
-  const L = new THREE.TextureLoader(), ok = () => { if (++n === 3 + MONDE.iles.length && R.flat === "attente") R.flat = "ok"; }, non = () => { R.flat = "non"; };
+  const L = new THREE.TextureLoader(), ok = () => { if (++n === 4 + MONDE.iles.length && R.flat === "attente") R.flat = "ok"; }, non = () => { R.flat = "non"; };
   R.texSol = L.load(IMG_JEU + "jeu-sols.webp", t => { t.colorSpace = THREE.SRGBColorSpace; t.flipY = false; t.anisotropy = 4; t.needsUpdate = true; ok(); }, undefined, non);
   R.texDecor = L.load(IMG_JEU + "jeu-decor.webp", t => { t.colorSpace = THREE.SRGBColorSpace; ok(); }, undefined, non);
   R.texIles = MONDE.iles.map(d => L.load(IMG_JEU + d.image, t => { t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4; ok(); }, undefined, non));
   R.texNature = L.load(IMG_JEU + "jeu-nature.webp", t => { t.colorSpace = THREE.SRGBColorSpace; ok(); }, undefined, non);   // les arbres de chaque zone
+  R.texHab = L.load(IMG_JEU + "jeu-habitants.webp", t => { t.colorSpace = THREE.SRGBColorSpace; ok(); }, undefined, non);   // les habitants de Sam et le Bonnie Ranch (18/10)
   R.matsFlat = [];   // tous les matériaux dessinés : on les teinte la nuit
 }
 function matDecor(R, nom, miroir, fondu) {   // un matériau par objet (et par sens, et estompé quand il cache le héros)
   const cle = nom + (miroir ? "/m" : "") + (fondu ? "/f" : ""); R.mats = R.mats || {};
   if (R.mats[cle]) return R.mats[cle];
-  const [x, y, w, h, nat] = ATLAS_DECOR[nom], [W, H] = nat ? ATLAS_DECOR.taille2 : ATLAS_DECOR.taille, t = (nat ? R.texNature : R.texDecor).clone();
+  const [x, y, w, h, nat] = ATLAS_DECOR[nom], [W, H] = nat === 2 ? ATLAS_DECOR.taille3 : nat ? ATLAS_DECOR.taille2 : ATLAS_DECOR.taille, t = (nat === 2 ? R.texHab : nat ? R.texNature : R.texDecor).clone();
   t.repeat.set((miroir ? -w : w) / W, h / H); t.offset.set((miroir ? x + w : x) / W, 1 - (y + h) / H); t.needsUpdate = true;
   const m = new THREE.SpriteMaterial({ map: t, transparent: true, alphaTest: .04, depthWrite: false, opacity: fondu ? .4 : 1 });
   R.matsFlat.push(m); return R.mats[cle] = m;
@@ -1020,7 +1032,12 @@ function estomperJ(R, d, fx, fy) {   // un arbre ou une maison qui cache le hér
 // ---------- les habitants et les cachettes, posés sur l'île (ils bougent, ils ne sont pas fondus avec le décor) ----------
 function habitantsJ(R) {
   if (R.pnj) return R.pnj;
-  R.pnj = PNJ.map(n => {   // un petit personnage tout rond, avec un chapeau à sa couleur
+  R.pnj = PNJ.map(n => {   // un petit personnage tout rond, avec un chapeau à sa couleur (ou, s'il est dessiné, son image : debout, ou qui parle)
+    if (n.image && ATLAS_DECOR["hab_" + n.image + "_0"] && R.texHab) {
+      const g = new THREE.Group(), c = new THREE.Group(), s = new THREE.Sprite(matDecor(R, "hab_" + n.image + "_0")), [, , w, h] = ATLAS_DECOR["hab_" + n.image + "_0"];
+      s.scale.set(n.haut * w / h, n.haut, 1); s.center.set(.5, .04); c.add(s); g.add(c); g.position.set(n.x, 0, n.y); R.scene.add(g);
+      return { n, g, c, s };
+    }
     const g = new THREE.Group(), c = new THREE.Group(), o = (geo, col, x, y, z) => { const m = new THREE.Mesh(geo, mat3(col)); m.position.set(x, y, z); m.castShadow = true; c.add(m); return m; };
     o(new THREE.CapsuleGeometry(.24, .2, 6, 12), n.corps, 0, .38, 0);
     o(new THREE.SphereGeometry(.22, 14, 10), COUL.peau, 0, .8, 0);
@@ -1181,7 +1198,14 @@ function boucleJeu(t) {
   d.anim.forEach(f => f(t));
   if (d.flat) { cachettesFlat(R, t); estomperJ(R, d, fx, fy); vueZoneJ(R, d); boutonBateauJ(); } else cachettesJ3D(R, t);
   creatureJ(R, t);
-  habitantsJ(R).forEach(({ n, g, c }) => {   // les habitants respirent, et se tournent vers toi quand tu approches
+  habitantsJ(R).forEach(({ n, g, c, s }) => {   // les habitants respirent, et se tournent vers toi quand tu approches
+    if (s) {   // dessiné : il regarde de ton côté (l'image regarde vers la droite de l'écran), et lève la main quand il te parle
+      const parle = JEU.parle === n && !$("jeuDialogue").hidden, gauche = (fx - fy) < (n.x - n.y) - .2, nom = "hab_" + n.image + "_" + (parle ? 1 : 0);
+      if (gauche !== s.userData.gauche || nom !== s.userData.nom) { s.userData.gauche = gauche; s.userData.nom = nom; s.material = matDecor(R, nom, gauche);
+        const [, , w, h] = ATLAS_DECOR[nom]; s.scale.set(n.haut * w / h, n.haut, 1); }
+      s.scale.y = n.haut * (1 + Math.sin(t / 700 + n.x) * .012);   // il respire
+      return;
+    }
     c.position.y = Math.abs(Math.sin(t / 500 + n.x)) * .04;
     if (Math.abs(n.x - fx) + Math.abs(n.y - fy) <= 3) { const a = Math.atan2(fx - n.x, fy - n.y), da = Math.atan2(Math.sin(a - g.rotation.y), Math.cos(a - g.rotation.y)); g.rotation.y += da * .15; }
   });
