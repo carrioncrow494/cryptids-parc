@@ -236,6 +236,32 @@ if LAC_VIDE:
         for x in range(d['ox'], d['ox'] + d['w']):
             if M[y][x] in 'Zz': M[y][x] = '~'
             elif M[y][x] in 'LT,OSCIoJ': M[y][x] = '.'
+# 18/10 : la carte annotée de Sam (sur la capture du lac vide) : chaque élément à sa place, en cases de l'île (0, 0 = coin du fond)
+if LAC_VIDE:
+    d = ILE['foret']; OX, OY = d['ox'], d['oy']
+    def met(lx, ly, ch, sur='.'):
+        x, y = OX + lx, OY + ly
+        if M[y][x] in sur: M[y][x] = ch; PRIS.add((x, y)); return True
+        return False
+    for lx, ly in ((2, 14), (2, 19), (4, 17), (6, 16), (6, 19)): met(lx, ly, 'o')          # le cercle de pierres (5 pierres, en haut à gauche)
+    for ly in range(11, 16):
+        for lx in range(28, 33): met(lx, ly, 'C')                                       # le chalet en A, sur la place de sable
+    for ly in range(5, 8):
+        for lx in range(31, 35): met(lx, ly, 'I')                                       # l'atelier, au fond de la place
+    for lx, ly in ((26, 5), (28, 4), (27, 7), (25, 7), (29, 6), (26, 9)): met(lx, ly, 'T')   # le bois, derrière la place (sans arbre tordu ni à baies : ARBRES.foret)
+    for ly in range(4):                                                                 # les deux kelpies au milieu du lac, face à face
+        for k in range(4): met(28 - 4 + k, 34 + ly, 'Z', '~'); met(28 + k, 34 - 4 + ly, 'z', '~')
+    bx, by = 34, 22   # le banc sur la rive, l'eau devant (jeu.js le tourne vers elle)
+    _, bx, by = min((abs(lx - bx) + abs(ly - by), lx, ly) for ly in range(d['h'] - 1) for lx in range(d['w'] - 1)
+                    if M[OY + ly][OX + lx] == '.' and '~' in (M[OY + ly + 1][OX + lx], M[OY + ly][OX + lx + 1]) and M[OY + ly - 1][OX + lx] != '~' and M[OY + ly][OX + lx - 1] != '~')
+    met(bx, by, 'J')
+    for ly in range(22, d['h'] - 1):                                                    # les bruyères : la bande d'herbe entre le lac et le bord avant-droit
+        for lx in range(36, d['w'] - 1):
+            if lx >= 38 and (lx * 7 + ly * 13) % 10 < 8: met(lx, ly, ',')
+    q = next(q for q in PORTAILS if q['zone'] == 'foret' and q['vers'] == 'cabane')      # le portail du bois Biscornu : au bout du chemin, en bas à gauche
+    nx, ny = OX + 4, OY + 38
+    if M[ny][nx] == '.' and M[ny - 1][nx] == '.':
+        M[q['y']][q['x']] = '.'; M[ny][nx] = 'g'; q.update(x=nx, y=ny, ax=nx, ay=ny - 1)
 carte = [''.join(l) for l in M]
 CODE = {'village': 'V', 'foret': 'F', 'cabane': 'K', 'desert': 'D', 'lande': 'L', 'bayou': 'B'}   # comme CODE_ZONE dans jeu.js
 ZG = [''.join('_' if ZONE[y][x] is None else CODE[ZONE[y][x]] for x in range(WW)) for y in range(WH)]

@@ -21,7 +21,7 @@ def rocher(z, a):
 # On repère les trois coins visibles du dessus (gauche, avant, droite) et on redresse l'image pour que le losange du dessus
 # ait exactement l'angle du jeu ; seul ce losange est découpé en cases.
 CUBES = {'foret': dict(fichier='/mnt/project-files/cryptids-parc/jeu-video/lac-essais/map-lac-02.png',   # Map_Lac_02 de Sam (17/10 au soir) : même cadrage que lac-carcajou-upscale.jpg (vérifié pixel à pixel), chemins revus et place de sable à droite
-                       gauche=(137, 2205), avant=(2635, 3535), droite=(5295, 2198), N=40,   # 40 cases de côté (et pas 54) : le héros et les objets à l'échelle du terrain peint (le pont fait environ 5 héros)
+                       gauche=(137, 2205), avant=(2635, 3535), droite=(5295, 2198), N=40, plus_droite=4,   # 40 cases de côté (et pas 54) : le héros et les objets à l'échelle du terrain peint (le pont fait environ 5 héros)
                        passages=[((2640, 2000), (3340, 2220), 60)],            # le pont de pierre (segment et demi-largeur, en pixels de l'image)
                        reperes=dict(terre=(4000, 2240), cromlech=(1560, 1640), barque=(1320, 2500),   # la terre battue (chalet), un pré dégagé…
                                     vers_village=(4900, 2280), vers_cabane=(440, 2380)))}   # le bout des chemins peints : les portails
@@ -44,12 +44,15 @@ def grille_cube(z):
     im = im.transform((W, H), Image.AFFINE, tuple(Ai[:2].ravel()), Image.BICUBIC, fillcolor=(0, 255, 0))
     a = np.asarray(im).astype(np.float32); E, R = couleurs_cube(a)
     hw = hwD / N; hh = hw * R_ISO; X0, Y0 = m + hwD, Yc - hhD   # le coin du fond du losange
-    G = [[' '] * N for _ in range(N)]
+    NX = N + c.get('plus_droite', 0)   # des colonnes en plus du côté avant-droit : Sam a remis sa carte au carré, ce bord est plus loin que le losange (18/10)
+    G = [[' '] * NX for _ in range(N)]
     for j in range(N):
-        for i in range(N):
+        for i in range(NX):
             x, y = X0 + (i - j) * hw, Y0 + (i + j + 1) * hh
-            vus = [(int(x + ddx * hw * .6), int(y + ddy * hh * .6)) for ddx, ddy in ((0, 0), (1, 0), (-1, 0), (0, 1), (0, -1))]
+            vus = [(min(W - 1, int(x + ddx * hw * .6)), min(H - 1, int(y + ddy * hh * .6))) for ddx, ddy in ((0, 0), (1, 0), (-1, 0), (0, 1), (0, -1))]
             fe = sum(E[Y, X] for X, Y in vus); fr = sum(R[Y, X] for X, Y in vus)
+            pr, pg, pb = a[vus[0][1], vus[0][0]]
+            if i >= N and (pg > 200 and pr < 90 or pr > pg + 35 and pr > pb + 50): continue   # hors du dessus peint : le fond vert, ou la terre du flanc
             G[j][i] = '~' if fe >= 3 else '#' if fr >= 3 else '.'
     def case(pt):   # un point de l'image d'origine -> (x, y) de la grille
         X, Y = np.array([pt[0], pt[1], 1.]) @ A; a_, b_ = (X - X0) / hw, (Y - Y0) / hh - 1
@@ -57,13 +60,13 @@ def grille_cube(z):
     for p0, p1, w in c.get('passages', []):
         (x0, y0), (x1, y1) = case(p0), case(p1); r = w / hw / 2 + .5
         for j in range(N):
-            for i in range(N):
+            for i in range(NX):
                 t = max(0, min(1, ((i - x0) * (x1 - x0) + (j - y0) * (y1 - y0)) / ((x1 - x0) ** 2 + (y1 - y0) ** 2)))
                 if np.hypot(i - (x0 + t * (x1 - x0)), j - (y0 + t * (y1 - y0))) < r: G[j][i] = '.'
     reperes = {k: tuple(int(round(v)) for v in case(pt)) for k, pt in c.get('reperes', {}).items()}
     for y in range(N):
-        for x in range(N):
-            if (x in (0, N - 1) or y in (0, N - 1)) and G[y][x] == '.': G[y][x] = 'x'
+        for x in range(NX):
+            if (x in (0, NX - 1) or y in (0, N - 1)) and G[y][x] == '.': G[y][x] = 'x'
     return G, dict(image=z, W=W, H=H, i0=0, j0=0, X0=X0, Y0=Y0, hw=hw, hh=hh, reperes=reperes), im
 def grille(z):
     if z in CUBES: return grille_cube(z)

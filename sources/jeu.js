@@ -696,11 +696,12 @@ const JEUX_PARC = ["toboggan", "balancoire", "tourniquet", "bacasable", "cheval"
 const PROPS_VILLAGE = ["puits", "fontaine", "tonneau", "caisse", "banc", "boite", "epouvantail", "lanterne", "panier"];
 const CACHETTE_FLAT = { foret: "cach_foret", lande: "cach_lande", village: "cach_village", desert: "cach_desert", bayou: "cach_bayou", cabane: "cach_cabane" };
 // les arbres d'une zone : surtout ses grands arbres, parfois un petit (buisson, rocher, souche)
-const ARBRES = { cabane: [1, 2, 3, 4, 5, 6, 7, 8], desert: [2, 3, 6, 8], lande: [2, 4, 5, 7, 8], bayou: [1, 2, 3, 4, 5, 6, 7, 8], foret: [1, 2, 3, 4, 5, 6, 7, 8], village: [1, 2, 3, 4, 5, 6] };
+const ARBRES = { // foret : ni arbres tordus (1, 5) ni sorbier à baies rouges (4), demandé par Sam le 18/10
+  cabane: [1, 2, 3, 4, 5, 6, 7, 8], desert: [2, 3, 6, 8], lande: [2, 4, 5, 7, 8], bayou: [1, 2, 3, 4, 5, 6, 7, 8], foret: [2, 3, 6, 7, 8], village: [1, 2, 3, 4, 5, 6] };
 const NEIGE_LANDE = [1, 3, 6];
 function arbreJ(z, neige, r, r2) {
   if (typeof ATLAS_DECOR === "undefined" || !ATLAS_DECOR[z + "_a1"]) return z === "desert" ? "cactus" : "sapin";
-  if (r < .14) return z + "_p" + (1 + Math.floor(r2 * 4));
+  if (r < .14 && z !== "foret") return z + "_p" + (1 + Math.floor(r2 * 4));   // au lac, un « T » est toujours un arbre (le bois de Sam)
   const l = z === "lande" && neige ? NEIGE_LANDE : ARBRES[z]; return z + "_a" + l[Math.floor(r2 * l.length)];
 }
 const CACTUS_DESERT = ["desert_a1", "desert_a4", "desert_a5", "desert_a7"];
@@ -790,7 +791,7 @@ function dioramaFlat() {
     else if (ch === "p") { pose("arche", x, y, { miroir: libreSol(x - 1, y) && libreSol(x + 1, y) && !(libreSol(x, y - 1) && libreSol(x, y + 1)), pied: .05 }).userData.passage = true; }
     else if (ch === "," && (z === "lande" || z === "cabane")) pose("bruyere", x + (rnd() - .5) * .3, y + (rnd() - .5) * .3, { miroir: m, haut: .4 + rnd() * .2 });
     else if (ch === "," && z === "bayou") pose("roseaux", x, y, { miroir: m });
-    else if (ch === "," && z === "foret") pose("foret_p" + (1 + Math.floor(r * 4)), x + (rnd() - .5) * .3, y + (rnd() - .5) * .3, { miroir: m, haut: .45 + rnd() * .2 });
+    else if (ch === "," && z === "foret") pose(r < .8 ? "foret_p1" : "foret_p2", x + (rnd() - .5) * .4, y + (rnd() - .5) * .4, { miroir: m, haut: .45 + rnd() * .25 });   // les bruyères (et un peu d'ajonc jaune)
     else if (ch === "~" && z === "bayou" && r < .12) pose("nenuphar", x, y, { miroir: m, pied: 0 });
   }
   // les bâtiments : une image pour tout le bloc de cases (maison, cathédrale, cabane, ranch, pont couvert)
