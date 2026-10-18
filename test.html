@@ -2336,7 +2336,7 @@ function dialogueJ(texte, duree) {
 
 // ---------- déplacement ----------
 function essayerPas(dir, essai) {   // essai : on regarde seulement si ça passe (sans se tourner ni cogner)
-  if (!JEU || JEU.pas || JEU.revele) return false;
+  if (!JEU || JEU.pas) return false;
   const [dx, dy] = DIRS[dir], x = JEU.x + dx, y = JEU.y + dy, B = JEU.bateau;
   if (B && B.a) {   // en bateau : on va sur l'eau ; en poussant vers la rive, on descend (le bateau reste là)
     if (eauJ(x, y)) { B.x = x; B.y = y; B.dir = dir; }
@@ -2362,7 +2362,8 @@ function dirLac() {   // le sens du lac à l'amarre : la direction où l'eau s'�
 function boutonBateauJ() {
   const B = JEU && JEU.bateau, el = $("jeuBateau"); if (!el || !JEU) return;
   let quoi = "";
-  if (B && !B.a && !JEU.pas && Math.max(Math.abs(B.x - JEU.x), Math.abs(B.y - JEU.y)) <= 2 && zoneJ(B.x, B.y) === zoneJ(JEU.x, JEU.y)) quoi = "Monter dans le bateau";
+  if (JEU.revele) quoi = "";
+  else if (B && !B.a && !JEU.pas && Math.max(Math.abs(B.x - JEU.x), Math.abs(B.y - JEU.y)) <= 2 && zoneJ(B.x, B.y) === zoneJ(JEU.x, JEU.y)) quoi = "Monter dans le bateau";
   else if (B && B.a && !JEU.pas && rivePres()) quoi = "Descendre";
   else if (!(B && B.a) && !JEU.portail && !JEU.revele && portailPres()) quoi = "Utiliser le portail";   // le même bouton sert aux portails (17/10)
   el.classList.toggle("portail", quoi === "Utiliser le portail");
@@ -2570,6 +2571,21 @@ function pasTenu() {
 function finPas() {
   JEU.pas = null; sauverJ();
   if (zoneJ(JEU.x, JEU.y) !== JEU.zone) arriverJ();
+  approcheJ();
+}
+// 18/10 : plus besoin d'être collé devant le buisson. À 2 cases (dans tous les sens), la créature sort toute seule ;
+// si on s'éloigne à plus de 3 cases, elle retourne se cacher. Après « B », elle ne ressort qu'une fois qu'on s'est éloigné.
+const RAYON_CACHETTE = 2, ecartJ = q => Math.max(Math.abs(q.x - JEU.x), Math.abs(q.y - JEU.y));
+const cachettePres = () => ciblesJ().filter(q => !(JEU.ignore && JEU.ignore.k === q.k) && zoneJ(q.x, q.y) === zoneJ(JEU.x, JEU.y) && ecartJ(q) <= RAYON_CACHETTE).sort((a, b) => ecartJ(a) - ecartJ(b))[0];
+function approcheJ() {
+  if (!JEU) return;
+  if (JEU.ignore && (ecartJ(JEU.ignore) > RAYON_CACHETTE + 1 || !ciblesJ().some(q => q.k === JEU.ignore.k))) JEU.ignore = null;
+  if (JEU.revele && JEU.revele.q.x != null && ecartJ(JEU.revele.q) > RAYON_CACHETTE + 1) { partirCrea(JEU.revele.q); JEU.revele = null; $("jeuDialogue").hidden = true; }
+  if (!JEU.revele) { const q = cachettePres(); if (q) revelerJ(q); }
+}
+function revelerJ(q) {
+  JEU.revele = { q, t0: performance.now() + 400 }; JEU.portail = null; sfx("revele"); if (navigator.vibrate) navigator.vibrate([60, 40, 60]);
+  dialogueJ(q.k === "catsith" ? "C'est Sporran ! Appuie sur A pour l'attraper !" : "Un cryptide sort de sa cachette ! Appuie sur A pour l'attraper avec l'œil magique !", 60000);
 }
 function boutonA() {
   if (!JEU) return;
@@ -2579,15 +2595,14 @@ function boutonA() {
   const g = portailEn(fx, fy) || (!cachetteEn(fx, fy) && !pnjEn(fx, fy) && portailPres()); if (g) return portailJ(g);   // A ouvre un portail tout proche, pas besoin d'être collé devant (17/10)
   if (JEU.bateau && !JEU.bateau.a && fx === JEU.bateau.x && fy === JEU.bateau.y) return essayerPas(JEU.dir);   // A devant le bateau : on monte
   // comme dans Zelda : on fouille ce qu'on a devant soi. Un buisson qui bouge cache un cryptide.
-  const q = cachetteEn(fx, fy);
-  if (q) { JEU.revele = { q, t0: performance.now() + 400 }; fouilleJ({ ligne: 2, boucle: true, vitesse: 160 }); sfx("revele"); if (navigator.vibrate) navigator.vibrate([60, 40, 60]);
-    return dialogueJ(q.k === "catsith" ? "C'est Sporran ! Appuie encore sur A pour l'attraper !" : "Deux yeux brillent dans la cachette… C'est un cryptide ! Appuie encore sur A pour ouvrir l'œil magique.", 60000); }
+  const q = cachetteEn(fx, fy) || cachettePres();
+  if (q) { JEU.ignore = null; fouilleJ({ ligne: 2, boucle: true, vitesse: 160 }); return revelerJ(q); }
   const bete = animalEn(fx, fy) || ANIMAUX.find(a => a.eau && Math.abs(a.x - fx) + Math.abs(a.y - fy) <= 1);
   if (bete && !pnjEn(fx, fy)) { sfx("hop"); return dialogueJ(CRIS[bete.nom] || "…", 2400); }
   const n = pnjEn(fx, fy);
   if (n) { sfx("page"); JEU.parle = n; return dialogueJ(n.nom + " : " + texteHabitant(n), 8000); }
   if (tuileJ(fx, fy) === "S") { sfx("page"); return dialogueJ(texteSigne(JEU.x + dx, JEU.y + dy), 6000); }
-  sfx("clic"); fouilleJ(); dialogueJ(["Rien par ici…", "Cherche ce qui bouge ! Mets-toi devant et appuie sur A.", "Le détecteur t'aide : plus il s'allume, plus un cryptide est proche !"][Math.floor(Math.random() * 3)], 2400);
+  sfx("clic"); fouilleJ(); dialogueJ(["Rien par ici…", "Cherche ce qui bouge ! Approche-toi et le cryptide sortira.", "Le détecteur t'aide : plus il s'allume, plus un cryptide est proche !"][Math.floor(Math.random() * 3)], 2400);
 }
 function texteHabitant(n) {   // ce que dit l'habitant d'une région : bonjour, puis les indices
   if (enBoss) return "Sporran ? Il est parti vers sa cabane, dans le bois Biscornu, à l'ouest du village !";
@@ -2617,7 +2632,7 @@ function trouveJ() {   // appelé depuis un « clic » ou une touche : iOS n'aut
   ouvrirOeil(() => k === "catsith" ? demarrerBossAR() : demarrerTraque(k, { gpsFait: true, angleGPS: null }));
 }
 function fuirJ() {
-  partirCrea(JEU.revele.q); JEU.revele = null; JEU.action = null; sfx("clic");
+  JEU.ignore = JEU.revele.q; partirCrea(JEU.revele.q); JEU.revele = null; JEU.action = null; sfx("clic");
   dialogueJ("Tu laisses le cryptide tranquille… Il reste caché ici. Reviens quand tu veux !", 3000);
 }
 function fuiteBoss() {   // comme sur la carte GPS : Sporran file ailleurs deux fois avant de se laisser attraper
