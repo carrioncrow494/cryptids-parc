@@ -23,10 +23,10 @@ const LARG = CARTE[0].length, HAUT = CARTE.length;
 const ZONES = {
   cabane: { nom: "Le bois Biscornu", panneau: "Le bois Biscornu. Dans la cabane de travers vit… Sporran !" },
   foret: { nom: "Le lac Carcajou", panneau: "Le lac Carcajou : le grand lac et ses deux kelpies de pierre, le chalet et le cercle de pierres." },
-  bayou: { nom: "Le bayou", panneau: "Le bayou : passerelles, cyprès et eaux boueuses." },
+  bayou: { nom: "Le bayou Barbouille", panneau: "Le bayou Barbouille : passerelles, cyprès et eaux boueuses." },
   village: { nom: "Le vieux village", panneau: "Le vieux village et sa cathédrale. Un pont part vers chaque région." },
-  lande: { nom: "Les Hautes-Terres", panneau: "Les Hautes-Terres : la lande, le lac et la ferme." },
-  desert: { nom: "Le désert des Mesas", panneau: "Le désert des Mesas : cactus, rochers rouges et le vieux ranch." }
+  lande: { nom: "Le mont Ben Glagla", panneau: "Le mont Ben Glagla : la lande, la neige et la ferme." },
+  desert: { nom: "Les plaines Rabougri", panneau: "Les plaines Rabougri : cactus, rochers rouges et le vieux ranch." }
 };
 const CODE_ZONE = { V: "village", F: "foret", K: "cabane", D: "desert", L: "lande", B: "bayou" };   // MONDE.zones : la région de chaque case
 const zoneJ = (x, y) => CODE_ZONE[(MONDE.zones[y] || "")[x]] || "village";
@@ -76,7 +76,7 @@ const libreJ = (x, y) => libreSol(x, y) && !occupeJ(x, y);           // et perso
 const PNJ = [
   { x: MONDE.pnj.village[0], y: MONDE.pnj.village[1], zone: "village", nom: "Le maire Pistache", corps: 0xd99a3c, chapeau: 0x6b569b, bonjour: "Bienvenue au vieux village ! Un pont part d'ici vers chaque région." },
   { x: MONDE.pnj.foret[0], y: MONDE.pnj.foret[1], zone: "foret", nom: "Lumignon le veilleur", corps: 0x3f8790, chapeau: 0x2a2a3a, bonjour: "Bienvenue au lac Carcajou ! On dit que Nessie nage près des rives, et le kraken tout au large : prends le bateau de pêche ! Le bois Biscornu est juste après." },
-  { x: MONDE.pnj.lande[0], y: MONDE.pnj.lande[1], zone: "lande", nom: "Bergère Mousse", corps: 0x9a6fb0, chapeau: 0xf3e2c4, bonjour: "Le vent souffle fort sur les Hautes-Terres. Le lac cache bien des secrets." },
+  { x: MONDE.pnj.lande[0], y: MONDE.pnj.lande[1], zone: "lande", nom: "Bergère Mousse", corps: 0x9a6fb0, chapeau: 0xf3e2c4, bonjour: "Le vent souffle fort sur le mont Ben Glagla. Le lac cache bien des secrets." },
   { x: MONDE.pnj.desert[0], y: MONDE.pnj.desert[1], zone: "desert", nom: "Papy Coyote", corps: 0xc9573f, chapeau: 0xe2b77c, bonjour: "Fait chaud, hein ? Dans le désert, regarde bien autour des cactus et des rochers rouges." },
   { x: MONDE.pnj.bayou[0], y: MONDE.pnj.bayou[1], zone: "bayou", nom: "Tante Grenouille", corps: 0x6e8a44, chapeau: 0xff8fa3, bonjour: "Attention où tu mets les pieds, petit ! Le bayou, ça glisse." }
 ];
@@ -155,7 +155,7 @@ function ciblesJ() {   // les créatures encore cachées sur l'île
 // ---------- ouverture, sauvegarde ----------
 function ouvrirJeu() {
   initAudio(); taire(); fermerPixel(); arreterGPS(); montrer(null); $("scene").hidden = true; $("victoire").hidden = true;
-  changerAmbiance("chasse");
+  changerAmbiance("jeu"); musiqueZonesJ();   // dans le jeu, chaque région a sa musique (18/10)
   let p = partie();
   if (!p) { p = { liste: [], pris: [], membres: {}, debut: Date.now() }; ecrire(CLES.partie, p); }
     if (p.jeu && p.jeu.v !== 4) delete p.jeu;   // une partie de l'ancien jeu (4 petites maps) : on repart du village, les créatures sauvées le restent
@@ -182,6 +182,8 @@ function fermerJeu() {
 function arriverJ(debut) {   // on entre dans une région : son nom, et combien de cryptides s'y cachent
   const z = JEU.zone = zoneJ(JEU.x, JEU.y), Z = ZONES[z], n = ciblesJ().filter(q => zoneJ(q.x, q.y) === z).length;
   $("jeuLieu").textContent = Z.nom;
+  musiqueZonesJ();
+  majPartie(p => { if (p.jeu) { p.jeu.vus = p.jeu.vus || ["village"]; if (!p.jeu.vus.includes(z)) p.jeu.vus.push(z); } });   // les régions déjà visitées : la carte les débloque
   let txt = n ? n + (n > 1 ? " cryptides se cachent ici" : " cryptide se cache ici") : "Aucun cryptide ici. Cherche ailleurs !";
   if (enBoss) txt = z === "cabane" ? "Sporran rôde autour de sa cabane…" : "Sporran t'attend dans le bois Biscornu, après le lac Carcajou !";
   titreJ(Z.nom, txt); if (!debut) sfx("page");
@@ -283,6 +285,144 @@ function voyagerJ(z) {   // on arrive devant le portail d'en face (ou devant la 
   else { JEU.x = DEPART[0]; JEU.y = DEPART[1]; JEU.dir = "bas"; }
   JEU.pas = null; JEU.action = null; sfx("fuite"); sauverJ(); arriverJ();
 }
+// ---------- la carte (18/10) : le village au centre, le lac et le mont au nord, le bois à l'ouest, le bayou à l'est, les plaines au sud ----------
+// une région reste grisée tant qu'on n'y est pas allé ; ensuite, on s'y téléporte d'un toucher
+const ORDRE_CARTE = ["foret", "lande", "cabane", "village", "bayou", "desert"];
+function arriveeZone(z) {   // devant le portail de la région (celui du village, s'il y en a plusieurs), ou au départ pour le village
+  if (z === "village") return [DEPART[0], DEPART[1], "bas"];
+  const l = (MONDE.portails || []).filter(q => q.zone === z), q = l.find(o => o.vers === "village") || l[0];
+  if (!q) return null;
+  return [q.ax, q.ay, Object.keys(DIRS).find(d => DIRS[d][0] === q.ax - q.x && DIRS[d][1] === q.ay - q.y) || "bas"];
+}
+function carteJ() {
+  if (!JEU || JEU.revele) return;
+  const p = partie(), vus = (p && p.jeu && p.jeu.vus) || ["village"], ici = zoneJ(JEU.x, JEU.y), el = $("jeuCarteZones"); el.innerHTML = "";
+  const img = Object.fromEntries((MONDE.iles || []).map(d => [d.zone, d.image]));
+  ORDRE_CARTE.forEach(z => {
+    const b = document.createElement("button"), ouvert = vus.includes(z) && arriveeZone(z); b.type = "button"; b.style.gridArea = z;
+    b.classList.toggle("ferme", !ouvert); b.classList.toggle("ici", z === ici);
+    if (img[z]) b.style.setProperty("--img", `url("${IMG_JEU + img[z]}")`);
+    const n = document.createElement("span"); n.textContent = ouvert ? ZONES[z].nom : "???"; b.appendChild(n);
+    b.onclick = e => { e.stopPropagation();
+      if (!ouvert) { sfx("clic"); return dialogueJ("Tu n'es pas encore allé là-bas. Trouve le chemin par les portails !", 2600); }
+      $("jeuCarte").hidden = true; if (z === ici) return;
+      teleporterJ(z);
+    };
+    el.appendChild(b);
+  });
+  sfx("page"); $("jeuCarte").hidden = false;
+}
+function teleporterJ(z) {
+  const a = arriveeZone(z); if (!a) return;
+  const B = JEU.bateau; if (B && B.a) B.a = false;   // en bateau : il reste là où on l'a laissé
+  JEU.portail = null; $("jeuDialogue").hidden = true;
+  [JEU.x, JEU.y, JEU.dir] = a; JEU.pas = null; JEU.action = null; sfx("fuite"); sauverJ(); arriverJ();
+}
+// ---------- les musiques des régions (18/10) : fabriquées par code, comme le reste des sons ; les artistes cités par Sam ne sont qu'une inspiration ----------
+// lac Carcajou : folk nordique et écossais (bourdon de cornemuse, flûte irlandaise, chœur aérien, tambour sur cadre), 6/8
+// mont Ben Glagla : country douce (basse « boum-tchik », guitare grattée, mélodie chantée) ; bois Biscornu : darkwave (basse en croches, arpège froid, caisse claire réverbérée)
+// bayou Barbouille : blues hillbilly en shuffle (contrebasse-cruche en boogie, banjo, harmonica, planche à laver) ; plaines Rabougri : dembow de reggaeton et trompettes mariachi
+// le village garde la marche de la traque (busChasse, dans app.js)
+const MUSIQUES = {
+  foret: { bpm: 84, pas: 6, croche: 1 / 2, accords: [[50,57,62],[48,55,60],[50,57,62],[45,52,57],[41,48,53],[48,55,60],[45,52,57],[50,57,62]],
+    melodie: [[[74,2],[76,1],[77,2],[76,1]],[[74,2],[72,1],[69,3]],[[74,2],[76,1],[77,2],[79,1]],[[81,3],[79,1],[77,1],[76,1]],
+              [[77,2],[79,1],[81,2],[84,1]],[[81,2],[79,1],[76,2],[72,1]],[[74,2],[76,1],[77,1],[76,1],[72,1]],[[74,6]]] },
+  lande: { bpm: 96, pas: 8, croche: 1 / 2, accords: [[43,47,50],[38,42,45],[40,43,47],[36,40,43],[43,47,50],[38,42,45],[40,43,47],[36,40,43]],
+    melodie: [[[71,2],[74,2],[74,1],[71,1],[69,2]],[[69,2],[66,2],[69,4]],[[67,2],[71,2],[74,2],[71,2]],[[72,3],[71,1],[69,4]],
+              [[71,2],[74,2],[79,2],[78,1],[76,1]],[[74,4],[69,4]],[[71,2],[67,2],[69,2],[71,2]],[[67,8]]] },
+  cabane: { bpm: 112, pas: 16, croche: 1 / 4, accords: [[40,47,52],[40,47,52],[36,43,48],[36,43,48],[45,52,57],[45,52,57],[47,51,54],[47,51,54]],
+    melodie: [[], [], [], [], [[76,8],[72,8]], [[74,16]], [[75,8],[78,8]], [[71,16]]] },
+  bayou: { bpm: 104, pas: 8, croche: 1 / 2, swing: true, accords: [45,45,45,45,50,50,45,45,52,50,45,52].map(r => [r, r + 4, r + 7, r + 10]),
+    melodie: [[[72,1],[69,1],[72,1],[74,1],[75,1],[76,3]],[],[],[],[[79,1],[76,1],[74,1],[72,1],[74,4]],[],[[72,1],[69,1],[72,1],[74,1],[75,1],[76,3]],[],[[76,2],[79,2],[76,4]],[],[[79,1],[76,1],[74,1],[72,1],[69,4]],[]] },
+  desert: { bpm: 94, pas: 16, croche: 1 / 4, accords: [[45,52,57,60],[43,50,55,59],[41,48,53,57],[40,47,52,56],[45,52,57,60],[43,50,55,59],[41,48,53,57],[40,47,52,56]],
+    melodie: [[], [], [], [], [[76,3],[76,1],[77,2],[76,2],[74,4],[72,4]], [[74,4],[71,4],[74,2],[76,2],[74,4]], [[72,4],[69,4],[72,2],[74,2],[72,4]], [[71,4],[68,4],[64,8]]] }
+};
+let musZ = null;
+function bruitJ(d, duree, freq, q, vol, sortie, type = "bandpass") {   // un souffle de bruit filtré : charleston, caisse claire, planche à laver, güiro
+  const t = audio.currentTime + d, n = Math.ceil(audio.sampleRate * duree), b = audio.createBuffer(1, n, audio.sampleRate), x = b.getChannelData(0);
+  for (let i = 0; i < n; i++) x[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 2);
+  const s = audio.createBufferSource(), f = audio.createBiquadFilter(), g = audio.createGain(); s.buffer = b; f.type = type; f.frequency.value = freq; f.Q.value = q; g.gain.value = vol;
+  s.connect(f).connect(g).connect(sortie); s.start(t);
+}
+function grosseCaisseJ(d, sortie, vol = .5, de = 150, a = 45) {
+  const t = audio.currentTime + d, o = audio.createOscillator(), g = audio.createGain();
+  o.frequency.setValueAtTime(de, t); o.frequency.exponentialRampToValueAtTime(a, t + .12);
+  g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(.001, t + .35); o.connect(g).connect(sortie); o.start(t); o.stop(t + .4);
+}
+function voixJ(m, d, duree, sortie, { type = "sine", vol = .08, vib = 5, prof = 6, filtre = 0, attaque = .04, glisse = 0 } = {}) {   // une note tenue avec vibrato : flûte, voix, harmonica, trompette
+  const t = audio.currentTime + d, o = audio.createOscillator(), g = audio.createGain(), l = audio.createOscillator(), lg = audio.createGain();
+  o.type = type; o.frequency.setValueAtTime(hz(m), t); if (glisse) { o.detune.setValueAtTime(glisse, t); o.detune.linearRampToValueAtTime(0, t + .09); }
+  l.frequency.value = vib; lg.gain.setValueAtTime(0, t); lg.gain.linearRampToValueAtTime(prof, t + Math.min(.3, duree * .5)); l.connect(lg).connect(o.detune);
+  g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vol, t + attaque); g.gain.setValueAtTime(vol, t + Math.max(attaque, duree - .08)); g.gain.linearRampToValueAtTime(0, t + duree);
+  let n = o; if (filtre) { const f = audio.createBiquadFilter(); f.type = "lowpass"; f.frequency.value = filtre; o.connect(f); n = f; }
+  n.connect(g).connect(sortie); o.start(t); l.start(t); o.stop(t + duree + .05); l.stop(t + duree + .05);
+}
+const pinceJ = (m, d, sortie, vol = .06, type = "triangle", duree = .35, filtre = 0) => note(hz(m), d, duree, { type, vol, sortie, filtre });
+const gratteJ = (ch, d, sortie, vol = .04, type = "triangle") => ch.forEach((m, k) => pinceJ(m + 12, d + k * .018, sortie, vol, type, .5, 2400));
+function pasMusique(z, i, d, ts, bus) {   // ce que joue la région z au pas i (d : dans combien de secondes ; ts : la durée d'un pas)
+  const M = MUSIQUES[z], mesure = Math.floor(i / M.pas) % M.accords.length, k = i % M.pas, ch = M.accords[mesure];
+  let pos = 0; (M.melodie[mesure] || []).forEach(([m, l]) => { if (pos === k && m) jouerMelodie(z, m, d, l * ts, bus); pos += l; });
+  if (z === "foret") {
+    if (k === 0) { voixJ(ch[0] - 12, d, ts * 6 + .1, bus, { type: "sawtooth", vol: .025, vib: .3, prof: 3, filtre: 700, attaque: .02 }); voixJ(ch[1] - 12, d, ts * 6 + .1, bus, { type: "sawtooth", vol: .018, vib: .3, prof: 3, filtre: 700, attaque: .02 }); }   // le bourdon
+    if (k === 0 || k === 3) grosseCaisseJ(d, bus, k ? .16 : .26, 110, 55); if (k === 5) bruitJ(d, .06, 2500, 1, .05, bus);
+    pinceJ(ch[k % 3] + (k > 2 ? 24 : 12), d, bus, .025, "sine", .9);   // la harpe
+    if (k === 0 && mesure % 2 === 0) choeur(ch[2] + 12, d, ts * 12, .035, bus, mesure % 4 ? "o" : "a");
+  }
+  else if (z === "lande") {
+    if (k === 0 || k === 4) { pinceJ((k ? ch[2] : ch[0]) - 12, d, bus, .16, "triangle", .45); grosseCaisseJ(d, bus, .18, 90, 45); }
+    if (k === 2 || k === 6) { gratteJ(ch, d, bus); bruitJ(d, .12, 3500, .8, .05, bus); }
+    if (k === 7) gratteJ(ch, d, bus, .02);
+  }
+  else if (z === "cabane") {
+    pinceJ((k % 4 === 2 ? ch[0] : ch[0] - 12) + (k % 8 === 6 ? 12 : 0), d, bus, .08, "sawtooth", ts * 1.6, 650);   // la basse en double-croches
+    if (k % 8 === 0) grosseCaisseJ(d, bus, .4); if (k === 4 || k === 12) { bruitJ(d, .3, 1600, .7, .16, bus); bruitJ(d, .05, 6000, 1, .04, bus, "highpass"); }
+    if (k % 2 === 0) bruitJ(d, .03, 8000, 1, .025, bus, "highpass");
+    if (k % 2 === 1) pinceJ(ch[(k >> 1) % 3] + 24, d, bus, .02, "square", .16, 2200);   // l'arpège froid
+    if (k === 0) ch.forEach(m => voixJ(m + 12, d, ts * 16, bus, { type: "sawtooth", vol: .012, vib: .2, prof: 8, filtre: 1100, attaque: .4 }));
+  }
+  else if (z === "bayou") {
+    const boogie = [0, 4, 7, 9, 10, 9, 7, 4];
+    pinceJ(ch[0] - 12 + boogie[k], d, bus, .14, "triangle", ts * .9, 900);   // la contrebasse-cruche
+    bruitJ(d, .04, 5000, 2, k % 4 === 2 ? .06 : .03, bus, "highpass");     // la planche à laver
+    if (k % 2 === 1) gratteJ([ch[1], ch[2], ch[0] + 12], d, bus, .028, "sawtooth");   // le banjo, à contretemps
+    if (k === 0 || k === 4) grosseCaisseJ(d, bus, .2, 80, 45);
+  }
+  else if (z === "desert") {
+    if (k % 4 === 0) grosseCaisseJ(d, bus, .3, 120, 40);   // le dembow : grosse caisse à chaque temps, caisse claire en « boum tchk-boum tchk »
+    if (k === 3 || k === 6 || k === 11 || k === 14) bruitJ(d, .1, 1800, .9, .12, bus);
+    if (k % 2 === 0) bruitJ(d, .025, 9000, 1, .02, bus, "highpass");
+    if (k === 0 || k === 8) voixJ(ch[0] - 12, d, ts * 6, bus, { vol: .1, vib: .1, prof: 2, attaque: .01 });   // la basse 808
+    if (k === 0 || k === 6 || k === 8 || k === 11) gratteJ(ch, d, bus, .03);   // la guitare nylon
+    if (k === 4 && mesure < 4) bruitJ(d, .22, 3000, 3, .04, bus);   // le güiro
+  }
+}
+function jouerMelodie(z, m, d, duree, bus) {
+  if (z === "foret") voixJ(m + 12, d, duree * .95, bus, { vol: .045, vib: 5.5, prof: 10, attaque: .03 });   // flûte irlandaise
+  else if (z === "lande") voixJ(m, d, duree * .9, bus, { type: "triangle", vol: .07, vib: 4.5, prof: 12, attaque: .05 });   // la voix
+  else if (z === "cabane") voixJ(m, d, duree * .98, bus, { type: "sine", vol: .05, vib: 3, prof: 14, attaque: .2 });
+  else if (z === "bayou") voixJ(m, d, duree * .9, bus, { type: "square", vol: .03, vib: 6, prof: 18, filtre: 1600, glisse: -120 });   // l'harmonica
+  else if (z === "desert") { voixJ(m, d, duree * .92, bus, { type: "sawtooth", vol: .03, vib: 6, prof: 14, filtre: 2600, attaque: .03 }); voixJ(m - 3, d, duree * .92, bus, { type: "sawtooth", vol: .02, vib: 6, prof: 14, filtre: 2200, attaque: .03 }); }   // deux trompettes
+}
+function musiqueZonesJ() {
+  if (!audio || musZ) return;
+  musZ = { bus: {}, t: audio.currentTime + .2, i: 0, z: null };
+  const echo = audio.createDelay(); echo.delayTime.value = .33; const retour = audio.createGain(); retour.gain.value = .28; echo.connect(retour); retour.connect(echo); retour.connect(maitre);
+  for (const z in MUSIQUES) { const g = audio.createGain(); g.gain.value = 0; g.connect(maitre); g.connect(echo); musZ.bus[z] = g; }
+  const tic = () => {
+    const actif = ambiance === "jeu" && JEU && !$("jeu").hidden, z = actif ? zoneJ(JEU.x, JEU.y) : null, t = audio.currentTime;
+    if (z !== musZ.z) {   // on change de région : fondu enchaîné, et la nouvelle musique repart du début
+      for (const k in musZ.bus) musZ.bus[k].gain.setTargetAtTime(k === z ? .9 : 0, t, .7);
+      if (ambiance === "jeu" && busChasse) busChasse.gain.setTargetAtTime(z === "village" ? .16 : 0, t, .7);
+      musZ.z = z; musZ.i = 0; musZ.t = Math.max(musZ.t, t + .1);
+    }
+    const M = MUSIQUES[z];
+    if (M) { const ts = 60 / M.bpm * M.croche;
+      while (musZ.t < t + 1.2) { const k = musZ.i % M.pas, sw = M.swing && k % 2 ? ts * .33 : 0; pasMusique(z, musZ.i, musZ.t - t + sw, ts, musZ.bus[z]); musZ.t += ts; musZ.i++; } }
+    else musZ.t = t + .1;
+    setTimeout(tic, 300);
+  };
+  tic();
+}
 // Le joystick : pousser tout droit vers le haut (ou le bas, la gauche, la droite de l'écran) fait marcher en zigzag sur les 2 diagonales voisines,
 // et si la diagonale choisie est bouchée, on glisse sur la voisine. Comme ça on monte même quand un arbre est devant.
 function pasTenu() {
@@ -313,7 +453,7 @@ function boutonA() {
   sfx("clic"); fouilleJ(); dialogueJ(["Rien par ici…", "Cherche ce qui bouge ! Mets-toi devant et appuie sur A.", "Le détecteur t'aide : plus il s'allume, plus un cryptide est proche !"][Math.floor(Math.random() * 3)], 2400);
 }
 function texteHabitant(n) {   // ce que dit l'habitant d'une région : bonjour, puis les indices
-  if (enBoss) return "Sporran ? Il est parti vers sa cabane, dans le bois Biscornu, au sud du village !";
+  if (enBoss) return "Sporran ? Il est parti vers sa cabane, dans le bois Biscornu, à l'ouest du village !";
   const l = ciblesJ().filter(q => zoneJ(q.x, q.y) === n.zone).map(q => TRAQUES[q.k].indice);
   if (!l.length) return n.bonjour + " Ici, tous les cryptides sont sauvés. Bravo !";
   return n.bonjour + " " + (l.length > 1 ? l.length + " cryptides se cachent par ici. " : "Un cryptide se cache par ici. ") + (l.length > 1 ? "Indices : " : "Un indice : ") + l.map(t => "« " + t + " »").join(", ") + ". Cherche une cachette qui bouge !";
@@ -1118,9 +1258,17 @@ addEventListener("keydown", e => {
   else if (!e.repeat && (e.key === "Escape" || e.key === "Backspace")) { e.preventDefault(); boutonB(); }
 });
 addEventListener("keyup", e => { if (JEU && TOUCHES[e.key] === JEU.tenu) JEU.tenu = null; });
+$("jeuCarteBouton").addEventListener("click", e => { e.stopPropagation(); carteJ(); });
+$("jeuCarteFermer").addEventListener("click", e => { e.stopPropagation(); $("jeuCarte").hidden = true; });
+$("jeuCarte").addEventListener("pointerdown", e => { e.stopPropagation(); if (e.target.id === "jeuCarte") $("jeuCarte").hidden = true; });
 $("jeuQuitter").addEventListener("click", () => { fermerJeu(); enBoss = false; majAccueil(); montrer("accueil"); });
 
-window.__jeu = { bateau: () => bateauBoutonJ(), zoom: () => ZOOM.demi, etat: () => JEU && { x: JEU.x, y: JEU.y, dir: JEU.dir, zone: zoneJ(JEU.x, JEU.y), revele: JEU.revele && JEU.revele.q.k, bateau: JEU.bateau, boutonBateau: !$("jeuBateau").hidden && $("jeuBateau").textContent, cibles: ciblesJ() },
+window.__jeu = { bateau: () => bateauBoutonJ(), ouvrirCarte: () => carteJ(), musique: () => musZ && { zone: musZ.z, pas: musZ.i }, rendreMusique: (z, sec) => {   // pour écouter une musique hors du jeu : rendu hors ligne, renvoie les échantillons
+    const a0 = audio, m0 = maitre, off = new OfflineAudioContext(1, 22050 * sec, 22050); audio = off; maitre = off.createGain(); maitre.gain.value = .64; maitre.connect(off.destination);
+    try { const bus = off.createGain(); bus.gain.value = .9; bus.connect(maitre); const e = off.createDelay(); e.delayTime.value = .33; const r = off.createGain(); r.gain.value = .28; bus.connect(e); e.connect(r); r.connect(e); r.connect(maitre);
+      const M = MUSIQUES[z], ts = 60 / M.bpm * M.croche; for (let i = 0; i * ts < sec - 1; i++) pasMusique(z, i, i * ts + (M.swing && i % 2 ? ts * .33 : 0) + .05, ts, bus); }
+    finally { audio = a0; maitre = m0; }
+    return off.startRendering().then(b => Array.from(b.getChannelData(0))); }, zoom: () => ZOOM.demi, etat: () => JEU && { x: JEU.x, y: JEU.y, dir: JEU.dir, zone: zoneJ(JEU.x, JEU.y), revele: JEU.revele && JEU.revele.q.k, bateau: JEU.bateau, boutonBateau: !$("jeuBateau").hidden && $("jeuBateau").textContent, cibles: ciblesJ() },
   aller: (x, y, dir) => { JEU.x = x; JEU.y = y; JEU.pas = null; if (dir) JEU.dir = dir; arriverJ(true); }, pnj: PNJ, libreSol, pas: d => essayerPas(d), A: () => boutonA(), B: () => boutonB(),
   sousBati: () => { sousBatiment(0, 0); return [...SOUS_BATI].filter(k => { const [x, y] = k.split(",").map(Number); return !!(TUILES[tuileJ(x, y)] || {}).libre; }); },
   decor: () => R3 && R3.ile && R3.ile.flat ? { objets: R3.ile.groupe.children.length, dessins: R3.rendu.info.render.calls } : null,

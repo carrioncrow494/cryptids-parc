@@ -206,9 +206,18 @@
       <div id="jeuLieu" class="jeu-lieu"></div>
       <div id="jeuLeds" class="emf-leds" aria-label="Détecteur"><i></i><i></i><i></i><i></i><i></i></div>
     </div>
+    <button id="jeuCarteBouton" class="jeu-carte-bouton" type="button" aria-label="La carte des régions">Carte</button>
     <div id="jeuTitre" class="jeu-titre" hidden></div>
     <div id="jeuDialogue" class="jeu-dialogue" hidden></div>
     <button id="jeuBateau" class="jeu-bateau" type="button" hidden></button>
+    <div id="jeuCarte" class="jeu-carte" hidden>
+      <div class="jeu-carte-cadre">
+        <b>La carte</b>
+        <div id="jeuCarteZones" class="jeu-carte-zones"></div>
+        <small>Touche une région déjà visitée pour t'y téléporter.</small>
+        <button id="jeuCarteFermer" class="mini" type="button">Fermer</button>
+      </div>
+    </div>
   </div>
   <div class="manette">
     <div id="jeuStick" class="joystick" role="application" aria-label="Joystick : pousse pour marcher">
