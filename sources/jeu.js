@@ -792,7 +792,7 @@ function dioramaFlat() {
     else if (ch === "," && (z === "lande" || z === "cabane")) pose("bruyere", x + (rnd() - .5) * .3, y + (rnd() - .5) * .3, { miroir: m, haut: .4 + rnd() * .2 });
     else if (ch === "," && z === "bayou") pose("roseaux", x, y, { miroir: m });
     else if (ch === "," && z === "foret") pose("foret_p1", x + (rnd() - .5) * .4, y + (rnd() - .5) * .4, { miroir: m, haut: .75 + rnd() * .3 });   // les bruyères : que des violettes, plus grosses (18/10)
-    else if (ch === ";" && z === "foret") pose("foret_p2", x + (rnd() - .5) * .4, y + (rnd() - .5) * .4, { miroir: m, haut: .5 + rnd() * .25 });   // l'ajonc jaune, un peu partout
+    else if (ch === ";" && z === "foret") { const v = (x * 13 + y * 7) % 5 < 2; pose(v ? "foret_p1" : "foret_p2", x + (rnd() - .5) * .4, y + (rnd() - .5) * .4, { miroir: m, haut: (v ? .65 : .5) + rnd() * .25 }); }   // ajonc jaune et quelques bruyères violettes, un peu partout
     else if (ch === "~" && z === "bayou" && r < .12) pose("nenuphar", x, y, { miroir: m, pied: 0 });
   }
   // les bâtiments : une image pour tout le bloc de cases (maison, cathédrale, cabane, ranch, pont couvert)
