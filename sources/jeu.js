@@ -93,7 +93,17 @@ const HABITANTS = {
 (MONDE.habitants || []).forEach(h => { const H = HABITANTS[h.nom]; if (H) PNJ.push({ x: h.x, y: h.y, zone: h.zone, nom: H.nom, bonjour: H.bonjour, image: h.nom === "lynda" ? "linda" : h.nom, haut: H.haut, corps: 0x6b569b, chapeau: 0x3a2a4a }); });
 const pnjEn = (x, y) => PNJ.find(n => n.x === x && n.y === y);
 const cachetteEn = (x, y) => ciblesJ().find(q => q.x === x && q.y === y);
-const occupeJ = (x, y) => !!(pnjEn(x, y) || cachetteEn(x, y));
+// les animaux (18/10) : chacun garde sa case ; ceux de l'eau (truites, alligators) ne gênent pas le bateau
+const ANIMAUX = (MONDE.animaux || []).map((a, i) => ({ ...a, i }));
+const TAILLE_ANIMAL = { mouton_blanc: .8, mouton_noir: .8, chevre: .85, cheval: 1.35, vache: 1.15, vache_ecossaise: 1.1, cerf: 1.4, biche: 1.1, loup: .95, ours: 1.3, renard: .7, ecureuil: .5,
+  loutre: .6, castor: .6, lezard: .5, truite: .45, corbeau: .5, rouge_gorge: .35, mesange: .35, raton: .6, opossum: .5, coyote: .85, alligator: .6, serpent: .55, grenouille: .4 };
+const CRIS = { mouton_blanc: "Bêêê !", mouton_noir: "Bêêê !", chevre: "Mêêê !", cheval: "Hiiii !", vache: "Meuuuh !", vache_ecossaise: "Meuuuh !", cerf: "Le cerf brame.", biche: "La biche te regarde, curieuse.",
+  loup: "Ahouuu !", ours: "Grrr… (c'est un gros câlin, en fait)", renard: "Le renard agite sa queue.", ecureuil: "L'écureuil grignote une noisette.", loutre: "La loutre se frotte les moustaches.",
+  castor: "Le castor tape l'eau avec sa queue.", lezard: "Le lézard prend le soleil.", truite: "Plouf !", corbeau: "Croâ ! Croâ !", rouge_gorge: "Cui-cui !", mesange: "Tsi-tsi-tsi !", raton: "Le raton laveur se lave les pattes.",
+  opossum: "L'opossum fait semblant de dormir…", coyote: "Le coyote se gratte l'oreille.", alligator: "Clac ! L'alligator sourit de toutes ses dents.", serpent: "Sssss…", grenouille: "Croâ !" };
+const REGARDE_DROITE = new Set(["corbeau", "rouge_gorge", "mesange", "raton", "loutre", "alligator", "serpent", "coyote"]);   // les autres dessins regardent vers la gauche
+const animalEn = (x, y) => ANIMAUX.find(a => !a.eau && a.x === x && a.y === y);
+const occupeJ = (x, y) => !!(pnjEn(x, y) || cachetteEn(x, y) || animalEn(x, y));
 function trouverJ(ch) { for (let y = 0; y < HAUT; y++) { const x = CARTE[y].indexOf(ch); if (x >= 0) return [x, y]; } return null; }
 const DEPART = trouverJ("P");
 let accessiblesJ = null;
@@ -458,6 +468,8 @@ function boutonA() {
   const q = cachetteEn(fx, fy);
   if (q) { JEU.revele = { q, t0: performance.now() + 400 }; fouilleJ({ ligne: 2, boucle: true, vitesse: 160 }); sfx("revele"); if (navigator.vibrate) navigator.vibrate([60, 40, 60]);
     return dialogueJ(q.k === "catsith" ? "C'est Sporran ! Appuie encore sur A pour l'attraper !" : "Deux yeux brillent dans la cachette… C'est un cryptide ! Appuie encore sur A pour ouvrir l'œil magique.", 60000); }
+  const bete = animalEn(fx, fy) || ANIMAUX.find(a => a.eau && Math.abs(a.x - fx) + Math.abs(a.y - fy) <= 1);
+  if (bete && !pnjEn(fx, fy)) { sfx("hop"); return dialogueJ(CRIS[bete.nom] || "…", 2400); }
   const n = pnjEn(fx, fy);
   if (n) { sfx("page"); JEU.parle = n; return dialogueJ(n.nom + " : " + texteHabitant(n), 8000); }
   if (tuileJ(fx, fy) === "S") { sfx("page"); return dialogueJ(texteSigne(JEU.x + dx, JEU.y + dy), 6000); }
@@ -859,18 +871,19 @@ const CACTUS_DESERT = ["desert_a1", "desert_a4", "desert_a5", "desert_a7"];
 const SIN_CAM = .543;   // un écart au sol (dx + dz) / √2 se voit SIN_CAM fois plus court à l'écran, en hauteur
 function chargerFlat(R) {   // les 3 planches du décor ; si l'une manque, on garde l'île en volumes
   R.flat = "attente"; R.tFlat = performance.now(); let n = 0;
-  const L = new THREE.TextureLoader(), ok = () => { if (++n === 4 + MONDE.iles.length && R.flat === "attente") R.flat = "ok"; }, non = () => { R.flat = "non"; };
+  const L = new THREE.TextureLoader(), ok = () => { if (++n === 5 + MONDE.iles.length && R.flat === "attente") R.flat = "ok"; }, non = () => { R.flat = "non"; };
   R.texSol = L.load(IMG_JEU + "jeu-sols.webp", t => { t.colorSpace = THREE.SRGBColorSpace; t.flipY = false; t.anisotropy = 4; t.needsUpdate = true; ok(); }, undefined, non);
   R.texDecor = L.load(IMG_JEU + "jeu-decor.webp", t => { t.colorSpace = THREE.SRGBColorSpace; ok(); }, undefined, non);
   R.texIles = MONDE.iles.map(d => L.load(IMG_JEU + d.image, t => { t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4; ok(); }, undefined, non));
   R.texNature = L.load(IMG_JEU + "jeu-nature.webp", t => { t.colorSpace = THREE.SRGBColorSpace; ok(); }, undefined, non);   // les arbres de chaque zone
   R.texHab = L.load(IMG_JEU + "jeu-habitants.webp", t => { t.colorSpace = THREE.SRGBColorSpace; ok(); }, undefined, non);   // les habitants de Sam et le Bonnie Ranch (18/10)
+  R.texAni = L.load(IMG_JEU + "jeu-animaux.webp", t => { t.colorSpace = THREE.SRGBColorSpace; ok(); }, undefined, non);   // les animaux de Sam (18/10)
   R.matsFlat = [];   // tous les matériaux dessinés : on les teinte la nuit
 }
 function matDecor(R, nom, miroir, fondu) {   // un matériau par objet (et par sens, et estompé quand il cache le héros)
   const cle = nom + (miroir ? "/m" : "") + (fondu ? "/f" : ""); R.mats = R.mats || {};
   if (R.mats[cle]) return R.mats[cle];
-  const [x, y, w, h, nat] = ATLAS_DECOR[nom], [W, H] = nat === 2 ? ATLAS_DECOR.taille3 : nat ? ATLAS_DECOR.taille2 : ATLAS_DECOR.taille, t = (nat === 2 ? R.texHab : nat ? R.texNature : R.texDecor).clone();
+  const [x, y, w, h, nat] = ATLAS_DECOR[nom], [W, H] = nat === 3 ? ATLAS_DECOR.taille4 : nat === 2 ? ATLAS_DECOR.taille3 : nat ? ATLAS_DECOR.taille2 : ATLAS_DECOR.taille, t = (nat === 3 ? R.texAni : nat === 2 ? R.texHab : nat ? R.texNature : R.texDecor).clone();
   t.repeat.set((miroir ? -w : w) / W, h / H); t.offset.set((miroir ? x + w : x) / W, 1 - (y + h) / H); t.needsUpdate = true;
   const m = new THREE.SpriteMaterial({ map: t, transparent: true, alphaTest: .04, depthWrite: false, opacity: fondu ? .4 : 1 });
   R.matsFlat.push(m); return R.mats[cle] = m;
@@ -978,6 +991,7 @@ function vueZoneJ(R, d) {   // on ne voit que l'île où l'on est (17/10) : les 
     d.groupe.children.forEach(o => { const u = o.userData; if (u.zoneVue === undefined) u.zoneVue = u.ile || zoneJ(Math.round(o.position.x), Math.round(o.position.z)); o.visible = u.zoneVue === z; }); }
   (R.cach || []).forEach(c => c.g.visible = zoneJ(c.q.x, c.q.y) === z);
   (R.pnj || []).forEach(({ n, g }) => g.visible = n.zone === z);
+  (R.animaux || []).forEach(o => o.s.visible = o.a.zone === z);
   if (R.bateau && JEU.bateau) R.bateau.visible = zoneJ(JEU.bateau.x, JEU.bateau.y) === z;
 }
 function vortexJ(R) {   // le vortex des portails : une spirale turquoise, rose et violette dessinée dans l'ouverture de l'arche (même cadre que son image)
@@ -1046,6 +1060,23 @@ function habitantsJ(R) {
     g.add(c); g.scale.setScalar(.85); g.position.set(n.x, 0, n.y); R.scene.add(g); return { n, g, c };   // à la taille du héros
   });
   return R.pnj;
+}
+function animauxJ(R, t, fx, fy) {   // la boucle d'attente : longtemps au repos, puis inspire, geste (tenu un peu), retour ; chacun à son rythme
+  if (!R.texAni || !ATLAS_DECOR.ani_vache_0) return;
+  if (!R.animaux) R.animaux = ANIMAUX.map(a => {
+    const miroir = (a.x * 7 + a.y * 3) % 2 === 1, s = new THREE.Sprite(matDecor(R, "ani_" + a.nom + "_0", miroir));
+    s.center.set(.5, a.eau ? .3 : .04); s.position.set(a.x, 0, a.y); R.scene.add(s);
+    return { a, s, miroir, k: -1, t0: -Math.random() * 4000, repos: 2200 + Math.random() * 2600 };
+  });
+  R.animaux.forEach(o => {
+    if (!o.s.visible) return;
+    let e = (t - o.t0) % (o.repos + 1100), k = e < o.repos ? 0 : e < o.repos + 220 ? 1 : e < o.repos + 880 ? 2 : 3;
+    if (Math.abs(o.a.x - fx) + Math.abs(o.a.y - fy) <= 2 && k === 0 && e > 600) { o.t0 = t - o.repos; k = 1; }   // il réagit quand tu t'approches
+    const veutDroite = (fx - fy) > (o.a.x - o.a.y) + .2, miroir = o.a.eau ? o.miroir : veutDroite !== REGARDE_DROITE.has(o.a.nom);   // il se tourne vers toi
+    if (k !== o.k || miroir !== o.m) { o.k = k; o.m = miroir; const nom = "ani_" + o.a.nom + "_" + k, [, , w, h] = ATLAS_DECOR[nom], u = (TAILLE_ANIMAL[o.a.nom] || .6) / 170;
+      o.s.material = matDecor(R, nom, miroir); o.s.scale.set(w * u, h * u, 1); }
+    if (o.a.eau) o.s.position.y = Math.sin(t / 700 + o.a.i) * .05;   // il flotte
+  });
 }
 const STYLE_CACHETTE = { foret: [0x2a5c4a, 0x1f4a3e], lande: [0x9a6fb0, 0x87a05a], village: [0x5e9a4e, 0x79a85f], desert: [0xb08850, 0x9a7444], bayou: [0x8a9a4a, 0x6e8a44], cabane: [0xd9822b, 0xc9573f] };
 function cachettesJ3D(R, t) {   // un buisson par créature encore cachée : il frémit quand on approche, et deux yeux brillent de temps en temps
@@ -1209,6 +1240,7 @@ function boucleJeu(t) {
     c.position.y = Math.abs(Math.sin(t / 500 + n.x)) * .04;
     if (Math.abs(n.x - fx) + Math.abs(n.y - fy) <= 3) { const a = Math.atan2(fx - n.x, fy - n.y), da = Math.atan2(Math.sin(a - g.rotation.y), Math.cos(a - g.rotation.y)); g.rotation.y += da * .15; }
   });
+  animauxJ(R, t, fx, fy);
   const rv = JEU.revele; R.signe.visible = !!rv;
   if (rv) R.signe.position.set(rv.q.x, (R.crea && R.crea.visible ? 2.1 : 1.25) + Math.abs(Math.sin(t / 220)) * .2, rv.q.y);
   R.rendu.render(R.scene, R.camera);

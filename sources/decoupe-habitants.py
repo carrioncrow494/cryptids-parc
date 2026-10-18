@@ -1,4 +1,4 @@
-# Les habitants (planches de Sam, 18/10) et le Bonnie Ranch, rangés dans jeu-habitants.webp ; leur place dans sources/habitants-atlas.js
+# Les habitants (planches de Sam, 18/10), le Bonnie Ranch et les 4 boutiques (Chupa la sopa, Ninamoto, Chez Bergamotte, Excalibook), rangés dans jeu-habitants.webp ; leur place dans sources/habitants-atlas.js
 # (le 5e nombre, 2, dit que l'objet est dans jeu-habitants.webp). Pour chaque habitant : hab_<nom>_0 (debout, de trois quarts face) et hab_<nom>_1 (il parle :
 # la main levée pour les adultes, de face pour les enfants, qui n'ont pas de planche « parole »).
 # python3 sources/decoupe-habitants.py <dossier d'aperçus>
@@ -17,6 +17,8 @@ for n in ADULTES + ENFANTS:
         im = serre(im); k = 300 / im.size[1]; objs.append(('hab_%s_%d' % (n, i), im.resize((round(im.size[0] * k), 300), Image.LANCZOS)))
 for nom, im in zip(['ranch_maison', 'ranch_portail', 'ranch_grange', 'ranch_corral'], [x for row in cases(H + 'bonnie-ranch.png', 2, 2) for x in row]):
     im = serre(im); k = 520 / max(im.size); objs.append((nom, im.resize((round(im.size[0] * k), round(im.size[1] * k)), Image.LANCZOS)))
+for nom, im in zip(['chupa', 'ninamoto', 'bergamotte', 'excalibook'], [x for row in cases(H + 'boutiques.png', 2, 2) for x in row]):   # les 4 boutiques (18/10)
+    im = serre(im); k = 440 / max(im.size); objs.append((nom, im.resize((round(im.size[0] * k), round(im.size[1] * k)), Image.LANCZOS)))
 LW = 2048; objs.sort(key=lambda o: -o[1].size[1]); x = y = h = 0; place = {}
 for n, im in objs:
     if x + im.size[0] > LW: x, y, h = 0, y + h + 6, 0

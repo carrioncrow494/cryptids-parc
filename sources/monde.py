@@ -329,12 +329,39 @@ habitant('lynda', 'lande', (porte_ranch[0] + 2, porte_ranch[1] + 1))  # sur le p
 habitant('vivien', 'lande', (rg[0] - 1, rg[1] + 5))                   # devant la grange
 habitant('nina', 'lande', (rc[0] - 2, rc[1] + 2))                     # près du corral
 print('habitants :', [(h['nom'], h['x'], h['y']) for h in HAB])
+# les animaux de Sam (18/10) : chacun dans sa région ; ceux de la ferme autour du ranch, les poissons et les alligators dans l'eau libre, loutres, castors et grenouilles sur la rive
+import random as _r
+ANI = []; ra = _r.Random(18)
+LIBRE = '.,;'
+def animal(nom, z, ou='sol', pres=None, rayon=12, n=1):
+    d = ILE[z]; occ = [(h['x'], h['y']) for h in HAB] + [(a['x'], a['y']) for a in ANI] + [(q['x'], q['y']) for q in PORTAILS] + [(q['ax'], q['ay']) for q in PORTAILS] + [dep]
+    for _ in range(n):
+        cs = []
+        for y in range(d['oy'] + 2, d['oy'] + d['h'] - 2):
+            for x in range(d['ox'] + 2, d['ox'] + d['w'] - 2):
+                if ZONE[y][x] != z or (pres and abs(x - pres[0]) + abs(y - pres[1]) > rayon) or any(abs(x - a) + abs(y - b) < 4 for a, b in occ): continue
+                v = [M[y + b][x + a] for a in (-1, 0, 1) for b in (-1, 0, 1)]
+                if ou == 'eau' and all(c == '~' for c in v): cs.append((x, y))
+                elif ou == 'rive' and M[y][x] in LIBRE and '~' in v and sum(c in LIBRE for c in v) >= 4: cs.append((x, y))
+                elif ou == 'sol' and all(c in LIBRE for c in v) and (x, y) not in PRIS: cs.append((x, y))
+        if not cs: print('  pas de place pour', nom, z); return
+        x, y = ra.choice(cs); ANI.append(dict(nom=nom, zone=z, x=x, y=y, eau=ou == 'eau')); occ.append((x, y))
+ranch = (rm[0] + 6, rm[1] + 5)
+for nom, k in (('mouton_blanc', 3), ('mouton_noir', 1), ('chevre', 2), ('cheval', 2), ('vache', 2), ('vache_ecossaise', 2)): animal(nom, 'lande', pres=ranch, rayon=14, n=k)
+for nom in ('cerf', 'biche', 'renard', 'ecureuil', 'rouge_gorge', 'mesange', 'corbeau'): animal(nom, 'foret')
+animal('loutre', 'foret', 'rive'); animal('castor', 'foret', 'rive'); animal('truite', 'foret', 'eau', n=2)
+for nom, k in (('loup', 2), ('ours', 1), ('corbeau', 2), ('renard', 1)): animal(nom, 'cabane', n=k)
+for nom in ('raton', 'opossum', 'serpent'): animal(nom, 'bayou')
+animal('alligator', 'bayou', 'eau', n=2); animal('grenouille', 'bayou', 'rive', n=3)
+for nom, k in (('coyote', 2), ('lezard', 2), ('serpent', 1)): animal(nom, 'desert', n=k)
+for nom in ('rouge_gorge', 'mesange', 'ecureuil'): animal(nom, 'village')
+print('animaux :', len(ANI))
 carte = [''.join(l) for l in M]
 CODE = {'village': 'V', 'foret': 'F', 'cabane': 'K', 'desert': 'D', 'lande': 'L', 'bayou': 'B'}   # comme CODE_ZONE dans jeu.js
 ZG = [''.join('_' if ZONE[y][x] is None else CODE[ZONE[y][x]] for x in range(WW)) for y in range(WH)]
 with open('sources/monde.js', 'w') as o:
     o.write('// fabriqué par sources/monde.py : les 6 îles peintes, reliées par des ponts. Chaque case : voir TUILES dans jeu.js.\n')
-    o.write('const MONDE = ' + json.dumps(dict(carte=carte, iles=INFO, pnj=PNJ, habitants=HAB, zones=ZG, portails=PORTAILS, bateau=BATEAU), ensure_ascii=False) + ';\n')
+    o.write('const MONDE = ' + json.dumps(dict(carte=carte, iles=INFO, pnj=PNJ, habitants=HAB, animaux=ANI, zones=ZG, portails=PORTAILS, bateau=BATEAU), ensure_ascii=False) + ';\n')
 # un aperçu : la carte entière en petits carrés
 C = {' ': (12, 30, 40), 'x': (120, 100, 140), '.': (130, 170, 100), '~': (60, 140, 220), 'b': (170, 110, 70), 'T': (30, 90, 50), '#': (150, 60, 50), 'P': (255, 255, 0)}
 im = Image.new('RGB', (WW * 4, WH * 4)); d = ImageDraw.Draw(im)
