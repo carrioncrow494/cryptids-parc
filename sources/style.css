@@ -296,6 +296,22 @@
   /* la carte des régions (18/10) : le village au centre, les régions autour ; grisées tant qu'on n'y est pas allé */
   .jeu-carte-bouton { position: absolute; top: 60px; left: 8px; z-index: 2; padding: 7px 12px; border-radius: 999px; border: 2px solid #f0c060; background: rgba(10,12,16,.8); color: #ffe0a0; font: inherit; font-family: var(--deco); font-size: .95rem; }
   .jeu-carte-bouton::before { content: "🗺 "; }
+  .jeu-masques-bouton { top: 104px; border-color: #c9a2ff; color: #e8d8ff; }
+  .jeu-masques-bouton::before { content: "🎭 "; }
+  .jeu-masques-bouton.porte::before { content: ""; }
+  .jeu-masques-bouton.nouveau { box-shadow: 0 0 10px #c9a2ff; }
+  .jeu-masques-liste { width: 100%; display: flex; flex-direction: column; gap: 6px; max-height: 56vh; overflow-y: auto; }
+  .jeu-masques-liste button { display: flex; align-items: center; gap: 10px; padding: 6px 10px; border-radius: 12px; border: 2px solid #8a6a3a; background: rgba(255,255,255,.4); color: #3a2a18; font: inherit; text-align: left; }
+  .jeu-masques-liste button img { width: 56px; height: 56px; flex: none; }
+  .jeu-masques-liste button span { display: flex; flex-direction: column; gap: 2px; }
+  .jeu-masques-liste button b { font-family: var(--deco); font-size: 1.05rem; }
+  .jeu-masques-liste button small { text-align: left; opacity: .85; line-height: 1.25; }
+  .jeu-masques-liste button.ferme { opacity: .65; }
+  .jeu-masques-liste button.porte { border-color: #6a3fa8; background: rgba(201,162,255,.45); box-shadow: 0 0 10px rgba(106,63,168,.6); }
+  .jeu-masques-taille { display: flex; gap: 8px; }
+  .jeu-masques-taille[hidden] { display: none; }
+  .jeu-masques-taille button { padding: 6px 14px; border-radius: 999px; border: 2px solid #8a6a3a; background: rgba(255,255,255,.35); color: #3a2a18; font: inherit; }
+  .jeu-masques-taille button.choisi { background: #ffd27a; border-color: #d8702a; }
   .jeu-carte { position: absolute; inset: 0; z-index: 4; display: flex; align-items: center; justify-content: center; padding: 16px; background: rgba(6,10,14,.7); }
   .jeu-carte[hidden] { display: none; }
   .jeu-carte-cadre { width: min(100%, 460px); display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 14px; border-radius: 16px; border: 3px solid #8a6a3a;

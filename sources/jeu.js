@@ -105,7 +105,7 @@ const CRIS = { mouton_blanc: "Bêêê !", mouton_noir: "Bêêê !", chevre: "Mê
   opossum: "L'opossum fait semblant de dormir…", coyote: "Le coyote se gratte l'oreille.", alligator: "Clac ! L'alligator sourit de toutes ses dents.", serpent: "Sssss…", grenouille: "Croâ !" };
 const REGARDE_DROITE = new Set(["corbeau", "rouge_gorge", "mesange", "raton", "loutre", "alligator", "serpent", "coyote"]);   // les autres dessins regardent vers la gauche
 const animalEn = (x, y) => ANIMAUX.find(a => !a.eau && a.x === x && a.y === y);
-const occupeJ = (x, y) => !!(pnjEn(x, y) || cachetteEn(x, y) || animalEn(x, y));
+const occupeJ = (x, y) => !!(pnjEn(x, y) || cachetteEn(x, y) || animalEn(x, y) || coffreEn(x, y));
 function trouverJ(ch) { for (let y = 0; y < HAUT; y++) { const x = CARTE[y].indexOf(ch); if (x >= 0) return [x, y]; } return null; }
 const DEPART = trouverJ("P");
 let accessiblesJ = null;
@@ -150,15 +150,16 @@ function cachettesJ(cle, prises, loinDe) {   // les meilleures cases de sa régi
   if (cle === "kraken") { const l = casesLarge().filter(c => zoneJ(c[0], c[1]) === z && loin(c) && Math.abs(c[0] - BATEAU0[0]) + Math.abs(c[1] - BATEAU0[1]) >= 12); if (l.length) return l; }   // au large : il faut le bateau
   if (AQUATIQUES.includes(cle)) { const l = casesEau(z).filter(loin); if (l.length) return l; }
   const ok = casesAccessibles().filter(([x, y]) => zoneJ(x, y) === z && !"PpbB=".includes(tuileJ(x, y))
-    && Object.values(DIRS).filter(([dx, dy]) => libreSol(x + dx, y + dy)).length >= 3 && PNJ.every(n => Math.abs(n.x - x) + Math.abs(n.y - y) > 2) && loin([x, y]));
+    && Object.values(DIRS).filter(([dx, dy]) => libreSol(x + dx, y + dy)).length >= 3 && PNJ.every(n => Math.abs(n.x - x) + Math.abs(n.y - y) > 2) && loin([x, y]) && loinCoffres(x, y));
   let best = 0; ok.forEach(([x, y]) => best = Math.max(best, scoreJ(cle, x, y)));
   return ok.filter(([x, y]) => scoreJ(cle, x, y) === best);
 }
+const loinCoffres = (x, y) => Object.values(coffresCases()).every(([a, b]) => Math.max(Math.abs(a - x), Math.abs(b - y)) >= 3);
 const auHasardJ = l => l[Math.floor(Math.random() * l.length)];
 function placerJeu(p) {   // chaque créature de l'aventure se cache dans sa région
   const j = p.jeu, prises = () => Object.values(j.pos).map(q => [q[1], q[2]]);
   Object.keys(j.pos).forEach(k => { const c = TRAQUES[k].cle, [, x, y] = j.pos[k];   // une ancienne partie : on remet chacun dans sa région, et dans l'eau s'il y nage
-  if (zoneJ(x, y) !== (HABITAT[c] || "village") || AQUATIQUES.includes(c) && tuileJ(x, y) !== "~" && casesEau(HABITAT[c]).length
+  if (zoneJ(x, y) !== (HABITAT[c] || "village") || !loinCoffres(x, y) || AQUATIQUES.includes(c) && tuileJ(x, y) !== "~" && casesEau(HABITAT[c]).length
     || c === "kraken" && casesLarge().length && !casesLarge().some(([a, b]) => a === x && b === y)) delete j.pos[k]; });
   p.liste.filter(k => !p.pris.includes(k) && !j.pos[k]).forEach(k => {
     const l = cachettesJ(TRAQUES[k].cle, prises(), DEPART), c = l.length ? auHasardJ(l) : auHasardJ(casesAccessibles());
@@ -186,8 +187,12 @@ function ouvrirJeu() {
   placerJeu(p);
   const b = p.jeu.bateau;   // un bateau sauvé sur l'ancienne carte du lac (avant le 17/10, ou après un changement de carte) : il revient à l'amarre
   if (b && !eauDuLac().has(b.x + "," + b.y)) { delete p.jeu.bateau; if (b.a) Object.assign(p.jeu, { x: DEPART[0], y: DEPART[1], dir: "bas" }); }
-  if (!(p.jeu.bateau && p.jeu.bateau.a) && !libreSol(p.jeu.x, p.jeu.y)) Object.assign(p.jeu, { x: DEPART[0], y: DEPART[1], dir: "bas" });   // une ancienne partie arrêtée sur un pont qui n'existe plus
-  JEU = { x: p.jeu.x, y: p.jeu.y, dir: p.jeu.dir || "bas", pas: null, tenu: null, revele: null, raf: 0, t: 0, dernierBip: 0, zone: null };
+  const dansMasque = p.jeu.masque && (PASSE_MASQUE[p.jeu.masque] || (p.jeu.masque === "desert" && p.jeu.taille === "petit" ? "#c" : "")).includes(tuileJ(p.jeu.x, p.jeu.y));   // dans l'eau ou les arbres, grâce au masque
+  if (!(p.jeu.bateau && p.jeu.bateau.a) && !libreSol(p.jeu.x, p.jeu.y) && !dansMasque) Object.assign(p.jeu, { x: DEPART[0], y: DEPART[1], dir: "bas" });   // une ancienne partie arrêtée sur un pont qui n'existe plus
+  JEU = { x: p.jeu.x, y: p.jeu.y, dir: p.jeu.dir || "bas", pas: null, tenu: null, revele: null, raf: 0, t: 0, dernierBip: 0, zone: null,
+    masques: (p.jeu.masques || []).filter(z => MASQUES[z]), masque: MASQUES[p.jeu.masque] ? p.jeu.masque : null, taille: p.jeu.taille || null };
+  if (!dansMasque && !libreSol(JEU.x, JEU.y) && !(p.jeu.bateau && p.jeu.bateau.a)) JEU.masque = null;
+  majBoutonMasqueJ();
   JEU.bateau = BATEAU0 && (p.jeu.bateau && p.jeu.bateau.lac ? { ...p.jeu.bateau } : { x: BATEAU0[0], y: BATEAU0[1], dir: dirLac(), a: false, lac: 1 });   // lac : tourné vers le large (17/10 ; les anciens bateaux sont retournés)
   if (p.jeu.nPris !== undefined && p.pris.length > p.jeu.nPris) JEU.action = { ligne: 3, t0: performance.now() + 300, duree: 1900, vitesse: 120 };   // un cryptide de plus : on saute de joie
   p.jeu.nPris = p.pris.length;
@@ -209,6 +214,7 @@ function arriverJ(debut) {   // on entre dans une région : son nom, et combien 
   majPartie(p => { if (p.jeu) { p.jeu.vus = p.jeu.vus || ["village"]; if (!p.jeu.vus.includes(z)) p.jeu.vus.push(z); } });   // les régions déjà visitées : la carte les débloque
   let txt = n ? n + (n > 1 ? " cryptides se cachent ici" : " cryptide se cache ici") : "Aucun cryptide ici. Cherche ailleurs !";
   if (enBoss) txt = z === "cabane" ? "Sporran rôde autour de sa cabane…" : "Sporran t'attend dans le bois Biscornu, après le lac Carcajou !";
+  if (MASQUES[z] && !aMasqueJ(z) && coffresCases()[z]) txt += " Un coffre à masque est caché quelque part !";
   titreJ(Z.nom, txt); if (!debut) sfx("page");
 }
 let minuterieTitre = 0;
@@ -235,7 +241,11 @@ function essayerPas(dir, essai) {   // essai : on regarde seulement si ça passe
     if (essai) return false;
     B.a = true; sfx("page"); dialogueJ("Tu montes dans le bateau de pêche ! Navigue sur le lac. Pousse vers la rive pour descendre.", 3600);   // il garde son sens : la proue vers le lac
   }
-  else if (!libreJ(x, y)) { if (essai) return false; JEU.dir = dir; const g = portailEn(x, y); if (g && !JEU.portail) return portailJ(g), false; if (performance.now() - (JEU.tCogne || 0) > 350) { JEU.tCogne = performance.now(); sfx("clic"); } return false; }
+  else if (!libreJ(x, y) && !passeMasqueJ(x, y) && enjambeJ(dir)) {   // Rabougri en tout grand : un grand pas par-dessus l'obstacle
+    const [sx, sy] = enjambeJ(dir); if (JEU.portail) { JEU.portail = null; $("jeuDialogue").hidden = true; }
+    JEU.dir = dir; JEU.pas = { de: [JEU.x, JEU.y], t0: performance.now(), saut: true }; JEU.x = sx; JEU.y = sy; JEU.action = null; sfx("hop"); return true;
+  }
+  else if (!libreJ(x, y) && !passeMasqueJ(x, y)) { if (essai) return false; JEU.dir = dir; const g = portailEn(x, y); if (g && !JEU.portail) return portailJ(g), false; if (performance.now() - (JEU.tCogne || 0) > 350) { JEU.tCogne = performance.now(); sfx("clic"); } return false; }
   if (JEU.portail) { JEU.portail = null; $("jeuDialogue").hidden = true; }   // on s'éloigne du portail : on reste
   JEU.dir = dir; JEU.pas = { de: [JEU.x, JEU.y], t0: performance.now() }; JEU.x = x; JEU.y = y; JEU.action = null; return true;
 }
@@ -460,7 +470,7 @@ function pasTenu() {
 function finPas() {
   JEU.pas = null; sauverJ();
   if (zoneJ(JEU.x, JEU.y) !== JEU.zone) arriverJ();
-  approcheJ();
+  JEU.traces = null; approcheJ();
 }
 // 18/10 : plus besoin d'être collé devant le buisson. À 2 cases (dans tous les sens), la créature sort toute seule ;
 // si on s'éloigne à plus de 3 cases, elle retourne se cacher. Après « B », elle ne ressort qu'une fois qu'on s'est éloigné.
@@ -481,6 +491,7 @@ function boutonA() {
   if (JEU.revele) return trouveJ();
   if (JEU.portail) return voyagerJ(JEU.portail.vers);
   const [dx, dy] = DIRS[JEU.dir], fx = JEU.x + dx, fy = JEU.y + dy;
+  const cf = coffreEn(fx, fy) || coffrePres(); if (cf) return ouvrirCoffreJ(cf);
   const g = portailEn(fx, fy) || (!cachetteEn(fx, fy) && !pnjEn(fx, fy) && portailPres()); if (g) return portailJ(g);   // A ouvre un portail tout proche, pas besoin d'être collé devant (17/10)
   if (JEU.bateau && !JEU.bateau.a && fx === JEU.bateau.x && fy === JEU.bateau.y) return essayerPas(JEU.dir);   // A devant le bateau : on monte
   // comme dans Zelda : on fouille ce qu'on a devant soi. Un buisson qui bouge cache un cryptide.
@@ -1213,9 +1224,10 @@ function boucleJeu(t) {
   const taille = R.rendu.getSize(new THREE.Vector2()); if (taille.x !== W || taille.y !== H) R.rendu.setSize(W, H, false);
   // un pas en cours ? on avance en douceur, sinon on repart si le joystick est tenu
   let fx = JEU.x, fy = JEU.y, bond = 0;
-  if (JEU.pas) { const k = Math.min(1, (t - JEU.pas.t0) / DUREE_PAS); fx = JEU.pas.de[0] + (JEU.x - JEU.pas.de[0]) * k; fy = JEU.pas.de[1] + (JEU.y - JEU.pas.de[1]) * k; bond = Math.sin(k * Math.PI) * .12;
+  const DP = dureePasJ() * (JEU.pas && JEU.pas.saut ? 1.8 : 1); let saut = 0;
+  if (JEU.pas) { const k = Math.min(1, (t - JEU.pas.t0) / DP); if (JEU.pas.saut) saut = Math.sin(k * Math.PI) * .8; fx = JEU.pas.de[0] + (JEU.x - JEU.pas.de[0]) * k; fy = JEU.pas.de[1] + (JEU.y - JEU.pas.de[1]) * k; bond = Math.sin(k * Math.PI) * .12;
     if (k >= 1) { const t0 = JEU.pas.t0; finPas(); fx = JEU.x; fy = JEU.y; bond = 0;
-      if (JEU.tenu) { pasTenu(); if (JEU.pas) JEU.pas.t0 = Math.max(t0 + DUREE_PAS, t - DUREE_PAS * .5); } } }   // le pas suivant part sans temps mort
+      if (JEU.tenu) { pasTenu(); if (JEU.pas) JEU.pas.t0 = Math.max(t0 + DP, t - dureePasJ() * .5); } } }   // le pas suivant part sans temps mort
   if (!JEU.pas && JEU.tenu) pasTenu();
   const d = dioramaJ(), h = R.heros, sol = d && d.flat ? 0 : hautSol(tuileJ(Math.round(fx), Math.round(fy)));
   if (!d) { R.rendu.setClearColor(0, 0); R.rendu.clear(); return; }   // les planches du décor arrivent
@@ -1223,9 +1235,10 @@ function boucleJeu(t) {
   h.position.set(fx, Math.max(0, sol) + bond, fy);
   if (h.userData.dessin.visible) {   // le dessin regarde toujours la caméra : on change seulement d'image
     const nav = JEU.bateau && JEU.bateau.a;   // en bateau : assis sur le pont, sans marcher
-    imageHeros(h, t, !nav && !!(JEU.pas || JEU.tenu)); h.position.y = nav ? .22 + Math.sin(t / 600) * .03 : Math.max(0, sol);   // pas de petit saut : les images de marche bougent déjà
+    imageHeros(h, t, !nav && !!(JEU.pas || JEU.tenu)); h.position.y = nav ? .22 + Math.sin(t / 600) * .03 : Math.max(0, sol) + saut;   // pas de petit saut : les images de marche bougent déjà
     h.visible = !nav; if (d.flat) bateauJ(R, fx, fy, t);   // à bord, le héros est dans la cabine : on ne voit plus que le bateau (17/10)
     h.userData.dessin.material.color.setRGB(1 - .18 * R.nuit, 1 - .22 * R.nuit, 1 - .08 * R.nuit);
+    herosMasqueJ(R, h, t, fx, fy);
   } else {
     const cible = ANGLE[JEU.dir], da = Math.atan2(Math.sin(cible - h.rotation.y), Math.cos(cible - h.rotation.y)); h.rotation.y += da * .35;
     h.userData.corps.scale.y = 1 + Math.sin(t / 260) * .015;
@@ -1245,7 +1258,7 @@ function boucleJeu(t) {
   }
   R.lampes.forEach(l => l.intensity = l.userData.ok ? .4 + 2.8 * R.nuit : 0);
   d.anim.forEach(f => f(t));
-  if (d.flat) { cachettesFlat(R, t); estomperJ(R, d, fx, fy); vueZoneJ(R, d); boutonBateauJ(); } else cachettesJ3D(R, t);
+  if (d.flat) { cachettesFlat(R, t); coffresFlat(R, t); tracesJ(R, t); estomperJ(R, d, fx, fy); vueZoneJ(R, d); boutonBateauJ(); } else cachettesJ3D(R, t);
   creatureJ(R, t);
   habitantsJ(R).forEach(({ n, g, c, s }) => {   // les habitants respirent, et se tournent vers toi quand tu approches
     if (s) {   // dessiné : il regarde de ton côté (l'image regarde vers la droite de l'écran), et lève la main quand il te parle
@@ -1287,6 +1300,172 @@ const VOYANTS = [[0.1326, 0.6553, 0.1627, 0.155], [0.2689, 0.6545, 0.1627, 0.155
   img.src = IMG_JEU + "jeu-detecteur.webp";
 })();
 
+// ---------- les masques (19/10, idée de Sam) : un par région, caché dans un coffre ; on en porte un à la fois, chacun donne un pouvoir ----------
+const MASQUES = {
+  foret: { nom: "Masque Carcajou", pouvoir: "Flair : des traces de pattes te mènent au cryptide le plus proche.", couleur: "#b8743a", clair: "#f0c890", signe: "🐾", oreilles: "rondes" },
+  lande: { nom: "Masque Glagla", pouvoir: "Glissade : tu glisses comme sur la glace, deux fois plus vite.", couleur: "#5fb8e8", clair: "#e6f7ff", signe: "❄️", oreilles: "glacons" },
+  cabane: { nom: "Masque Biscornu", pouvoir: "Ombre : tu passes à travers les arbres.", couleur: "#6a3fa8", clair: "#c9a2ff", signe: "🌙", oreilles: "tordues" },
+  bayou: { nom: "Masque Bayou", pouvoir: "Tu nages et tu respires sous l'eau.", couleur: "#3f9a6a", clair: "#b8f0c0", signe: "🫧", oreilles: "grenouille" },
+  desert: { nom: "Masque Rabougri", pouvoir: "Tout petit : tu passes entre les rochers. Tout grand : tu enjambes les obstacles.", couleur: "#d8702a", clair: "#ffd27a", signe: "🌵", oreilles: "plumes" }
+};
+const ORDRE_MASQUES = ["foret", "lande", "cabane", "bayou", "desert"];
+const PASSE_MASQUE = { cabane: "T", bayou: "~v" };   // les cases que le masque laisse traverser (Rabougri : les rochers, seulement en tout petit)
+const masqueJ = () => JEU && JEU.masque;
+const aMasqueJ = z => !!(JEU && JEU.masques.includes(z));
+const dureePasJ = () => masqueJ() === "lande" ? 140 : DUREE_PAS;
+function passeMasqueJ(x, y) {   // le masque porté laisse-t-il entrer sur cette case ?
+  const m = masqueJ(), t = tuileJ(x, y); if (!m || occupeJ(x, y) || portailEn(x, y)) return false;
+  if (m === "desert") return JEU.taille === "petit" && "#c".includes(t);
+  return !!PASSE_MASQUE[m] && PASSE_MASQUE[m].includes(t);
+}
+const marcheJ = (x, y) => libreJ(x, y) || passeMasqueJ(x, y);
+// Rabougri en tout grand : on enjambe un obstacle d'une case (un arbre, un rocher, un ruisseau), s'il y a de la place derrière
+function enjambeJ(dir) {
+  if (masqueJ() !== "desert" || JEU.taille !== "grand") return null;
+  const [dx, dy] = DIRS[dir], x = JEU.x + dx, y = JEU.y + dy, t = tuileJ(x, y);
+  if (marcheJ(x, y) || occupeJ(x, y) || portailEn(x, y) || t === " " || sousBatiment(x, y) || !"T#c~xoRfu".includes(t)) return null;
+  return libreJ(x + dx, y + dy) && zoneJ(x + dx, y + dy) === zoneJ(JEU.x, JEU.y) ? [x + dx, y + dy] : null;
+}
+// le coffre de chaque région : sur une case dégagée, le plus loin possible de l'arrivée des portails (il faut explorer)
+let coffresJ = null;
+function coffresCases() {
+  if (coffresJ) return coffresJ; coffresJ = {};
+  const acc = casesAccessibles(), autres = [...PNJ.map(n => [n.x, n.y]), ...(MONDE.habitants || []).map(h => [h.x, h.y]), ...ANIMAUX.map(a => [a.x, a.y]),
+    ...(MONDE.portails || []).flatMap(q => [[q.x, q.y], [q.ax, q.ay]]), ...(BATEAU0 ? [BATEAU0] : []), DEPART];
+  const cheb = (a, b) => Math.max(Math.abs(a[0] - b[0]), Math.abs(a[1] - b[1]));
+  ORDRE_MASQUES.forEach(z => {
+    const entrees = (MONDE.portails || []).filter(q => zoneJ(q.ax, q.ay) === z).map(q => [q.ax, q.ay]);
+    let best = null, score = -1;
+    acc.forEach(c => { const [x, y] = c;
+      if (zoneJ(x, y) !== z || !".,;".includes(tuileJ(x, y))) return;
+      for (let j = -1; j <= 1; j++) for (let i = -1; i <= 1; i++) if (!libreSol(x + i, y + j) || "PpbB=".includes(tuileJ(x + i, y + j))) return;
+      if (autres.some(o => cheb(o, c) <= 3)) return;
+      const s = entrees.length ? Math.min(...entrees.map(e => Math.abs(e[0] - x) + Math.abs(e[1] - y))) : 0;
+      if (s > score) { score = s; best = c; } });
+    if (best) coffresJ[z] = best;
+  });
+  return coffresJ;
+}
+const coffreEn = (x, y) => JEU ? ORDRE_MASQUES.find(z => !aMasqueJ(z) && coffresCases()[z] && coffresCases()[z][0] === x && coffresCases()[z][1] === y) : null;
+const coffrePres = () => ORDRE_MASQUES.find(z => { const c = coffresCases()[z]; return c && !aMasqueJ(z) && Math.max(Math.abs(c[0] - JEU.x), Math.abs(c[1] - JEU.y)) <= 1; });
+function ouvrirCoffreJ(z) {
+  const M = MASQUES[z]; JEU.masques.push(z); sfx("victoire"); if (navigator.vibrate) navigator.vibrate([80, 50, 120]);
+  JEU.action = { ligne: 3, t0: performance.now(), duree: 1900, vitesse: 120 };
+  const peut = libreSol(JEU.x, JEU.y) && !(JEU.bateau && JEU.bateau.a); if (peut) mettreMasqueJ(z, true);
+  sauverMasquesJ(); majBoutonMasqueJ();
+  dialogueJ("Tu as trouvé le " + M.nom + " ! " + M.pouvoir + (peut ? " Tu le portes ! Touche « Masques » pour en changer." : ""), 7000);
+}
+function mettreMasqueJ(z, silence) {   // z = null : on l'enlève
+  if (!JEU) return false;
+  if (!libreSol(JEU.x, JEU.y) && !(JEU.bateau && JEU.bateau.a)) { dialogueJ("Pas ici ! Retourne d'abord sur la terre ferme.", 2600); return false; }
+  JEU.masque = z || null; if (z === "desert" && !JEU.taille) JEU.taille = "petit";
+  JEU.traces = null; sauverMasquesJ(); majBoutonMasqueJ();
+  if (!silence) { sfx(z ? "sceau" : "clic"); dialogueJ(z ? MASQUES[z].nom + " : " + MASQUES[z].pouvoir : "Tu enlèves ton masque.", 3600); }
+  return true;
+}
+function sauverMasquesJ() { majPartie(p => { if (p.jeu) Object.assign(p.jeu, { masques: JEU.masques.slice(), masque: JEU.masque, taille: JEU.taille || null }); }); }
+// le dessin provisoire d'un masque (en attendant ceux de Sam) : un loup de carnaval, ses oreilles ou ses cornes, et son signe sur le front
+const imagesMasque = {};
+function imageMasque(z, gris) {
+  const cle = z + (gris ? "/g" : ""); if (imagesMasque[cle]) return imagesMasque[cle];
+  const M = MASQUES[z], c = document.createElement("canvas"); c.width = c.height = 160; const g = c.getContext("2d");
+  const coul = gris ? "#6b6b72" : M.couleur, clair = gris ? "#9a9aa2" : M.clair;
+  g.lineWidth = 6; g.strokeStyle = "#1b1b22"; g.lineJoin = "round";
+  const forme = () => { g.beginPath();
+    if (M.oreilles === "rondes") { g.arc(40, 52, 20, 0, Math.PI * 2); g.moveTo(140, 52); g.arc(120, 52, 20, 0, Math.PI * 2); }
+    else if (M.oreilles === "glacons") { for (const x of [34, 58, 102, 126]) { g.moveTo(x - 11, 60); g.lineTo(x, x === 58 || x === 102 ? 12 : 26); g.lineTo(x + 11, 60); } }
+    else if (M.oreilles === "tordues") { g.moveTo(36, 62); g.quadraticCurveTo(8, 30, 34, 10); g.quadraticCurveTo(36, 40, 58, 52); g.moveTo(124, 62); g.quadraticCurveTo(160, 40, 140, 6); g.quadraticCurveTo(122, 36, 102, 52); }
+    else if (M.oreilles === "grenouille") { g.arc(46, 50, 22, 0, Math.PI * 2); g.moveTo(136, 50); g.arc(114, 50, 22, 0, Math.PI * 2); }
+    else { for (let i = 0; i < 5; i++) { const a = -Math.PI / 2 + (i - 2) * .42, x = 80 + Math.cos(a) * 52, y = 66 + Math.sin(a) * 52; g.moveTo(80 + Math.cos(a - .14) * 30, 66 + Math.sin(a - .14) * 30); g.lineTo(x, y - 6); g.lineTo(80 + Math.cos(a + .14) * 30, 66 + Math.sin(a + .14) * 30); } }
+    g.fill(); g.stroke(); };
+  g.fillStyle = clair; forme();
+  // le loup : un front large, deux joues et une pointe sur le nez
+  g.beginPath(); g.moveTo(14, 70); g.quadraticCurveTo(14, 40, 80, 42); g.quadraticCurveTo(146, 40, 146, 70); g.quadraticCurveTo(146, 118, 104, 124); g.quadraticCurveTo(88, 116, 80, 104);
+  g.quadraticCurveTo(72, 116, 56, 124); g.quadraticCurveTo(14, 118, 14, 70); g.closePath();
+  const dg = g.createLinearGradient(0, 40, 0, 124); dg.addColorStop(0, clair); dg.addColorStop(.45, coul); dg.addColorStop(1, coul); g.fillStyle = dg; g.fill(); g.stroke();
+  g.fillStyle = "#1b1b22"; for (const x of [52, 108]) { g.beginPath(); g.ellipse(x, 84, 17, 12, x < 80 ? .2 : -.2, 0, Math.PI * 2); g.fill(); }
+  g.fillStyle = "rgba(255,255,255,.55)"; g.beginPath(); g.ellipse(46, 60, 14, 5, -.3, 0, Math.PI * 2); g.fill();
+  if (!gris) { g.font = "30px serif"; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText(M.signe, 80, 62); }
+  else { g.fillStyle = "#e8e8ec"; g.font = "bold 36px sans-serif"; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText("?", 80, 64); }
+  return imagesMasque[cle] = c;
+}
+function majBoutonMasqueJ() {
+  const b = $("jeuMasquesBouton"); if (!b || !JEU) return;
+  b.textContent = JEU.masque ? MASQUES[JEU.masque].signe + " Masque" + (JEU.masque === "desert" ? (JEU.taille === "grand" ? " (grand)" : " (petit)") : "") : "Masques";
+  b.classList.toggle("porte", !!JEU.masque); b.classList.toggle("nouveau", JEU.masques.length > 0 && !JEU.masque);
+}
+function masquesJ() {   // la liste des 5 masques : ceux qu'on a trouvés se mettent d'un toucher
+  if (!JEU || JEU.revele) return;
+  const el = $("jeuMasquesListe"); el.innerHTML = "";
+  ORDRE_MASQUES.forEach(z => {
+    const M = MASQUES[z], a = aMasqueJ(z), b = document.createElement("button"); b.type = "button";
+    b.className = (a ? "" : "ferme ") + (JEU.masque === z ? "porte" : "");
+    const img = imageMasque(z, !a), i = document.createElement("img"); i.src = img.toDataURL(); i.alt = "";
+    const t = document.createElement("span"); t.innerHTML = "<b></b><small></small>";
+    t.firstChild.textContent = a ? M.nom : "Masque ???";
+    t.lastChild.textContent = a ? (JEU.masque === z ? "Tu le portes. " : "") + M.pouvoir : "Caché dans un coffre, quelque part dans " + ZONES[z].nom.replace(/^(Le|La|Les) /, m => m.toLowerCase()) + ".";
+    b.append(i, t);
+    if (a) b.addEventListener("click", e => { e.stopPropagation(); if (mettreMasqueJ(JEU.masque === z ? null : z)) $("jeuMasques").hidden = true; });
+    el.append(b);
+  });
+  const tl = $("jeuMasquesTaille"); tl.hidden = JEU.masque !== "desert";
+  tl.querySelectorAll("button").forEach(b => b.classList.toggle("choisi", b.dataset.taille === (JEU.taille || "petit")));
+  $("jeuMasques").hidden = false; sfx("page");
+}
+function tailleJ(t) {   // Rabougri : tout petit ou tout grand
+  if (!JEU || JEU.masque !== "desert" || JEU.taille === t) return;
+  if (t === "grand" && !libreSol(JEU.x, JEU.y)) return dialogueJ("Tu es coincé entre les rochers ! Sors d'abord pour grandir.", 2600);
+  JEU.taille = t; sauverMasquesJ(); majBoutonMasqueJ(); sfx("hop"); $("jeuMasques").hidden = true;
+  dialogueJ(t === "petit" ? "Tout petit ! Tu peux te faufiler entre les rochers." : "Tout grand ! Tu enjambes les arbres, les rochers et les ruisseaux.", 3000);
+}
+// Carcajou : le chemin le plus court vers le cryptide caché le plus proche de la région (on montre les 12 premières traces)
+function cheminFlairJ() {
+  const z = zoneJ(JEU.x, JEU.y), cibles = ciblesJ().filter(q => zoneJ(q.x, q.y) === z); if (!cibles.length) return [];
+  const but = new Set(cibles.map(q => q.x + "," + q.y)), de = new Map([[JEU.x + "," + JEU.y, null]]), file = [[JEU.x, JEU.y]];
+  while (file.length) { const [x, y] = file.shift();
+    for (const [dx, dy] of Object.values(DIRS)) { const n = [x + dx, y + dy], k = n + ""; if (de.has(k)) continue;
+      if (but.has(k)) { const l = []; let c = x + "," + y; while (c && c !== JEU.x + "," + JEU.y) { l.unshift(c.split(",").map(Number)); c = de.get(c); } return l.slice(0, 12); }
+      if (zoneJ(n[0], n[1]) === z && (libreSol(n[0], n[1]) || passeMasqueJ(n[0], n[1]))) { de.set(k, x + "," + y); file.push(n); } } }
+  return [];
+}
+let texPatte = null;
+function tracesJ(R, t) {
+  const on = masqueJ() === "foret"; R.traces = R.traces || [];
+  if (on && !JEU.traces) { JEU.traces = cheminFlairJ();
+    if (!texPatte) { const c = document.createElement("canvas"); c.width = c.height = 64; const g = c.getContext("2d"); g.font = "46px serif"; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText("🐾", 32, 34); texPatte = new THREE.CanvasTexture(c); }
+    while (R.traces.length < 12) { const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: texPatte, transparent: true, depthWrite: false })); s.scale.set(.42, .42, 1); R.scene.add(s); R.traces.push(s); } }
+  R.traces.forEach((s, i) => { const c = on && JEU.traces && JEU.traces[i]; s.visible = !!c;
+    if (c) { s.position.set(c[0], .05, c[1]); s.material.opacity = (.95 - i * .06) * (.6 + .4 * Math.sin(t / 260 - i * .7)); } });
+}
+// le masque porté se voit : une petite image au-dessus de la tête ; et le héros change (petit ou grand, ombre, dans l'eau)
+let texMasques = {};
+function herosMasqueJ(R, h, t, fx, fy) {
+  const m = masqueJ(), u = h.userData;
+  if (!R.badge) { R.badge = new THREE.Sprite(new THREE.SpriteMaterial({ transparent: true, depthWrite: false, depthTest: false })); R.badge.scale.set(.5, .5, 1); R.scene.add(R.badge); }
+  R.badge.visible = !!m && h.visible;
+  const kv = m === "desert" ? (JEU.taille === "grand" ? 1.6 : .55) : 1; JEU.echelle = (JEU.echelle || 1) + (kv - (JEU.echelle || 1)) * .15; h.scale.setScalar(JEU.echelle);
+  const eau = m === "bayou" && "~v".includes(tuileJ(Math.round(fx), Math.round(fy))) && !(JEU.bateau && JEU.bateau.a);
+  JEU.nage = (JEU.nage || 0) + ((eau ? 1 : 0) - (JEU.nage || 0)) * .2; h.position.y -= JEU.nage * (.38 + Math.sin(t / 400) * .04);
+  if (u.dessin) { const mat = u.dessin.material, ombre = m === "cabane";
+    if (ombre) mat.color.multiply(new THREE.Color(.55, .45, .8)); if (JEU.nage > .05) mat.color.lerp(new THREE.Color(.55, .8, 1), JEU.nage * .35);
+    mat.opacity = ombre ? .78 : 1; mat.transparent = true; }
+  if (m) { if (!texMasques[m]) texMasques[m] = new THREE.CanvasTexture(imageMasque(m)); if (R.badge.material.map !== texMasques[m]) { R.badge.material.map = texMasques[m]; R.badge.material.needsUpdate = true; }
+    R.badge.position.set(fx, h.position.y + TAILLE_HEROS * JEU.echelle * .95 + .25 + Math.sin(t / 380) * .05, fy); }
+}
+// les coffres pas encore ouverts : une caisse qui brille, avec des étincelles
+function coffresFlat(R, t) {
+  const cle = ORDRE_MASQUES.filter(z => !aMasqueJ(z) && coffresCases()[z]).join(",");
+  if (R.cleCoffres !== cle) {
+    (R.coffres || []).forEach(c => R.scene.remove(c.g)); R.cleCoffres = cle;
+    R.coffres = cle ? cle.split(",").map(z => { const [x, y] = coffresCases()[z], g = new THREE.Group();
+      const b = poserDecor(R, g, "caisse", 0, 0, { haut: .85, pied: .12 }); b.material = b.material.clone(); b.material.color.setRGB(1.25, 1.1, .7);
+      const et = [0, 1, 2, 3].map(() => { const e = new THREE.Sprite(etincelleJ()); e.scale.set(.24, .24, 1); g.add(e); return e; });
+      g.position.set(x, 0, y); R.scene.add(g); return { z, g, b, et, phase: x * .7 }; }) : [];
+  }
+  R.coffres.forEach(c => { c.b.material.rotation = Math.sin(t / 400 + c.phase) * .02;
+    c.et.forEach((e, i) => { const a = t / 700 + i * 1.57 + c.phase; e.position.set(Math.cos(a) * .5, .45 + Math.sin(t / 250 + i) * .2, Math.sin(a) * .5); }); });
+}
+
 // ---------- joystick, boutons A et B, clavier ----------
 // La vue est en biais : les 4 directions de marche sont les 4 diagonales de l'écran. Le joystick choisit la plus proche
 // (en haut à droite = « haut », en bas à droite = « droite », en bas à gauche = « bas », en haut à gauche = « gauche »).
@@ -1308,9 +1487,9 @@ function lacherStick() { doigtStick = null; stick.classList.remove("actif"); pom
 function arretJ() { if (!JEU) return; if (JEU.vue && !(JEU.bateau && JEU.bateau.a)) JEU.dir = JEU.vue; JEU.vue = null; JEU.tenu = JEU.tenu2 = null; }
 const INVERSE = { haut: "bas", bas: "haut", gauche: "droite", droite: "gauche" };
 function demiTourJ(dir) {   // 19/10 : un demi-tour se fait tout de suite, sans finir le pas commencé (on repart d'où l'on est)
-  const P = JEU.pas; if (!P || JEU.bateau && JEU.bateau.a || INVERSE[dir] !== JEU.dir) return;
-  const k = Math.min(1, (performance.now() - P.t0) / DUREE_PAS); if (k >= .9) return;
-  const [x0, y0] = P.de; JEU.pas = { de: [JEU.x, JEU.y], t0: performance.now() - (1 - k) * DUREE_PAS }; JEU.x = x0; JEU.y = y0; JEU.dir = dir; JEU.vue = null;
+  const P = JEU.pas; if (!P || P.saut || JEU.bateau && JEU.bateau.a || INVERSE[dir] !== JEU.dir) return;
+  const k = Math.min(1, (performance.now() - P.t0) / dureePasJ()); if (k >= .9) return;
+  const [x0, y0] = P.de; JEU.pas = { de: [JEU.x, JEU.y], t0: performance.now() - (1 - k) * dureePasJ() }; JEU.x = x0; JEU.y = y0; JEU.dir = dir; JEU.vue = null;
 }
 // Le zoom : on pince l'écran à deux doigts (ou la molette) pour rapprocher ou éloigner la caméra. Le choix est gardé.
 const ZOOM = { demi: 5, min: 3.2, max: 8, doigts: new Map(), d0: 0, z0: 0 };
@@ -1341,6 +1520,9 @@ addEventListener("keydown", e => {
 addEventListener("keyup", e => { if (JEU && TOUCHES[e.key] === JEU.tenu) arretJ(); });
 $("jeuCarteBouton").addEventListener("click", e => { e.stopPropagation(); carteJ(); });
 $("jeuCarteFermer").addEventListener("click", e => { e.stopPropagation(); $("jeuCarte").hidden = true; });
+$("jeuMasquesBouton").addEventListener("click", e => { e.stopPropagation(); masquesJ(); });
+$("jeuMasquesFermer").addEventListener("click", e => { e.stopPropagation(); $("jeuMasques").hidden = true; });
+document.querySelectorAll("#jeuMasquesTaille button").forEach(b => b.addEventListener("click", e => { e.stopPropagation(); tailleJ(b.dataset.taille); }));
 $("jeuCarte").addEventListener("pointerdown", e => { e.stopPropagation(); if (e.target.id === "jeuCarte") $("jeuCarte").hidden = true; });
 $("jeuQuitter").addEventListener("click", () => { fermerJeu(); enBoss = false; majAccueil(); montrer("accueil"); });
 
@@ -1350,6 +1532,7 @@ window.__jeu = { bateau: () => bateauBoutonJ(), ouvrirCarte: () => carteJ(), mus
       const M = MUSIQUES[z], ts = 60 / M.bpm * M.croche; for (let i = 0; i * ts < sec - 1; i++) pasMusique(z, i, i * ts + (M.swing && i % 2 ? ts * .33 : 0) + .05, ts, bus); }
     finally { audio = a0; maitre = m0; }
     return off.startRendering().then(b => Array.from(b.getChannelData(0))); }, zoom: () => ZOOM.demi, etat: () => JEU && { x: JEU.x, y: JEU.y, dir: JEU.dir, tenu: JEU.tenu, tenu2: JEU.tenu2, zigzag: JEU.zigzag, pas: !!JEU.pas, vue: JEU.vue, zone: zoneJ(JEU.x, JEU.y), revele: JEU.revele && JEU.revele.q.k, bateau: JEU.bateau, boutonBateau: !$("jeuBateau").hidden && $("jeuBateau").textContent, cibles: ciblesJ() },
+  masques: { coffres: () => coffresCases(), donner: z => { if (!JEU.masques.includes(z)) JEU.masques.push(z); sauverMasquesJ(); }, mettre: z => mettreMasqueJ(z), taille: t => tailleJ(t), flair: () => JEU.traces, etat: () => ({ masques: JEU.masques, masque: JEU.masque, taille: JEU.taille }) },
   aller: (x, y, dir) => { JEU.x = x; JEU.y = y; JEU.pas = null; if (dir) JEU.dir = dir; arriverJ(true); }, pnj: PNJ, libreSol, pas: d => essayerPas(d), A: () => boutonA(), B: () => boutonB(),
   sousBati: () => { sousBatiment(0, 0); return [...SOUS_BATI].filter(k => { const [x, y] = k.split(",").map(Number); return !!(TUILES[tuileJ(x, y)] || {}).libre; }); },
   decor: () => R3 && R3.ile && R3.ile.flat ? { objets: R3.ile.groupe.children.length, dessins: R3.rendu.info.render.calls } : null,

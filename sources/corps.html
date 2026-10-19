@@ -207,6 +207,7 @@
       <div id="jeuLeds" class="emf-leds" aria-label="Détecteur"><i></i><i></i><i></i><i></i><i></i></div>
     </div>
     <button id="jeuCarteBouton" class="jeu-carte-bouton" type="button" aria-label="La carte des régions">Carte</button>
+    <button id="jeuMasquesBouton" class="jeu-carte-bouton jeu-masques-bouton" type="button" aria-label="Les masques">Masques</button>
     <div id="jeuTitre" class="jeu-titre" hidden></div>
     <div id="jeuDialogue" class="jeu-dialogue" hidden></div>
     <button id="jeuBateau" class="jeu-bateau" type="button" hidden></button>
@@ -216,6 +217,15 @@
         <div id="jeuCarteZones" class="jeu-carte-zones"></div>
         <small>Touche une région déjà visitée pour t'y téléporter.</small>
         <button id="jeuCarteFermer" class="mini" type="button">Fermer</button>
+      </div>
+    </div>
+    <div id="jeuMasques" class="jeu-carte" hidden>
+      <div class="jeu-carte-cadre">
+        <b>Les masques</b>
+        <div id="jeuMasquesListe" class="jeu-masques-liste"></div>
+        <div id="jeuMasquesTaille" class="jeu-masques-taille" hidden><button type="button" data-taille="petit">Tout petit</button><button type="button" data-taille="grand">Tout grand</button></div>
+        <small>Chaque région cache un coffre avec son masque. Touche un masque pour le mettre ou l'enlever.</small>
+        <button id="jeuMasquesFermer" class="mini" type="button">Fermer</button>
       </div>
     </div>
   </div>
