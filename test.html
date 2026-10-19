@@ -2564,9 +2564,10 @@ function musiqueZonesJ() {
 function pasTenu() {
   if (!JEU || !JEU.tenu) return;
   const a = JEU.tenu, b = JEU.tenu2;
-  const ordre = !b ? [a] : JEU.zigzag && JEU.dernierDir === a ? [b, a] : [a, b];
-  for (const d of ordre) if (essayerPas(d, true)) { JEU.dernierDir = d; return; }
-  essayerPas(ordre[0]);
+  const ordre = !b ? [a] : JEU.zigzag && JEU.dernierDir === a ? [b, a] : [a, b], avant = JEU.dernierDir;
+  // en zigzag, le héros garde la tête vers la direction du pouce (sinon son image changeait de sens à chaque pas, 19/10)
+  for (const d of ordre) if (essayerPas(d, true)) { JEU.dernierDir = d; JEU.vue = JEU.zigzag && (d === a || avant === a) ? a : d; return; }
+  JEU.vue = null; essayerPas(ordre[0]);
 }
 function finPas() {
   JEU.pas = null; sauverJ();
@@ -2741,7 +2742,7 @@ function imageHeros(h, t, marche) {   // choisit l'image de la planche : directi
     const fin = !a.boucle && Math.floor(x) >= 3;   // la dernière image d'une action qui ne boucle pas ne revient pas à la première
     return fonduImages(d, u.suite, u.texActions, u.texActions2, [c / 4, ligne], [((c + 1) % 4) / 4, ligne], fin ? 0 : x % 1);
   }
-  const ligne = 1 - (LIGNE_HEROS[JEU.dir] + 1) / 4, x = marche ? t / 170 : t / 650, c = Math.floor(x) % (marche ? 4 : 2), base = marche ? 0 : 4, n = marche ? 4 : 2;
+  const ligne = 1 - (LIGNE_HEROS[marche && JEU.vue || JEU.dir] + 1) / 4, x = marche ? t / 170 : t / 650, c = Math.floor(x) % (marche ? 4 : 2), base = marche ? 0 : 4, n = marche ? 4 : 2;
   fonduImages(d, u.suite, u.texMarche, u.texMarche2, [(base + c) / 6, ligne], [(base + (c + 1) % n) / 6, ligne], x % 1);
 }
 const fouilleJ = puis => { JEU.action = { ligne: "bas gauche".includes(JEU.dir) ? 0 : 1, t0: performance.now(), duree: 400, vitesse: 100, puis }; };
@@ -3407,15 +3408,22 @@ function bougerStick(e) {
   const r = stick.getBoundingClientRect(), dx = e.clientX - (r.left + r.width / 2), dy = e.clientY - (r.top + r.height / 2), d = Math.hypot(dx, dy), max = r.width * .3, k = d > max ? max / d : 1;
   pommeau.style.transform = `translate(${dx * k}px, ${dy * k}px)`;
   if (!JEU) return;
-  if (d < r.width * .17) { JEU.tenu = JEU.tenu2 = null; return; }   // une grande zone morte au centre : un doigt posé ne fait pas marcher
+  if (d < r.width * .17) { arretJ(); return; }   // une grande zone morte au centre : un doigt posé ne fait pas marcher
   const a = (Math.atan2(-dy, dx) * 180 / Math.PI + 360) % 360, ecart = c => Math.abs(((a - c + 540) % 360) - 180);
   let [p, q] = Object.keys(CAP).sort((k, l) => ecart(CAP[k]) - ecart(CAP[l]));   // la diagonale la plus proche, puis sa voisine
-  if (JEU.tenu && JEU.tenu !== p && ecart(CAP[JEU.tenu]) < 60) { q = p; p = JEU.tenu; }   // on garde la direction tant qu'on n'a pas franchement tourné le pouce
+  if (JEU.tenu && JEU.tenu !== p && ecart(CAP[JEU.tenu]) < 52) { q = p; p = JEU.tenu; }   // 7° au-delà de la limite (c'était 15°, 19/10)   // on garde la direction tant qu'on n'a pas franchement tourné le pouce
   const ep = ecart(CAP[p]), zigzag = JEU.zigzag ? ep > 20 : ep > 34, change = p !== JEU.tenu || zigzag !== !!JEU.zigzag;
-  JEU.tenu = p; JEU.tenu2 = ecart(CAP[q]) <= 90 ? q : null; JEU.zigzag = zigzag;
-  if (change) pasTenu();
+  JEU.tenu = p; JEU.tenu2 = ecart(CAP[q]) < 80 ? q : null; JEU.zigzag = zigzag;   // on ne glisse sur la voisine que si le pouce penche vers elle (19/10)
+  if (change) { demiTourJ(p); pasTenu(); }
 }
-function lacherStick() { doigtStick = null; stick.classList.remove("actif"); pommeau.style.transform = ""; if (JEU) JEU.tenu = JEU.tenu2 = null; }
+function lacherStick() { doigtStick = null; stick.classList.remove("actif"); pommeau.style.transform = ""; arretJ(); }
+function arretJ() { if (!JEU) return; if (JEU.vue && !(JEU.bateau && JEU.bateau.a)) JEU.dir = JEU.vue; JEU.vue = null; JEU.tenu = JEU.tenu2 = null; }
+const INVERSE = { haut: "bas", bas: "haut", gauche: "droite", droite: "gauche" };
+function demiTourJ(dir) {   // 19/10 : un demi-tour se fait tout de suite, sans finir le pas commencé (on repart d'où l'on est)
+  const P = JEU.pas; if (!P || JEU.bateau && JEU.bateau.a || INVERSE[dir] !== JEU.dir) return;
+  const k = Math.min(1, (performance.now() - P.t0) / DUREE_PAS); if (k >= .9) return;
+  const [x0, y0] = P.de; JEU.pas = { de: [JEU.x, JEU.y], t0: performance.now() - (1 - k) * DUREE_PAS }; JEU.x = x0; JEU.y = y0; JEU.dir = dir; JEU.vue = null;
+}
 // Le zoom : on pince l'écran à deux doigts (ou la molette) pour rapprocher ou éloigner la caméra. Le choix est gardé.
 const ZOOM = { demi: 5, min: 3.2, max: 8, doigts: new Map(), d0: 0, z0: 0 };
 try { const z = parseFloat(localStorage.getItem("cryptids-zoom")); if (z >= ZOOM.min && z <= ZOOM.max) ZOOM.demi = z; } catch (e) {}
@@ -3438,11 +3446,11 @@ $("jeuBateau").addEventListener("pointerup", e => { e.preventDefault(); bateauBo
 const TOUCHES = { ArrowUp: "haut", ArrowDown: "bas", ArrowLeft: "gauche", ArrowRight: "droite", z: "haut", s: "bas", q: "gauche", d: "droite", w: "haut", a: "gauche" };
 addEventListener("keydown", e => {
   if (!JEU || $("jeu").hidden) return;
-  if (TOUCHES[e.key]) { e.preventDefault(); JEU.tenu = TOUCHES[e.key]; JEU.tenu2 = null; JEU.zigzag = false; pasTenu(); }
+  if (TOUCHES[e.key]) { e.preventDefault(); JEU.tenu = TOUCHES[e.key]; JEU.tenu2 = null; JEU.zigzag = false; demiTourJ(JEU.tenu); pasTenu(); }
   else if (!e.repeat && (e.key === " " || e.key === "Enter")) { e.preventDefault(); boutonA(); }
   else if (!e.repeat && (e.key === "Escape" || e.key === "Backspace")) { e.preventDefault(); boutonB(); }
 });
-addEventListener("keyup", e => { if (JEU && TOUCHES[e.key] === JEU.tenu) JEU.tenu = null; });
+addEventListener("keyup", e => { if (JEU && TOUCHES[e.key] === JEU.tenu) arretJ(); });
 $("jeuCarteBouton").addEventListener("click", e => { e.stopPropagation(); carteJ(); });
 $("jeuCarteFermer").addEventListener("click", e => { e.stopPropagation(); $("jeuCarte").hidden = true; });
 $("jeuCarte").addEventListener("pointerdown", e => { e.stopPropagation(); if (e.target.id === "jeuCarte") $("jeuCarte").hidden = true; });
@@ -3453,7 +3461,7 @@ window.__jeu = { bateau: () => bateauBoutonJ(), ouvrirCarte: () => carteJ(), mus
     try { const bus = off.createGain(); bus.gain.value = .9; bus.connect(maitre); const e = off.createDelay(); e.delayTime.value = .33; const r = off.createGain(); r.gain.value = .28; bus.connect(e); e.connect(r); r.connect(e); r.connect(maitre);
       const M = MUSIQUES[z], ts = 60 / M.bpm * M.croche; for (let i = 0; i * ts < sec - 1; i++) pasMusique(z, i, i * ts + (M.swing && i % 2 ? ts * .33 : 0) + .05, ts, bus); }
     finally { audio = a0; maitre = m0; }
-    return off.startRendering().then(b => Array.from(b.getChannelData(0))); }, zoom: () => ZOOM.demi, etat: () => JEU && { x: JEU.x, y: JEU.y, dir: JEU.dir, zone: zoneJ(JEU.x, JEU.y), revele: JEU.revele && JEU.revele.q.k, bateau: JEU.bateau, boutonBateau: !$("jeuBateau").hidden && $("jeuBateau").textContent, cibles: ciblesJ() },
+    return off.startRendering().then(b => Array.from(b.getChannelData(0))); }, zoom: () => ZOOM.demi, etat: () => JEU && { x: JEU.x, y: JEU.y, dir: JEU.dir, tenu: JEU.tenu, tenu2: JEU.tenu2, zigzag: JEU.zigzag, pas: !!JEU.pas, vue: JEU.vue, zone: zoneJ(JEU.x, JEU.y), revele: JEU.revele && JEU.revele.q.k, bateau: JEU.bateau, boutonBateau: !$("jeuBateau").hidden && $("jeuBateau").textContent, cibles: ciblesJ() },
   aller: (x, y, dir) => { JEU.x = x; JEU.y = y; JEU.pas = null; if (dir) JEU.dir = dir; arriverJ(true); }, pnj: PNJ, libreSol, pas: d => essayerPas(d), A: () => boutonA(), B: () => boutonB(),
   sousBati: () => { sousBatiment(0, 0); return [...SOUS_BATI].filter(k => { const [x, y] = k.split(",").map(Number); return !!(TUILES[tuileJ(x, y)] || {}).libre; }); },
   decor: () => R3 && R3.ile && R3.ile.flat ? { objets: R3.ile.groupe.children.length, dessins: R3.rendu.info.render.calls } : null,
