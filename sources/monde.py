@@ -1,0 +1,379 @@
+# Le monde du jeu (16/10/2026) : 6 îles, une par zone, chacune peinte par Sam, reliées par des ponts de planches.
+# Pour chaque île : la grille devinée sur son terrain (terrains.py), puis les bâtiments, les arbres, les habitants… posés ici.
+# Écrit sources/monde.js (la carte et la place de chaque image) et les images jeu-ile-<zone>.webp.
+# python3 sources/monde.py <dossier d'aperçus>
+import sys, json, random, numpy as np; sys.path.insert(0, 'sources')
+from collections import deque
+from terrains import grille, TERRAINS
+from planches import detoure
+from PIL import Image, ImageDraw
+ECART = 4   # les cases de vide entre deux îles
+PLACE = {'lande': (1, 0), 'foret': (0, 1), 'village': (1, 1), 'desert': (2, 1), 'cabane': (0, 2), 'bayou': (1, 2)}   # (colonne, ligne) de chaque île
+PONTS = [('village', 'foret'), ('village', 'desert'), ('village', 'lande'), ('village', 'bayou'), ('foret', 'cabane')]
+LIBRE = set(".,=*bnPp:B")
+iles = {z: grille(z) for z in PLACE}
+LW = max(len(g[0]) for g, p, im in iles.values()) + ECART; LH = max(len(g) for g, p, im in iles.values()) + ECART
+WW, WH = 3 * LW, 3 * LH
+M = [[' '] * WW for _ in range(WH)]
+ZONE = [[None] * WW for _ in range(WH)]
+INFO = []
+for z, (g, P, im) in iles.items():
+    c, l = PLACE[z]; ox, oy = c * LW + (LW - len(g[0])) // 2, l * LH + (LH - len(g)) // 2
+    for y, ligne in enumerate(g):
+        for x, ch in enumerate(ligne): M[oy + y][ox + x] = ch; ZONE[oy + y][ox + x] = z if ch != ' ' else None
+    INFO.append(dict(zone=z, image='jeu-ile-%s.webp' % z, ox=ox, oy=oy, w=len(g[0]), h=len(g), peint='reperes' in P, **{k: P[k] for k in ('W', 'H', 'i0', 'j0', 'X0', 'Y0', 'hw', 'hh')}))
+    detoure(im).save('jeu-ile-%s.webp' % z, quality=86, method=6)
+ILE = {d['zone']: d for d in INFO}
+def couleur(z, x, y):   # la couleur du terrain peint sous la case (x, y) du monde
+    d = ILE[z]; g, P, im = iles[z]; i, j = x - d['ox'] + d['i0'], y - d['oy'] + d['j0']
+    px, py = d['X0'] + (i - j) * d['hw'], d['Y0'] + (i + j + 1) * d['hh']
+    return np.array(im.getpixel((int(min(d['W'] - 1, max(0, px))), int(min(d['H'] - 1, max(0, py))))), np.float32)
+# la couleur du sol de chaque île : la plus fréquente sous ses cases de sol (pour ne pas planter d'arbre sur un chemin peint)
+SOLC = {}
+for z, d in ILE.items():
+    cs = [couleur(z, x, y) for y in range(d['oy'], d['oy'] + d['h']) for x in range(d['ox'], d['ox'] + d['w']) if M[y][x] == '.']
+    q = np.array(cs) // 16; k = q[:, 0] * 1e4 + q[:, 1] * 1e2 + q[:, 2]; v, n = np.unique(k, return_counts=True); SOLC[z] = np.array(cs)[k == v[n.argmax()]].mean(0)
+def surSol(z, x, y): return np.abs(couleur(z, x, y) - SOLC[z]).sum() < 75
+def chemin(z, x, y): c = couleur(z, x, y); return bool(c[2] > c[1] + 15 and c[0] > c[1] - 10)   # les pavés violets peints (sur toutes les îles en pavés)
+# ---------- les portails entre îles (17/10) : au bout des chemins, un portail mène à l'île voisine, ou au village ----------
+BOUTS = []; PORTAILS = []; PRIS = set()
+def repere(z, k): d = ILE[z]; x, y = iles[z][1]['reperes'][k]; return (d['ox'] + x, d['oy'] + y)
+def portail(z, vers, pt):   # la case du portail la plus proche de pt, et la case d'arrivée juste devant, côté île
+    d = ILE[z]; best = None
+    for y in range(d['oy'] + 1, d['oy'] + d['h'] - 1):
+        for x in range(d['ox'] + 1, d['ox'] + d['w'] - 1):
+            if M[y][x] != '.' or (x, y) in PRIS: continue
+            for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+                ax, ay = x + dx, y + dy
+                if M[ay][ax] != '.' or abs(ax - pt[0]) + abs(ay - pt[1]) <= abs(x - pt[0]) + abs(y - pt[1]): continue
+                if sum(M[ay + b][ax + a] == '.' for a in (-1, 0, 1) for b in (-1, 0, 1)) < 8: continue
+                s = abs(x - pt[0]) + abs(y - pt[1])
+                if not d['peint']:   # sur les îles en pavés : le portail au bout d'un chemin pavé, son entrée face au chemin (17/10)
+                    s -= 5 * sum(chemin(z, ax + k * dx, ay + k * dy) for k in range(4)) + 3 * chemin(z, x, y)
+                if best is None or s < best[0]: best = (s, x, y, ax, ay)
+    _, x, y, ax, ay = best; M[y][x] = 'g'; BOUTS.append((x, y)); PORTAILS.append(dict(x=x, y=y, zone=z, vers=vers, ax=ax, ay=ay))
+    PRIS.update((x + a, y + b) for a in range(-2, 3) for b in range(-2, 3))
+for a, b in PONTS:
+    A, B = ILE[a], ILE[b]; (ca, la), (cb, lb) = PLACE[a], PLACE[b]
+    horiz = la == lb; best = None
+    if horiz:
+        G, D = (A, B) if ca < cb else (B, A)
+        for y in range(max(G['oy'], D['oy']) + 3, min(G['oy'] + G['h'], D['oy'] + D['h']) - 3):
+            xa = max((x for x in range(G['ox'], G['ox'] + G['w']) if M[y][x] == '.'), default=None); xb = min((x for x in range(D['ox'], D['ox'] + D['w']) if M[y][x] == '.'), default=None)
+            if xa is None or xb is None: continue
+            mid = (max(G['oy'], D['oy']) + min(G['oy'] + G['h'], D['oy'] + D['h'])) / 2; s = (xb - xa) + abs(y - mid) * .4
+            if best is None or s < best[0]: best = (s, [(x, y) for x in range(xa + 1, xb)])
+    else:
+        H_, Bs = (A, B) if la < lb else (B, A)
+        for x in range(max(H_['ox'], Bs['ox']) + 3, min(H_['ox'] + H_['w'], Bs['ox'] + Bs['w']) - 3):
+            ya = max((y for y in range(H_['oy'], H_['oy'] + H_['h']) if M[y][x] == '.'), default=None); yb = min((y for y in range(Bs['oy'], Bs['oy'] + Bs['h']) if M[y][x] == '.'), default=None)
+            if ya is None or yb is None: continue
+            mid = (max(H_['ox'], Bs['ox']) + min(H_['ox'] + H_['w'], Bs['ox'] + Bs['w'])) / 2; s = (yb - ya) + abs(x - mid) * .4
+            if (a, b) == ('foret', 'cabane'): s += 3 * (x - H_['ox'])   # le lac : le chemin peint vers la cabane longe le bord gauche
+            if best is None or s < best[0]: best = (s, [(x, y) for y in range(ya + 1, yb)])
+    # chaque bout de l'ancien pont devient un portail ; sur une carte peinte, le portail va au bout de son chemin (repère vers_<île>)
+    p0, p1 = best[1][0], best[1][-1]
+    for z, vers, pt in ((a, b, p0), (b, a, p1)):
+        if horiz: pt = p0 if (ILE[z]['ox'] < ILE[vers]['ox']) == (p0[0] < p1[0]) else p1
+        else: pt = p0 if (ILE[z]['oy'] < ILE[vers]['oy']) == (p0[1] < p1[1]) else p1
+        if 'vers_' + vers in iles[z][1].get('reperes', {}): pt = repere(z, 'vers_' + vers)
+        portail(z, vers, pt)
+# ---------- les éléments posés ----------
+rnd = random.Random(7)   # PRIS : les cases déjà prises (portails, bâtiments, et une marge autour)
+def proche(x, y, l, d): return any(max(abs(x - a), abs(y - b)) <= d for a, b in l)
+def libreRect(z, x0, y0, w, h, marge=1):
+    for y in range(y0 - marge, y0 + h + marge + 1):   # + 1 : la rangée devant la porte reste libre
+        for x in range(x0 - marge, x0 + w + marge):
+            if not (0 <= y < WH and 0 <= x < WW) or M[y][x] != '.' or ZONE[y][x] != z or (x, y) in PRIS: return False
+    return not proche(x0 + w // 2, y0 + h // 2, BOUTS, 3 + max(w, h) // 2)
+def poser(z, motif, cible=None, pres=None, loin=None, marge=1):
+    """pose un motif (liste de lignes) sur l'île z : le plus près de la cible (x, y), ou au hasard ; renvoie le coin"""
+    d = ILE[z]; h, w = len(motif), len(motif[0]); cands = []
+    for y0 in range(d['oy'], d['oy'] + d['h'] - h):
+        for x0 in range(d['ox'], d['ox'] + d['w'] - w):
+            if not libreRect(z, x0, y0, w, h, marge): continue
+            cx, cy = x0 + w / 2, y0 + h / 2
+            s = rnd.random() * 8
+            if cible: s += abs(cx - cible[0]) + abs(cy - cible[1])
+            if pres: s += 3 * min((abs(cx - a) + abs(cy - b) for a, b in pres), default=0)
+            if loin: s -= 1.2 * min(min((abs(cx - a) + abs(cy - b) for a, b in loin), default=40), 18)
+            cands.append((s, x0, y0))
+    if not cands: print('  pas de place pour', z, motif[0]); return None
+    _, x0, y0 = min(cands)
+    for yy, ligne in enumerate(motif):
+        for xx, ch in enumerate(ligne):
+            if ch != '?': M[y0 + yy][x0 + xx] = ch
+    for yy in range(y0 - 2, y0 + h + 3):
+        for xx in range(x0 - 2, x0 + w + 2): PRIS.add((xx, yy))
+    return (x0, y0)
+def centre(z): d = ILE[z]; return (d['ox'] + d['w'] / 2, d['oy'] + d['h'] / 2)
+def semer(z, ch, n, ok=lambda x, y: True, ecart=1):
+    d = ILE[z]; cs = [(x, y) for y in range(d['oy'], d['oy'] + d['h']) for x in range(d['ox'], d['ox'] + d['w']) if M[y][x] == '.' and ZONE[y][x] == z and (x, y) not in PRIS and ok(x, y)]
+    rnd.shuffle(cs); mis = []
+    for x, y in cs:
+        if len(mis) >= n: break
+        if proche(x, y, mis, ecart) or proche(x, y, BOUTS, 2): continue
+        M[y][x] = ch; mis.append((x, y)); PRIS.add((x, y))
+    return mis
+def maison(w, h, l='H', porte='D', toit='R'):
+    return [toit * w] * (h - 1) + [l * (w // 2) + porte + l * (w - w // 2 - 1)]
+BATIS = []
+def bati(z, motif, **k):
+    c = poser(z, motif, **k)
+    if c: BATIS.append((c[0] + len(motif[0]) // 2, c[1] + len(motif) - 1 + 1))   # la case devant la porte
+    return c
+# le village : la cathédrale au milieu, le départ devant elle, les maisons et les boutiques autour
+cv = centre('village')
+ca = bati('village', ['EEEEEEE'] * 6 + ['EEEGEEE'], cible=cv)
+dep = (ca[0] + 3, ca[1] + 9); M[dep[1]][dep[0]] = 'P'; PRIS.add(dep)
+for i in range(4): bati('village', maison(4, 3), loin=BATIS)
+for l, w in (('X', 4), ('Q', 4), ('N', 5), ('Y', 4)): bati('village', maison(w, 3, l, l, l), loin=BATIS)
+parc = poser('village', ['j?j?j', '?????', 'j?j?j'], loin=BATIS)
+bati('desert', maison(5, 3), cible=centre('desert'))                      # le ranch (RHD dans le désert : le saloon)
+bati('desert', maison(4, 3, 'W', 'W', 'W'), loin=BATIS)                   # Chupa la sopa
+bati('lande', maison(5, 4, 'F', 'F', 'F'), cible=centre('lande'))         # la ferme
+# le lac (17/10) : le chalet en A sur la terre battue peinte, et le cromlech (cercle de pierres levées) dans un pré
+# chalet 5 × 5 et atelier 4 × 3 posés ensemble, côte à côte (posés l'un après l'autre, l'atelier ne trouvait plus de place près du chalet agrandi)
+c = poser('foret', ['CCCCC?????', 'CCCCC?????', 'CCCCC?IIII', 'CCCCC?IIII', 'CCCCC?IIII'], cible=repere('foret', 'terre'))
+BATIS.extend([(c[0] + 2, c[1] + 5), (c[0] + 8, c[1] + 5)])   # la case devant chaque porte
+poser('foret', ['??oo??', 'o????o', '??????', '??????', 'o????o', '??oo??'], cible=repere('foret', 'cromlech'), marge=0)   # 8 pierres sur 6 × 6 (17/10 ; 7 × 7 ne tient pas dans le pré)
+# la statue du kelpie : au milieu du lac, la case d'eau la plus loin de toute rive (Sam y a retiré l'îlot)
+import scipy.ndimage as ndi
+d_ = ILE['foret']; eau = np.array([[M[y][x] == '~' for x in range(d_['ox'], d_['ox'] + d_['w'])] for y in range(d_['oy'], d_['oy'] + d_['h'])])
+dist_ = ndi.distance_transform_edt(np.pad(eau, 1))[1:-1, 1:-1]; sy, sx = np.unravel_index(dist_.argmax(), dist_.shape); sx += d_['ox'] + .5; sy += d_['oy'] + .5
+sx, sy = round(sx), round(sy)   # deux kelpies face à face (comme à Falkirk) : Z à gauche à l'écran, z à droite
+for y in range(sy, sy + 4):
+    for x in range(sx - 4, sx): M[y][x] = 'Z'
+for y in range(sy - 4, sy):
+    for x in range(sx, sx + 4): M[y][x] = 'z'
+bx, by = repere('foret', 'barque')   # la bateau de pêche : sur l'eau, contre la plage de galets
+_, x, y = min((abs(x - bx) + abs(y - by), x, y) for y in range(ILE['foret']['oy'], ILE['foret']['oy'] + ILE['foret']['h'] - 1) for x in range(ILE['foret']['ox'], ILE['foret']['ox'] + ILE['foret']['w'] - 1) if M[y][x] == '~' and any(M[y + b][x + a] == '.' for a, b in ((1, 0), (-1, 0), (0, 1), (0, -1))))
+M[y][x] = 'v'; BATEAU = (x, y)   # le bateau de pêche est amarré là (jeu.js le fait naviguer)
+PRIS.update((x + a, y + b) for a in range(-2, 3) for b in range(-2, 3))   # rien de semé contre lui : la rive d'où l'on monte reste libre
+bati('cabane', ['KKKKKK'] * 3 + ['KKkKKK'], cible=centre('cabane'))       # la cabane de Sporran
+# les habitants et les panneaux : près du pont par lequel on arrive
+ENTREE = {'village': dep}
+for q in PORTAILS: ENTREE.setdefault(q['zone'], (q['ax'], q['ay']))   # on arrive dans une île devant son portail
+PNJ = {}
+for z, (ex, ey) in ENTREE.items():
+    if z == 'cabane': continue
+    d = ILE[z]; cs = sorted(((abs(x - ex) + abs(y - ey), x, y) for y in range(d['oy'], d['oy'] + d['h']) for x in range(d['ox'], d['ox'] + d['w'])
+                            if M[y][x] == '.' and (x, y) not in PRIS and 3 <= abs(x - ex) + abs(y - ey) <= 6 and all(M[y + b][x + a] == '.' for a in (-1, 0, 1) for b in (-1, 0, 1))))
+    if cs: _, x, y = cs[0]; PNJ[z] = (x, y); PRIS.update((x + a, y + b) for a in (-1, 0, 1) for b in (-1, 0, 1))
+    cs = sorted(((abs(x - ex) + abs(y - ey), x, y) for y in range(d['oy'], d['oy'] + d['h']) for x in range(d['ox'], d['ox'] + d['w']) if M[y][x] == '.' and (x, y) not in PRIS and 2 <= abs(x - ex) + abs(y - ey) <= 5))
+    if cs: _, x, y = cs[0]; M[y][x] = 'S'; PRIS.add((x, y))
+# les petits éléments
+for x, y in BATIS: PRIS.update((x + a, y + b) for a in (-1, 0, 1) for b in (0, 1, 2))
+semer('village', 'L', 10, ecart=5); semer('foret', 'L', 4, ecart=8); semer('cabane', 'L', 3, ecart=8)
+semer('desert', 'c', 18, ok=lambda x, y: surSol('desert', x, y), ecart=3)
+semer('lande', 'o', 4, ecart=8); semer('lande', ',', 30, ok=lambda x, y: surSol('lande', x, y), ecart=2)
+semer('foret', 'O', 7, ok=lambda x, y: surSol('foret', x, y), ecart=6); semer('foret', ',', 20, ok=lambda x, y: surSol('foret', x, y), ecart=2)
+rive = lambda x, y: sum(M[y + b][x + a] == '~' for a in (-1, 0, 1) for b in (-1, 0, 1)) >= 3   # au bord de l'eau
+semer('foret', 'J', 1, ok=lambda x, y: rive(x, y) and M[y - 1][x] != '~' and M[y][x - 1] != '~' and '~' in (M[y + 1][x], M[y][x + 1]))   # le dos au pré, l'eau juste devant (jeu.js le tourne vers elle)
+semer('cabane', 'u', 6, ecart=4); semer('cabane', ',', 20, ecart=2); semer('bayou', ',', 30, ecart=2)
+# les arbres : surtout en lisière, quelques-uns au milieu ; jamais sur un chemin peint ni devant une porte
+def bordDist(x, y):
+    for r in range(1, 4):
+        if any(M[y + b][x + a] in 'x ' for a in range(-r, r + 1) for b in range(-r, r + 1) if 0 <= y + b < WH and 0 <= x + a < WW): return r
+    return 9
+for z, d in ILE.items():
+    for y in range(d['oy'], d['oy'] + d['h']):
+        for x in range(d['ox'], d['ox'] + d['w']):
+            if M[y][x] != '.' or ZONE[y][x] != z or (x, y) in PRIS or proche(x, y, BOUTS, 2) or not surSol(z, x, y): continue
+            r = bordDist(x, y); p = {1: .5, 2: .3, 3: .12}.get(r, .025)
+            if rnd.random() < p: M[y][x] = 'T'
+# ---------- tout doit être accessible à pied : on relie les morceaux coupés par l'eau ou les rochers avec des passerelles ----------
+def composantes():
+    vu = {}; n = 0
+    for y in range(WH):
+        for x in range(WW):
+            if M[y][x] in LIBRE and (x, y) not in vu:
+                n += 1; f = [(x, y)]; vu[(x, y)] = n
+                while f:
+                    a, b = f.pop()
+                    for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+                        c = (a + dx, b + dy)
+                        if 0 <= c[0] < WW and 0 <= c[1] < WH and c not in vu and M[c[1]][c[0]] in LIBRE: vu[c] = n; f.append(c)
+    return vu
+for tour in range(30):
+    vu = composantes(); principaux = {vu[dep]} | {vu[(q['ax'], q['ay'])] for q in PORTAILS}; tailles = {}   # chaque île : le morceau où l'on arrive
+    for c, n in vu.items(): tailles[n] = tailles.get(n, 0) + 1
+    autres = [n for n, t in tailles.items() if n not in principaux and t >= 12]
+    if not autres: break
+    cible = autres[0]
+    # 0-1 : on traverse l'eau, les rochers et le bord à coût 1 ; le sol coûte 0
+    dist = {}; prec = {}; dq = deque()
+    for c, n in vu.items():
+        if n in principaux: dist[c] = 0; dq.append(c)
+    fin = None
+    while dq:
+        a, b = dq.popleft()
+        if vu.get((a, b)) == cible: fin = (a, b); break
+        for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+            c = (a + dx, b + dy)
+            if not (0 <= c[0] < WW and 0 <= c[1] < WH): continue
+            ch = M[c[1]][c[0]]
+            if ch in LIBRE: w = 0
+            elif ch in '~#x' and not (ZONE[c[1]][c[0]] and ILE[ZONE[c[1]][c[0]]]['peint']): w = 1   # pas de planches sur une carte peinte : un coin coupé y reste hors d'atteinte
+            else: continue
+            nd_ = dist[(a, b)] + w
+            if nd_ < dist.get(c, 1e9):
+                dist[c] = nd_; prec[c] = (a, b)
+                (dq.appendleft if w == 0 else dq.append)(c)
+    if not fin: break
+    c = fin
+    while c in prec:
+        if M[c[1]][c[0]] in '~#x': M[c[1]][c[0]] = 'b'
+        c = prec[c]
+vu = composantes(); principaux = {vu[dep]} | {vu[(q['ax'], q['ay'])] for q in PORTAILS}
+print('cases accessibles :', sum(1 for n in vu.values() if n in principaux), '/', len(vu), '; portails :', len(PORTAILS))
+# 17/10 (fin) : Sam refait la carte du lac (une version propre et une annotée) : en attendant, le lac est vidé de ses éléments posés
+# (bâtiments, kelpies, pierres levées, arbres, plantes, objets, banc, lanternes, panneau). Restent les portails, le bateau et son amarre.
+LAC_VIDE = True
+if LAC_VIDE:
+    d = ILE['foret']
+    for y in range(d['oy'], d['oy'] + d['h']):
+        for x in range(d['ox'], d['ox'] + d['w']):
+            if M[y][x] in 'Zz': M[y][x] = '~'
+            elif M[y][x] in 'LT,OSCIoJ': M[y][x] = '.'
+# 18/10 : la carte annotée de Sam (sur la capture du lac vide) : chaque élément à sa place, en cases de l'île (0, 0 = coin du fond)
+if LAC_VIDE:
+    d = ILE['foret']; OX, OY = d['ox'], d['oy']
+    def met(lx, ly, ch, sur='.'):
+        x, y = OX + lx, OY + ly
+        if M[y][x] in sur: M[y][x] = ch; PRIS.add((x, y)); return True
+        return False
+    for lx, ly in ((2, 14), (2, 19), (4, 17), (6, 16), (6, 19)): met(lx, ly, 'o')          # le cercle de pierres (5 pierres, en haut à gauche)
+    for ly in range(11, 16):
+        for lx in range(28, 33): met(lx, ly, 'C')                                       # le chalet en A, sur la place de sable (18/10, 3e retour : remis dans le losange que Sam a dessiné)
+    for ly in range(5, 8):
+        for lx in range(31, 35): met(lx, ly, 'I')                                       # l'atelier, au fond de la place
+    for lx, ly in ((26, 5), (28, 4), (27, 7), (25, 7), (29, 6), (26, 9)): met(lx, ly, 'T')   # le bois, derrière la place (sans arbre tordu ni à baies : ARBRES.foret)
+    def sable(lx, ly): c = couleur('foret', OX + lx, OY + ly); return c[0] > 200 and c[2] > 100 and c[0] > c[2] + 60
+    def herbe(lx, ly): c = couleur('foret', OX + lx, OY + ly); return c[0] > c[2] + 40 and c[1] > c[2] + 25 and not sable(lx, ly)   # l'herbe peinte (pas les rochers gris-mauve)
+    def bois(zone):   # 18/10 : « plus d'arbres dans les zones blanches » : des arbres serrés, pas sur les chemins de sable ni contre eux
+        for lx, ly in zone:
+            if (lx * 7 + ly * 11) % 5 == 0 or sable(lx, ly): continue
+            met(lx, ly, 'T')
+    bois([(lx, ly) for ly in range(21, 35) for lx in range(1, next((k for k in range(1, 7) if sable(k, ly)), 3))])   # le long du bord gauche, entre le bord et le chemin du portail
+    bois([(lx, ly) for ly in range(12, 16) for lx in range(9, 14)])                    # la petite clairière à côté du cercle de pierres
+    bois([(lx, ly) for ly in range(1, 13) for lx in range(22, 29) if abs((lx - 23) + (ly - 12) * .4) < 2.5])   # derrière le chalet, le long de la place
+    bois([(lx, ly) for ly in range(14, 19) for lx in range(36, 42) if abs((lx - 39) - (ly - 16)) < 3 and abs((lx - 39) + (ly - 16)) < 2])   # 3e retour : « arbres » devant la place, à droite du banc
+    for ly in range(4):                                                                 # les deux kelpies au milieu du lac, face à face
+        for k in range(4): met(28 - 4 + k, 34 + ly, 'Z', '~'); met(28 + k, 34 - 4 + ly, 'z', '~')
+    bx, by = 34, 22   # le banc sur la rive, l'eau devant (jeu.js le tourne vers elle)
+    _, bx, by = min((abs(lx - bx) + abs(ly - by), lx, ly) for ly in range(d['h'] - 1) for lx in range(d['w'] - 1)
+                    if M[OY + ly][OX + lx] == '.' and '~' in (M[OY + ly + 1][OX + lx], M[OY + ly][OX + lx + 1]) and M[OY + ly - 1][OX + lx] != '~' and M[OY + ly][OX + lx - 1] != '~')
+    bx, by = 33, 20   # 18/10 (2e retour) : Sam l'a redessiné ici, en long dans le sens du chemin (jeu.js le retourne : pas d'eau juste devant en y)
+    met(bx, by, 'J')
+    for ly in range(22, d['h'] - 1):                                                    # les bruyères : la bande d'herbe entre le lac et le bord avant-droit
+        for lx in range(36, d['w'] - 1):
+            if lx >= 38 and (lx * 7 + ly * 13) % 10 < 8 and herbe(lx, ly): met(lx, ly, ',')   # pas sur les rochers (3e retour)
+    for ly in range(1, d['h'] - 1):                                                     # 18/10 : un peu d'ajonc jaune partout (« ; »), hors des chemins
+        for lx in range(1, d['w'] - 1):
+            if ((lx * 73856093) ^ (ly * 19349663)) % 13 == 0 and not (lx >= 36 and ly >= 21) and herbe(lx, ly) and (OX + lx, OY + ly) not in PRIS: met(lx, ly, ';')
+    q = next(q for q in PORTAILS if q['zone'] == 'foret' and q['vers'] == 'village')    # 18/10 : le portail du village tourné d'un quart (Sam : « portail dans ce sens »)
+    for dy in (1, -1):
+        if M[q['y'] + dy][q['x']] == '.': q.update(ax=q['x'], ay=q['y'] + dy); break
+    q = next(q for q in PORTAILS if q['zone'] == 'foret' and q['vers'] == 'cabane')      # le portail du bois Biscornu : au bout du chemin, en bas à gauche
+    nx, ny = OX + 4, OY + 38
+    if M[ny][nx] == '.' and M[ny - 1][nx] == '.':
+        M[q['y']][q['x']] = '.'; M[ny][nx] = 'g'; q.update(x=nx, y=ny, ax=nx, ay=ny - 1)
+# ---------- 18/10 : les habitants de Sam et le Bonnie Ranch (posés à la fin : le reste de l'île ne bouge pas) ----------
+def bloc_de(l):   # les cases d'une lettre : (x0, y0, x1, y1)
+    cs = [(x, y) for y in range(WH) for x in range(WW) if M[y][x] == l]
+    return (min(c[0] for c in cs), min(c[1] for c in cs), max(c[0] for c in cs), max(c[1] for c in cs)) if cs else None
+def rect_libre(z, x0, y0, w, h, m=1):
+    return all(0 <= y < WH and 0 <= x < WW and M[y][x] in '.,;' and ZONE[y][x] == z for y in range(y0 - m, y0 + h + m) for x in range(x0 - m, x0 + w + m))
+def poser_pres(z, motif, cible, m=1):   # le motif au plus près de la cible, sans hasard
+    h, w = len(motif), len(motif[0]); d = ILE[z]
+    cs = sorted((abs(x0 + w / 2 - cible[0]) + abs(y0 + h / 2 - cible[1]), x0, y0) for y0 in range(d['oy'], d['oy'] + d['h'] - h) for x0 in range(d['ox'], d['ox'] + d['w'] - w) if rect_libre(z, x0, y0, w, h, m))
+    if not cs: print('  pas de place pour', motif[0]); return None
+    _, x0, y0 = cs[0]
+    for yy, ligne in enumerate(motif):
+        for xx, ch in enumerate(ligne): M[y0 + yy][x0 + xx] = ch
+    return (x0, y0)
+# Ninamoto quitte le village pour le mont Ben Glagla (Sam, 18/10)
+b = bloc_de('N')
+for y in range(b[1], b[3] + 1):
+    for x in range(b[0], b[2] + 1): M[y][x] = '.'
+# la ferme devient le Bonnie Ranch : la maison à sa place, la grange et le corral à côté, le portail en rondins devant la maison
+f = bloc_de('F')
+for y in range(f[1], f[3] + 1):
+    for x in range(f[0], f[2] + 1): M[y][x] = '.'
+rm = poser_pres('lande', ['UUUUU'] * 4, ((f[0] + f[2]) / 2 + .5, (f[1] + f[3]) / 2 + .5), m=0)
+rg = poser_pres('lande', ['VVVV'] * 4, (rm[0] + 9, rm[1] + 2))
+rc = poser_pres('lande', ['rrrr'] * 4, (rm[0] + 9, rm[1] + 8))
+porte_ranch = (rm[0] + 2, rm[1] + 4)
+for k in (-1, 0, 1):
+    if M[porte_ranch[1] + 3][porte_ranch[0] + k] in '.,;': M[porte_ranch[1] + 3][porte_ranch[0] + k] = 'h'
+entree_lande = next((q['ax'], q['ay']) for q in PORTAILS if q['zone'] == 'lande')
+rn = poser_pres('lande', ['NNNNN'] * 3, (entree_lande[0] - 7, entree_lande[1] - 6))
+# les habitants : chacun près d'un lieu (dans l'ordre de la liste), sur une case libre entourée de cases libres
+HAB = []
+def habitant(nom, z, cible):
+    d = ILE[z]; pris = {(h['x'], h['y']) for h in HAB}
+    cs = sorted((abs(x - cible[0]) + abs(y - cible[1]), x, y) for y in range(d['oy'] + 1, d['oy'] + d['h'] - 1) for x in range(d['ox'] + 1, d['ox'] + d['w'] - 1)
+                if M[y][x] == '.' and ZONE[y][x] == z and all(M[y + b][x + a] in '.,;' for a in (-1, 0, 1) for b in (-1, 0, 1))
+                and all(abs(x - a) + abs(y - b) > 2 for a, b in pris) and abs(x - cible[0]) + abs(y - cible[1]) >= 1)
+    _, x, y = cs[0]; HAB.append(dict(nom=nom, zone=z, x=x, y=y))
+c = bloc_de('C'); a = bloc_de('I'); jb = bloc_de('J'); X = bloc_de('X'); E = bloc_de('E')
+o = ILE['foret']
+habitant('sam', 'foret', ((c[0] + c[2]) / 2 + 1, c[3] + 3))           # devant le chalet en A
+habitant('gaelle', 'foret', ((a[0] + a[2]) / 2, a[3] + 3))            # devant l'atelier d'art
+habitant('finn', 'foret', (o['ox'] + 9, o['oy'] + 17))                # près du cercle de pierres
+habitant('siobhan', 'foret', (jb[0] - 2, jb[1] + 1))                  # à côté du banc, au bord du lac
+habitant('max', 'village', ((X[0] + X[2]) / 2 + .5, X[3] + 2))        # devant Excalibook (Sam, 18/10)
+habitant('simon', 'village', (dep[0] + 2, dep[1] + 1))                # devant la cathédrale
+habitant('lynda', 'lande', (porte_ranch[0] + 2, porte_ranch[1] + 1))  # sur le perron du ranch
+habitant('vivien', 'lande', (rg[0] - 1, rg[1] + 5))                   # devant la grange
+habitant('nina', 'lande', (rc[0] - 2, rc[1] + 2))                     # près du corral
+print('habitants :', [(h['nom'], h['x'], h['y']) for h in HAB])
+# les animaux de Sam (18/10) : chacun dans sa région ; ceux de la ferme autour du ranch, les poissons et les alligators dans l'eau libre, loutres, castors et grenouilles sur la rive
+import random as _r
+ANI = []; ra = _r.Random(18)
+def bleu(z, x, y): c = couleur(z, x, y); return z != 'foret' or c[2] > c[0] + 60   # le bayou a une eau verte
+def sol_ok(z, x, y):   # de l'herbe (ou le sol de la région) : pas un chemin, pas un rocher, pas de l'eau
+    if chemin(z, x, y) or M[y][x] not in LIBRE: return False
+    c = couleur(z, x, y)
+    if z == 'foret': return c[0] > c[2] + 40 and c[1] > c[2] + 25 and not (c[0] > 200 and c[2] > 100)
+    return np.abs(c - SOLC[z]).sum() < 120 or (c[1] > c[2] + 20 and c[1] >= c[0] - 30)   # le sol de l'île, ou de l'herbe
+LIBRE = '.,;'
+def animal(nom, z, ou='sol', pres=None, rayon=12, n=1):
+    d = ILE[z]; occ = [(h['x'], h['y']) for h in HAB] + [(a['x'], a['y']) for a in ANI] + [(q['x'], q['y']) for q in PORTAILS] + [(q['ax'], q['ay']) for q in PORTAILS] + [dep]
+    for _ in range(n):
+        cs = []
+        for y in range(d['oy'] + 2, d['oy'] + d['h'] - 2):
+            for x in range(d['ox'] + 2, d['ox'] + d['w'] - 2):
+                if ZONE[y][x] != z or (pres and abs(x - pres[0]) + abs(y - pres[1]) > rayon) or any(abs(x - a) + abs(y - b) < 4 for a, b in occ): continue
+                v = [M[y + b][x + a] for a in (-1, 0, 1) for b in (-1, 0, 1)]
+                if ou == 'eau':   # l'eau libre, loin des rochers peints de la rive
+                    r = 2 if z == 'foret' else 1
+                    if all(M[y + b][x + a] == '~' for a in range(-r, r + 1) for b in range(-r, r + 1)) and bleu(z, x, y): cs.append((x, y))
+                elif not sol_ok(z, x, y): continue   # 18/10 : jamais sur un chemin peint ni sur un rocher (Sam : des animaux mal placés)
+                elif ou == 'rive' and M[y][x] in LIBRE and '~' in v and sum(c in LIBRE for c in v) >= 4: cs.append((x, y))
+                elif ou == 'sol' and all(c in LIBRE for c in v) and all(sol_ok(z, x + a, y + b) for a, b in ((1, 0), (-1, 0), (0, 1), (0, -1))) and (x, y) not in PRIS: cs.append((x, y))
+        if not cs: print('  pas de place pour', nom, z); return
+        x, y = ra.choice(cs); ANI.append(dict(nom=nom, zone=z, x=x, y=y, eau=ou == 'eau')); occ.append((x, y))
+ranch = (rm[0] + 6, rm[1] + 5)
+for nom, k in (('mouton_blanc', 3), ('mouton_noir', 1), ('chevre', 2), ('cheval', 2), ('vache', 2), ('vache_ecossaise', 2)): animal(nom, 'lande', pres=ranch, rayon=18, n=k)
+for nom in ('cerf', 'biche', 'renard', 'ecureuil', 'rouge_gorge', 'mesange', 'corbeau'): animal(nom, 'foret')
+animal('loutre', 'foret', 'rive'); animal('castor', 'foret', 'rive'); animal('truite', 'foret', 'eau', n=2)
+for nom, k in (('loup', 2), ('ours', 1), ('corbeau', 2), ('renard', 1)): animal(nom, 'cabane', n=k)
+for nom in ('raton', 'opossum', 'serpent'): animal(nom, 'bayou')
+animal('alligator', 'bayou', 'eau', n=2); animal('grenouille', 'bayou', 'rive', n=3)
+for nom, k in (('coyote', 2), ('lezard', 2), ('serpent', 1)): animal(nom, 'desert', n=k)
+for nom in ('rouge_gorge', 'mesange', 'ecureuil'): animal(nom, 'village')
+print('animaux :', len(ANI))
+carte = [''.join(l) for l in M]
+CODE = {'village': 'V', 'foret': 'F', 'cabane': 'K', 'desert': 'D', 'lande': 'L', 'bayou': 'B'}   # comme CODE_ZONE dans jeu.js
+ZG = [''.join('_' if ZONE[y][x] is None else CODE[ZONE[y][x]] for x in range(WW)) for y in range(WH)]
+with open('sources/monde.js', 'w') as o:
+    o.write('// fabriqué par sources/monde.py : les 6 îles peintes, reliées par des ponts. Chaque case : voir TUILES dans jeu.js.\n')
+    o.write('const MONDE = ' + json.dumps(dict(carte=carte, iles=INFO, pnj=PNJ, habitants=HAB, animaux=ANI, zones=ZG, portails=PORTAILS, bateau=BATEAU), ensure_ascii=False) + ';\n')
+# un aperçu : la carte entière en petits carrés
+C = {' ': (12, 30, 40), 'x': (120, 100, 140), '.': (130, 170, 100), '~': (60, 140, 220), 'b': (170, 110, 70), 'T': (30, 90, 50), '#': (150, 60, 50), 'P': (255, 255, 0)}
+im = Image.new('RGB', (WW * 4, WH * 4)); d = ImageDraw.Draw(im)
+for y in range(WH):
+    for x in range(WW): d.rectangle((x * 4, y * 4, x * 4 + 3, y * 4 + 3), fill=C.get(M[y][x], (240, 240, 240)))
+im.save(sys.argv[1] + '/monde.png'); print(WW, WH)
