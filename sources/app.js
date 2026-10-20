@@ -88,6 +88,10 @@ try { ["monstresPris", "chasseMonstres-inventaire-v2", "chasseMonstres-relaches-
 /* ===================== Sons : musique et bruitages fabriqués par code ===================== */
 let audio = null, maitre = null, musiqueOn = false;
 let volume = (v => v === true ? .8 : v === false ? 0 : Math.max(0, Math.min(1, +v || 0)))(lire(CLES.son, .8)), sonActif = volume > 0;
+// le bip du détecteur (20/10, Sam) : on le coupe ou on le remet en touchant le détecteur ; il ne sonne que dans le jaune, le vert et le bleu (3 voyants et plus)
+const CLE_BIP = "cryptidsParc-bip-detecteur"; let bipDetecteur = lire(CLE_BIP, true) !== false;
+function majBip() { document.querySelectorAll("#detecteur, #jeuLeds").forEach(el => { el.classList.toggle("muet", !bipDetecteur); el.title = bipDetecteur ? "Touche pour couper le bip" : "Touche pour remettre le bip"; }); }
+function basculerBip(dire) { bipDetecteur = !bipDetecteur; ecrire(CLE_BIP, bipDetecteur); majBip(); sfx("clic"); dire(bipDetecteur ? "Bip du détecteur : activé" : "Bip du détecteur : coupé"); }
 const gainVolume = () => volume * volume;   // courbe plus naturelle à l'oreille
 const tampons = {};
 function initAudio() {
@@ -1210,7 +1214,7 @@ function majDetecteur(t) {
   allumer(n);
   const periode = PXC.revele ? 260 : 1500 - 1200 * PXC.signal;
   if (t - PXC.dernierBip > periode) {
-    PXC.dernierBip = t; if (audio && sonActif) note(480 + 900 * (PXC.revele ? 1 : PXC.signal), 0, .07, { type: "square", vol: .045, filtre: 2600 });
+    PXC.dernierBip = t; if (audio && sonActif && bipDetecteur && n >= 3) note(480 + 900 * (PXC.revele ? 1 : PXC.signal), 0, .07, { type: "square", vol: .045, filtre: 2600 });
     const oeil = document.querySelector(".emf-oeil"), led = document.querySelector(".emf-leds i:nth-child(" + Math.max(1, n) + ")");
     oeil.style.setProperty("--led", getComputedStyle(led).getPropertyValue("--led")); oeil.classList.add("flash"); setTimeout(() => oeil.classList.remove("flash"), 90);
   }

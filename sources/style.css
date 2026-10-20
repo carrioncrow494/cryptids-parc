@@ -379,3 +379,8 @@
   .liste-qr.chemins { grid-template-columns: 1fr; gap: 10px; }
   .chemin { margin: 4px 0 0; padding-left: 1.2em; font-family: var(--texte); font-size: .95rem; letter-spacing: 0; }
   .liste-qr .chemin li { font-family: var(--texte); letter-spacing: 0; }
+  /* le bip du détecteur coupé (20/10) : un petit haut-parleur barré sur le détecteur */
+  #jeuLeds, #detecteur { cursor: pointer; }
+  #jeuLeds { position: relative; }
+  #jeuLeds.muet::after, #detecteur.muet::after { content: "🔇"; position: absolute; right: -4px; bottom: -4px; z-index: 2; padding: 2px 4px; border-radius: 999px; background: rgba(10,12,16,.85); font-size: .8rem; line-height: 1; }
+  #jeuLeds.dessine.muet::after { right: 2px; bottom: 50px; }

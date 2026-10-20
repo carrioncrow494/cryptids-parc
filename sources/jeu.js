@@ -1271,7 +1271,7 @@ function detecteurJ(t) {
   const n = JEU.revele ? 5 : d <= 2 ? 5 : d <= 4 ? 4 : d <= 7 ? 3 : d <= 11 ? 2 : 1;
   allumerJ(n);
   const periode = 1600 - n * 260;
-  if (t - JEU.dernierBip > periode) { JEU.dernierBip = t; if (audio && sonActif) note(480 + 180 * n, 0, .07, { type: "square", vol: .04, filtre: 2600 }); }
+  if (t - JEU.dernierBip > periode) { JEU.dernierBip = t; const sonne = bipDetecteur && n >= 3; if (sonne) JEU.bips = (JEU.bips || 0) + 1; if (audio && sonActif && sonne) note(480 + 180 * n, 0, .07, { type: "square", vol: .04, filtre: 2600 }); }
 }
 function allumerJ(n) { document.querySelectorAll("#jeuLeds i").forEach((l, i) => l.classList.toggle("on", i < 5 ? i < n : n >= 5)); }
 // Le détecteur dessiné : l'image éteinte en fond, et chaque voyant découpé dans l'image allumée (position et taille en fraction de l'image).
@@ -1339,6 +1339,9 @@ addEventListener("keydown", e => {
   else if (!e.repeat && (e.key === "Escape" || e.key === "Backspace")) { e.preventDefault(); boutonB(); }
 });
 addEventListener("keyup", e => { if (JEU && TOUCHES[e.key] === JEU.tenu) arretJ(); });
+$("jeuLeds").addEventListener("click", e => { e.stopPropagation(); basculerBip(t => dialogueJ(t, 1800)); });
+$("detecteur").addEventListener("click", () => basculerBip(t => bandeau(t, 1800)));
+majBip();
 $("jeuCarteBouton").addEventListener("click", e => { e.stopPropagation(); carteJ(); });
 $("jeuCarteFermer").addEventListener("click", e => { e.stopPropagation(); $("jeuCarte").hidden = true; });
 $("jeuCarte").addEventListener("pointerdown", e => { e.stopPropagation(); if (e.target.id === "jeuCarte") $("jeuCarte").hidden = true; });
@@ -1350,6 +1353,7 @@ window.__jeu = { bateau: () => bateauBoutonJ(), ouvrirCarte: () => carteJ(), mus
       const M = MUSIQUES[z], ts = 60 / M.bpm * M.croche; for (let i = 0; i * ts < sec - 1; i++) pasMusique(z, i, i * ts + (M.swing && i % 2 ? ts * .33 : 0) + .05, ts, bus); }
     finally { audio = a0; maitre = m0; }
     return off.startRendering().then(b => Array.from(b.getChannelData(0))); }, zoom: () => ZOOM.demi, etat: () => JEU && { x: JEU.x, y: JEU.y, dir: JEU.dir, tenu: JEU.tenu, tenu2: JEU.tenu2, zigzag: JEU.zigzag, pas: !!JEU.pas, vue: JEU.vue, zone: zoneJ(JEU.x, JEU.y), revele: JEU.revele && JEU.revele.q.k, bateau: JEU.bateau, boutonBateau: !$("jeuBateau").hidden && $("jeuBateau").textContent, cibles: ciblesJ() },
+  bips: () => JEU.bips || 0,
   aller: (x, y, dir) => { JEU.x = x; JEU.y = y; JEU.pas = null; if (dir) JEU.dir = dir; arriverJ(true); }, pnj: PNJ, libreSol, pas: d => essayerPas(d), A: () => boutonA(), B: () => boutonB(),
   sousBati: () => { sousBatiment(0, 0); return [...SOUS_BATI].filter(k => { const [x, y] = k.split(",").map(Number); return !!(TUILES[tuileJ(x, y)] || {}).libre; }); },
   decor: () => R3 && R3.ile && R3.ile.flat ? { objets: R3.ile.groupe.children.length, dessins: R3.rendu.info.render.calls } : null,
