@@ -235,7 +235,7 @@ function essayerPas(dir, essai) {   // essai : on regarde seulement si ça passe
     if (essai) return false;
     B.a = true; sfx("page"); dialogueJ("Tu montes dans le bateau de pêche ! Navigue sur le lac. Pousse vers la rive pour descendre.", 3600);   // il garde son sens : la proue vers le lac
   }
-  else if (!libreJ(x, y)) { if (essai) return false; JEU.dir = dir; const g = portailEn(x, y); if (g && !JEU.portail) return portailJ(g), false; if (performance.now() - (JEU.tCogne || 0) > 350) { JEU.tCogne = performance.now(); sfx("clic"); } return false; }
+  else if (!libreJ(x, y)) { if (essai) return false; JEU.dir = dir; const g = portailEn(x, y); if (g && !JEU.portail) return portailJ(g), false; return false; }   // plus de bip quand on se cogne (20/10, Sam)
   if (JEU.portail) { JEU.portail = null; $("jeuDialogue").hidden = true; }   // on s'éloigne du portail : on reste
   JEU.dir = dir; JEU.pas = { de: [JEU.x, JEU.y], t0: performance.now() }; JEU.x = x; JEU.y = y; JEU.action = null; return true;
 }
