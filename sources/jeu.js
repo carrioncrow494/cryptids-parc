@@ -1003,6 +1003,36 @@ function dioramaFlat() {
   R.scene.add(groupe);
   return R.ile = { groupe, anim, lampes: [], devant, flat: true };
 }
+// ---------- le sol en haute résolution (20/10) : autour du héros, l'île peinte est recouverte de carrés deux fois plus fins (ile-hd.py) ----------
+// L'image entière reste dessous (on la voit le temps qu'un carré arrive) ; un carré trop loin est retiré, pour garder peu de mémoire.
+function ilesHdJ(R, t) {
+  R.hd = R.hd || new Map();
+  R.hd.forEach(o => { if (o.t0) o.mt.opacity = Math.min(1, (performance.now() - o.t0) / 300); });   // il apparaît en fondu, sans à-coup
+  if (typeof ILES_HD === "undefined" || t - (R.tHd || 0) < 250) return; R.tHd = t;
+  const z = zoneJ(JEU.x, JEU.y), d = MONDE.iles.find(i => i.zone === z), H = d && ILES_HD[z], garde = new Set();
+  if (H && R.cam) {
+    const X = R.cam[0] + d.i0 - d.ox, Z = R.cam[1] + d.j0 - d.oy, px = d.X0 + (X - Z) * d.hw, py = d.Y0 + (X + Z + 1) * d.hh;   // le centre de l'écran, en pixels de l'image de l'île
+    const parUnite = d.hw * Math.SQRT2 * H.k, cv = $("jeuCanvas"), demi = ZOOM.demi, rx = demi * parUnite + H.t * .6, ry = demi * cv.clientHeight / Math.max(1, cv.clientWidth) * parUnite + H.t * .6;
+    H.l.forEach(([i, j]) => { const cx = (i + .5) * H.t, cy = (j + .5) * H.t;
+      if (Math.abs(cx - px * H.k) < rx + H.t / 2 && Math.abs(cy - py * H.k) < ry + H.t / 2) garde.add(z + "-" + i + "-" + j); });
+  }
+  R.hd.forEach((o, cle) => { if (garde.has(cle)) return;   // trop loin : on le retire
+    R.scene.remove(o.ms); o.ms.geometry.dispose(); if (o.tex) o.tex.dispose(); o.mt.dispose(); const k = R.matsFlat.indexOf(o.mt); if (k >= 0) R.matsFlat.splice(k, 1); R.hd.delete(cle); });
+  garde.forEach(cle => { if (R.hd.has(cle)) return;
+    const [, i, j] = cle.split("-").map(Number), k = H.k, x0 = (i * H.t - H.p) / k, y0 = (j * H.t - H.p) / k, x1 = x0 + (H.t + 2 * H.p) / k, y1 = y0 + (H.t + 2 * H.p) / k;
+    const m = (qx, qy) => { const a = (qx - d.X0) / d.hw, b = (qy - d.Y0) / d.hh - 1; return [(a + b) / 2 - d.i0 + d.ox, 0, (b - a) / 2 - d.j0 + d.oy]; };
+    const C = [m(x0, y0), m(x1, y0), m(x1, y1), m(x0, y1)], U = [[0, 1], [1, 1], [1, 0], [0, 0]], pos = [], uv = [];
+    [0, 2, 1, 0, 3, 2].forEach(n => { pos.push(...C[n]); uv.push(...U[n]); });
+    const g = new THREE.BufferGeometry(); g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute("uv", new THREE.Float32BufferAttribute(uv, 2));
+    const mt = new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false, depthTest: false, side: THREE.DoubleSide });
+    mt.color.setRGB(1 - .36 * (R.nuitFlat || 0), 1 - .32 * (R.nuitFlat || 0), 1 - .12 * (R.nuitFlat || 0)); R.matsFlat.push(mt);
+    const ms = new THREE.Mesh(g, mt); ms.renderOrder = -10.5; ms.frustumCulled = false; ms.visible = false; R.scene.add(ms);
+    const o = { ms, mt, tex: null, t0: 0 }; R.hd.set(cle, o);
+    new THREE.TextureLoader().load(IMG_JEU + "jeu-hd/" + cle + ".webp", tex => {
+      if (R.hd.get(cle) !== o) return tex.dispose();   // retiré entre-temps
+      tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 4; o.tex = tex; mt.map = tex; mt.needsUpdate = true; ms.visible = true; o.t0 = performance.now(); });
+  });
+}
 function vueZoneJ(R, d) {   // on ne voit que l'île où l'on est (17/10) : les autres restent cachées, même au bord
   const z = zoneJ(JEU.x, JEU.y);
   if (R.vueZone !== z) { R.vueZone = z;
@@ -1245,7 +1275,7 @@ function boucleJeu(t) {
   }
   R.lampes.forEach(l => l.intensity = l.userData.ok ? .4 + 2.8 * R.nuit : 0);
   d.anim.forEach(f => f(t));
-  if (d.flat) { cachettesFlat(R, t); estomperJ(R, d, fx, fy); vueZoneJ(R, d); boutonBateauJ(); } else cachettesJ3D(R, t);
+  if (d.flat) { ilesHdJ(R, t); cachettesFlat(R, t); estomperJ(R, d, fx, fy); vueZoneJ(R, d); boutonBateauJ(); } else cachettesJ3D(R, t);
   creatureJ(R, t);
   habitantsJ(R).forEach(({ n, g, c, s }) => {   // les habitants respirent, et se tournent vers toi quand tu approches
     if (s) {   // dessiné : il regarde de ton côté (l'image regarde vers la droite de l'écran), et lève la main quand il te parle
@@ -1354,6 +1384,7 @@ window.__jeu = { bateau: () => bateauBoutonJ(), ouvrirCarte: () => carteJ(), mus
     finally { audio = a0; maitre = m0; }
     return off.startRendering().then(b => Array.from(b.getChannelData(0))); }, zoom: () => ZOOM.demi, etat: () => JEU && { x: JEU.x, y: JEU.y, dir: JEU.dir, tenu: JEU.tenu, tenu2: JEU.tenu2, zigzag: JEU.zigzag, pas: !!JEU.pas, vue: JEU.vue, zone: zoneJ(JEU.x, JEU.y), revele: JEU.revele && JEU.revele.q.k, bateau: JEU.bateau, boutonBateau: !$("jeuBateau").hidden && $("jeuBateau").textContent, cibles: ciblesJ() },
   bips: () => JEU.bips || 0,
+  hd: () => { const R = moteurJeu(); return R.hd ? [...R.hd].map(([k, o]) => k + (o.tex ? "" : "…")) : []; },
   aller: (x, y, dir) => { JEU.x = x; JEU.y = y; JEU.pas = null; if (dir) JEU.dir = dir; arriverJ(true); }, pnj: PNJ, libreSol, pas: d => essayerPas(d), A: () => boutonA(), B: () => boutonB(),
   sousBati: () => { sousBatiment(0, 0); return [...SOUS_BATI].filter(k => { const [x, y] = k.split(",").map(Number); return !!(TUILES[tuileJ(x, y)] || {}).libre; }); },
   decor: () => R3 && R3.ile && R3.ile.flat ? { objets: R3.ile.groupe.children.length, dessins: R3.rendu.info.render.calls } : null,

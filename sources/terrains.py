@@ -67,7 +67,7 @@ def grille_cube(z):
     for y in range(N):
         for x in range(NX):
             if (x in (0, NX - 1) or y in (0, N - 1)) and G[y][x] == '.': G[y][x] = 'x'
-    return G, dict(image=z, W=W, H=H, i0=0, j0=0, X0=X0, Y0=Y0, hw=hw, hh=hh, reperes=reperes), im
+    return G, dict(image=z, W=W, H=H, i0=0, j0=0, X0=X0, Y0=Y0, hw=hw, hh=hh, reperes=reperes, Ai=Ai[:2].ravel().tolist(), fichier=c['fichier']), im   # Ai, fichier : pour l'image en haute résolution (ile-hd.py)
 def grille(z):
     if z in CUBES: return grille_cube(z)
     im = Image.open(U + TERRAINS[z] + '-image.png').convert('RGB'); a = np.asarray(im).astype(np.float32); H, W = a.shape[:2]
