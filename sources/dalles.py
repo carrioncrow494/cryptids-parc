@@ -5,10 +5,11 @@
 # 4. toutes les variantes reprennent sa bande de bord (B px, fondue), donc n'importe quelle dalle
 #    peut toucher n'importe quelle autre, dans tous les sens.
 # python3 sources/dalles.py sortie/herbe img1.png img2.png ...  ->  sortie/herbe-1.webp ...
-import sys
+# DALLE=2048 pour les grandes dalles (une dalle = 2 × 2 cases, 20/10)
+import os, sys
 import numpy as np
 from PIL import Image
-T, B = 1024, 96
+T = int(os.environ.get('DALLE', 1024)); B = T * 3 // 32
 
 def carre(p):
     im = Image.open(p).convert('RGB'); c = min(im.size)
