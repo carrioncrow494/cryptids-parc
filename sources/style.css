@@ -384,3 +384,6 @@
   #jeuLeds { position: relative; }
   #jeuLeds.muet::after, #detecteur.muet::after { content: "🔇"; position: absolute; right: -4px; bottom: -4px; z-index: 2; padding: 2px 4px; border-radius: 999px; background: rgba(10,12,16,.85); font-size: .8rem; line-height: 1; }
   #jeuLeds.dessine.muet::after { right: 2px; bottom: 50px; }
+  .indice-lieu small { font-size: .9rem; line-height: 1.25; opacity: .85; margin-top: 2px; }
+  .chemin small { font-size: .85rem; opacity: .8; }
+  .chemin b { color: var(--cyan); font-weight: 400; }

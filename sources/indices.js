@@ -1,46 +1,83 @@
 
 /* ===================== Aventure réelle : 3 indices à QR code par cryptide =====================
    Chaque indice a sa carte à QR code (adresse …/cryptids-parc/?indice=<n° de la créature>-<1 à 3>).
-   lieu : où le parent cache la carte SUIVANTE (après l'indice 3 : la carte du cryptide). L'indice 1 se cache où l'on veut.
+   lieu : où vous cachez la carte SUIVANTE, avec un exemple dans la maison (dedans) et dehors (dehors) (après l'indice 3 : la carte du cryptide). L'indice 1 se cache où l'on veut.
    vis : le dessin affiché sur le téléphone (VISUELS ci-dessous). */
 const INDICES = {
-  "1": [ { vis: "poudre", titre: "De la poudre qui brille !", texte: "Elle est tombée des ailes d'un papillon géant. Il adore la lumière…", lieu: "près d'une lampe" },
-         { vis: "ampoule", titre: "Une ampoule grignotée !", texte: "Quelqu'un a essayé de manger la lumière. Maintenant, il vole vers le ciel…", lieu: "près d'une fenêtre" },
-         { vis: "yeux", titre: "Deux yeux rouges !", texte: "Ils brillent dans le noir et te regardent. Il est tout près…", lieu: "près d'une porte" } ],
-  "2": [ { vis: "mouille", titre: "Des traces mouillées !", texte: "Elles font des zigzags : quelque chose est sorti de l'eau en rampant.", lieu: "près d'un robinet ou d'un arrosoir" },
-         { vis: "ecaille", titre: "Une écaille bleue !", texte: "Grande comme une main ! Elle aime se cacher en dessous des choses…", lieu: "sous une chaise ou un banc" },
-         { vis: "bulles", titre: "Des bulles !", texte: "Ça fait des bulles là-bas. Elle se cache dans les feuilles, comme dans les algues…", lieu: "près d'une plante" } ],
-  "3": [ { vis: "plume", titre: "Une plume qui pique !", texte: "Elle fait des étincelles quand on la touche. Cet oiseau géant vole très haut…", lieu: "en hauteur (étagère, rebord)" },
-         { vis: "eclair", titre: "Un caillou tout noir !", texte: "Un éclair est tombé ici… mais il n'y a pas d'orage ! L'oiseau aime se poser sur ce qui est grand…", lieu: "près d'un grand meuble ou d'un arbre" },
-         { vis: "orage", titre: "Ça gronde !", texte: "Un petit nuage d'orage ! L'oiseau surveille le ciel…", lieu: "près d'une fenêtre" } ],
-  "4": [ { vis: "patte", titre: "Des pattes de chien… énormes !", texte: "Un chien grand comme un poney ? Les chiens aiment dormir près de l'entrée…", lieu: "près d'un paillasson ou d'une entrée" },
-         { vis: "os", titre: "Un vieil os mâchouillé !", texte: "Il cache ses trésors là où il fait noir…", lieu: "dans un coin sombre" },
-         { vis: "grogne", titre: "Grrr… ça grogne !", texte: "Deux yeux turquoise et une fumée froide, tout en bas…", lieu: "sous un meuble (lit, table, buffet)" } ],
-  "5": [ { vis: "champignons", titre: "Un rond de champignons !", texte: "C'est la piste de danse des fées. Elles adorent les fleurs…", lieu: "près d'une plante ou de fleurs" },
-         { vis: "clochette", titre: "Une clochette minuscule !", texte: "Elle sonne toute seule. La fée adore la musique…", lieu: "près de quelque chose qui fait de la musique (radio, instrument, carillon)" },
-         { vis: "notes", titre: "Une petite musique !", texte: "Des notes et des étincelles qui dansent. Suis la petite lumière…", lieu: "près d'une veilleuse ou d'une petite lumière" } ],
-  "6": [ { vis: "bogue", titre: "Des bogues de marrons !", texte: "Ouvertes et vides : quelqu'un s'est fait un festin ! Les lutins adorent se cacher dans les chaussures…", lieu: "près des chaussures ou des bottes" },
-         { vis: "chapeau", titre: "Un tout petit chapeau !", texte: "Le chapeau pointu d'un tout petit bonhomme. Les lutins aiment les endroits douillets…", lieu: "sous un coussin ou une couverture" },
-         { vis: "feuilles", titre: "Des feuilles qui rigolent !", texte: "Elles gigotent et elles chuchotent. Les lutins se cachent dans un panier…", lieu: "dans un panier ou une boîte" } ],
-  "7": [ { vis: "lapin", titre: "Des traces de lapin !", texte: "Très loin les unes des autres : il fait des bonds immenses ! Il saute sur les marches…", lieu: "près d'un escalier ou d'une marche" },
-         { vis: "bois", titre: "Un petit bois de cerf !", texte: "Un lapin… avec des cornes ? Il a faim de carottes…", lieu: "dans la cuisine ou le potager" },
-         { vis: "carotte", titre: "Une carotte croquée !", texte: "Il vient juste de la croquer. Son terrier est tout près…", lieu: "sous une table" } ],
-  "8": [ { vis: "pied", titre: "Une empreinte géante !", texte: "Plus grande que tes deux pieds ! Il adore le froid…", lieu: "près du frigo, ou à l'ombre dehors" },
-         { vis: "poils", titre: "Des poils blancs tout doux !", texte: "Doux comme une peluche. Il adore les câlins…", lieu: "près d'une peluche ou d'une couverture" },
-         { vis: "neige", titre: "Une boule de neige… qui éternue !", texte: "Atchoum ! Il est caché derrière quelque chose de grand…", lieu: "derrière un grand meuble ou un arbre" } ],
-  "9": [ { vis: "cailloux", titre: "Des petits cailloux !", texte: "Et de la poussière de pierre. Quelque chose de pierre s'est gratté contre un mur…", lieu: "près d'un mur ou d'une grosse pierre" },
-         { vis: "corne", titre: "Une corne en pierre !", texte: "Avec une fleur coincée dedans. Elle aime surveiller dehors…", lieu: "près d'une fenêtre" },
-         { vis: "clin", titre: "Un clin d'œil de pierre !", texte: "Cette statue vient de te faire un clin d'œil. Elle est perchée tout en haut…", lieu: "en hauteur (étagère, rebord)" } ],
-  "10": [ { vis: "piquants", titre: "Des piquants rouges !", texte: "Ils viennent d'un dos tout piquant. Lui, il a toujours faim…", lieu: "dans la cuisine" },
-          { vis: "fruit", titre: "Un fruit tout croqué !", texte: "Il a encore faim ! Il cherche la table du repas…", lieu: "près de la table à manger" },
-          { vis: "ventre", titre: "Grrrou… un ventre qui gargouille !", texte: "Il a fouillé partout pour trouver un goûter…", lieu: "près d'un sac ou d'un panier" } ],
-  "11": [ { vis: "ventouses", titre: "Des ronds de ventouses !", texte: "Plein de petits ronds collants : une pieuvre est passée par là ! Elle aime l'eau…", lieu: "près de l'eau (évier, lavabo, arrosoir)" },
-          { vis: "piece", titre: "Une pièce d'or !", texte: "Elle est tombée de son trésor. Elle range ses trésors dans un coffre…", lieu: "près d'une boîte ou d'un coffre" },
-          { vis: "tentacule", titre: "Un tentacule qui fait coucou !", texte: "Coucou ! Il dépasse de quelque chose de tout plat…", lieu: "sous un tapis ou une serviette" } ],
-  "12": [ { vis: "palme", titre: "Des pieds palmés pleins de boue !", texte: "Des pieds de grenouille, mais énormes ! Il adore les bottes sales…", lieu: "près des bottes ou des chaussures" },
-          { vis: "nenuphar", titre: "Une feuille de nénuphar !", texte: "Elle est tombée de sa tête en marchant. Il cherche des plantes…", lieu: "près d'une plante" },
-          { vis: "boue", titre: "Bloup, bloup… de la boue !", texte: "Elle fait des bulles, et deux yeux te regardent ! Il veut prendre un bain de boue…", lieu: "près d'un seau, d'une bassine ou de la baignoire" } ]
+  "1": [ { vis: "poudre", titre: "De la poudre qui brille !", texte: "Elle est tombée des ailes d'un papillon géant. Il adore la lumière…",
+           lieu: "près d'une lumière", dedans: "une lampe", dehors: "un lampadaire, une lanterne" },
+         { vis: "ampoule", titre: "Une ampoule grignotée !", texte: "Quelqu'un a essayé de manger la lumière. Maintenant, il vole vers les fenêtres…",
+           lieu: "près d'une fenêtre", dedans: "le rebord d'une fenêtre", dehors: "sous une fenêtre, côté jardin" },
+         { vis: "yeux", titre: "Deux yeux rouges !", texte: "Ils brillent dans le noir et te regardent. Il attend derrière une porte…",
+           lieu: "près d'une porte", dedans: "la porte d'une chambre", dehors: "la porte d'entrée, un portail, un cabanon" } ],
+  "2": [ { vis: "mouille", titre: "Des traces mouillées !", texte: "Elles font des zigzags : quelque chose est sorti de l'eau en rampant.",
+           lieu: "près de l'eau", dedans: "un lavabo, la baignoire", dehors: "un arrosoir, un robinet, une flaque" },
+         { vis: "ecaille", titre: "Une écaille bleue !", texte: "Grande comme une main ! Elle aime se cacher en dessous des choses…",
+           lieu: "sous un siège", dedans: "une chaise, le canapé", dehors: "un banc, une chaise de jardin" },
+         { vis: "bulles", titre: "Des bulles !", texte: "Ça fait des bulles là-bas. Elle se cache dans les feuilles, comme dans les algues…",
+           lieu: "près d'une plante", dedans: "une plante en pot", dehors: "un buisson, des fleurs" } ],
+  "3": [ { vis: "plume", titre: "Une plume qui pique !", texte: "Elle fait des étincelles quand on la touche. Cet oiseau géant aime être en hauteur…",
+           lieu: "en hauteur, à portée de main", dedans: "une étagère basse", dehors: "un muret, un rebord, une branche basse" },
+         { vis: "eclair", titre: "Un caillou tout noir !", texte: "Un éclair est tombé ici… mais il n'y a pas d'orage ! L'oiseau aime se poser sur ce qui est grand…",
+           lieu: "au pied de quelque chose de grand", dedans: "une armoire, une bibliothèque", dehors: "un arbre, un grand poteau" },
+         { vis: "orage", titre: "Ça gronde !", texte: "Un petit nuage d'orage ! L'oiseau surveille le ciel…",
+           lieu: "près d'une fenêtre", dedans: "le rebord d'une fenêtre", dehors: "sous une fenêtre, côté jardin" } ],
+  "4": [ { vis: "patte", titre: "Des pattes de chien… énormes !", texte: "Un chien grand comme un poney ? Les chiens aiment dormir devant l'entrée…",
+           lieu: "près de l'entrée", dedans: "le paillasson, le porte-manteau", dehors: "les marches devant la porte" },
+         { vis: "os", titre: "Un vieil os mâchouillé !", texte: "Il cache ses trésors là où il fait noir…",
+           lieu: "dans un coin sombre", dedans: "un placard entrouvert", dehors: "sous une haie, derrière un pot" },
+         { vis: "grogne", titre: "Grrr… ça grogne !", texte: "Deux yeux turquoise et une fumée froide, tout en bas…",
+           lieu: "sous une table", dedans: "la table du salon, un lit", dehors: "la table de jardin, un banc" } ],
+  "5": [ { vis: "champignons", titre: "Un rond de champignons !", texte: "C'est la piste de danse des fées. Elles adorent les fleurs…",
+           lieu: "près de fleurs ou d'une plante", dedans: "un bouquet, une plante en pot", dehors: "un massif de fleurs" },
+         { vis: "clochette", titre: "Une clochette minuscule !", texte: "Elle sonne toute seule. La fée adore tout ce qui fait de la musique…",
+           lieu: "près de quelque chose qui sonne", dedans: "une radio, un réveil, un instrument", dehors: "la sonnette, un carillon" },
+         { vis: "notes", titre: "Une petite musique !", texte: "Des notes et des étincelles qui dansent. Suis la petite lumière…",
+           lieu: "près d'une petite lumière", dedans: "une veilleuse, une bougie à piles", dehors: "une lampe solaire, une guirlande" } ],
+  "6": [ { vis: "bogue", titre: "Des bogues de marrons !", texte: "Ouvertes et vides : quelqu'un s'est fait un festin ! Les lutins adorent se cacher dans les chaussures…",
+           lieu: "près des chaussures", dedans: "le meuble à chaussures", dehors: "les bottes devant la porte" },
+         { vis: "chapeau", titre: "Un tout petit chapeau !", texte: "Le chapeau pointu d'un tout petit bonhomme. Les lutins aiment les endroits douillets…",
+           lieu: "sous quelque chose de doux", dedans: "un coussin, une couverture", dehors: "un coussin de jardin, un tas de feuilles" },
+         { vis: "feuilles", titre: "Des feuilles qui rigolent !", texte: "Elles gigotent et elles chuchotent. Les lutins se cachent dans un panier…",
+           lieu: "dans un panier ou une boîte", dedans: "un panier à linge, une boîte à jouets", dehors: "un seau, un pot de fleurs vide" } ],
+  "7": [ { vis: "lapin", titre: "Des traces de lapin !", texte: "Très loin les unes des autres : il fait des bonds immenses ! Il saute sur les marches…",
+           lieu: "près d'une marche", dedans: "l'escalier", dehors: "les marches de la terrasse, un trottoir" },
+         { vis: "bois", titre: "Un petit bois de cerf !", texte: "Un lapin… avec des cornes ? Il a faim de légumes…",
+           lieu: "près de quelque chose à manger", dedans: "la corbeille de fruits, la cuisine", dehors: "le potager, un arbre fruitier" },
+         { vis: "carotte", titre: "Une carotte croquée !", texte: "Il vient juste de la croquer. Son terrier est tout près, sous une table…",
+           lieu: "sous une table", dedans: "la table du salon, un bureau", dehors: "la table de jardin" } ],
+  "8": [ { vis: "pied", titre: "Une empreinte géante !", texte: "Plus grande que tes deux pieds ! Il adore le froid…",
+           lieu: "dans un endroit frais", dedans: "près du frigo, du congélateur", dehors: "à l'ombre d'un arbre ou d'un mur" },
+         { vis: "poils", titre: "Des poils blancs tout doux !", texte: "Doux comme une peluche. Il adore les câlins…",
+           lieu: "près de quelque chose de doux", dedans: "une peluche, une couverture", dehors: "un coussin de jardin, l'herbe haute" },
+         { vis: "neige", titre: "Une boule de neige… qui éternue !", texte: "Atchoum ! Il est caché derrière quelque chose de grand…",
+           lieu: "derrière quelque chose de grand", dedans: "une armoire, un fauteuil", dehors: "un arbre, une poubelle, une voiture garée" } ],
+  "9": [ { vis: "cailloux", titre: "Des petits cailloux !", texte: "Et de la poussière de pierre. Quelque chose de pierre s'est gratté contre un mur…",
+           lieu: "au pied d'un mur", dedans: "le bas d'un mur, une plinthe", dehors: "un muret, une grosse pierre" },
+         { vis: "corne", titre: "Une corne en pierre !", texte: "Avec une fleur coincée dedans. Elle aime surveiller par les fenêtres…",
+           lieu: "près d'une fenêtre", dedans: "le rebord d'une fenêtre", dehors: "sous une fenêtre, côté jardin" },
+         { vis: "clin", titre: "Un clin d'œil de pierre !", texte: "Cette statue vient de te faire un clin d'œil. Elle est perchée en hauteur…",
+           lieu: "en hauteur, à portée de main", dedans: "une étagère basse", dehors: "un muret, un rebord, une branche basse" } ],
+  "10": [ { vis: "piquants", titre: "Des piquants rouges !", texte: "Ils viennent d'un dos tout piquant. Lui, il a toujours faim…",
+            lieu: "près de quelque chose à manger", dedans: "la corbeille de fruits, la cuisine", dehors: "le potager, un arbre fruitier" },
+          { vis: "fruit", titre: "Un fruit tout croqué !", texte: "Il a encore faim ! Il cherche la table du repas…",
+            lieu: "près d'une table", dedans: "la table à manger", dehors: "la table de jardin ou de pique-nique" },
+          { vis: "ventre", titre: "Grrrou… un ventre qui gargouille !", texte: "Il a fouillé partout pour trouver un goûter…",
+            lieu: "près d'un sac ou d'un panier", dedans: "un sac, un panier de courses", dehors: "un sac de plage, une brouette" } ],
+  "11": [ { vis: "ventouses", titre: "Des ronds de ventouses !", texte: "Plein de petits ronds collants : une pieuvre est passée par là ! Elle aime l'eau…",
+            lieu: "près de l'eau", dedans: "un lavabo, l'évier", dehors: "un arrosoir, un robinet, une flaque" },
+          { vis: "piece", titre: "Une pièce d'or !", texte: "Elle est tombée de son trésor. Elle range ses trésors dans un coffre…",
+            lieu: "près d'une boîte ou d'un coffre", dedans: "une boîte à jouets, un tiroir", dehors: "la boîte aux lettres, un coffre de jardin" },
+          { vis: "tentacule", titre: "Un tentacule qui fait coucou !", texte: "Coucou ! Il dépasse de quelque chose de tout plat…",
+            lieu: "sous quelque chose de plat", dedans: "un tapis, une serviette", dehors: "le paillasson, une planche, un pot de fleurs" } ],
+  "12": [ { vis: "palme", titre: "Des pieds palmés pleins de boue !", texte: "Des pieds de grenouille, mais énormes ! Il adore les bottes sales…",
+            lieu: "près des chaussures", dedans: "le meuble à chaussures", dehors: "les bottes devant la porte" },
+          { vis: "nenuphar", titre: "Une feuille de nénuphar !", texte: "Elle est tombée de sa tête en marchant. Il cherche des plantes…",
+            lieu: "près d'une plante", dedans: "une plante en pot", dehors: "un buisson, des fleurs" },
+          { vis: "boue", titre: "Bloup, bloup… de la boue !", texte: "Elle fait des bulles, et deux yeux te regardent ! Il veut prendre un bain…",
+            lieu: "près d'un seau ou d'une bassine", dedans: "une bassine, la baignoire", dehors: "un seau, un arrosoir, une flaque" } ]
 };
+const OU = ind => "Dans la maison : " + ind.dedans + ". Dehors : " + ind.dehors + ".";   // les deux exemples, pour les parents et pour l'enfant
 
 /* ---------- Les dessins des indices (SVG, 120 × 120) ---------- */
 const VIS = (() => {
@@ -112,6 +149,7 @@ function montrerIndice(k, i, retour) {
   $("indiceTexte").textContent = ind.texte;
   $("indiceLieuTitre").textContent = i < 3 ? "Le prochain indice est caché…" : "Le cryptide se cache…";
   $("indiceLieu").textContent = ind.lieu;
+  $("indiceOu").textContent = OU(ind);
   $("indiceAvance").innerHTML = [1, 2, 3].map(j => '<i class="' + (indicesTrouves(k).includes(j) ? "ok" : "") + '"></i>').join("");
   $("indiceAutre").hidden = !(i > 1 && deja < i - 1 && n < i);
   $("indice").hidden = false; $("viseur").hidden = true;
@@ -121,12 +159,10 @@ function montrerIndice(k, i, retour) {
 
 // pour les parents : où cacher chaque carte, du 1er indice jusqu'au cryptide
 function cheminIndices(k) {
-  const l = INDICES[k];
+  const l = INDICES[k], ligne = (quoi, ind) => '<li><b>' + quoi + '</b> ' + ind.lieu + '<br><small>' + OU(ind) + '</small></li>';
   return '<li><b>n° ' + k + '</b> ' + TRAQUES[k].nom.split(",")[0] + '<ol class="chemin">'
-    + '<li>Indice 1 : où vous voulez, pour commencer</li>'
-    + '<li>Indice 2 : ' + l[0].lieu + '</li>'
-    + '<li>Indice 3 : ' + l[1].lieu + '</li>'
-    + '<li>Carte du cryptide : ' + l[2].lieu + '</li></ol></li>';
+    + '<li><b>Indice 1 :</b> où vous voulez, pour commencer</li>'
+    + ligne("Indice 2 :", l[0]) + ligne("Indice 3 :", l[1]) + ligne("Carte du cryptide :", l[2]) + '</ol></li>';
 }
 
 // carte d'indice scannée avec l'appareil photo du téléphone (hors de l'appli)
