@@ -78,7 +78,11 @@ const ecrire = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } c
 const pris = () => lire(CLES.pris, []).filter(k => TRAQUES[k]);
 const relaches = () => lire(CLES.relache, []);
 const ajouter = (cle, val) => { const l = lire(cle, []); if (!l.includes(val)) { l.push(val); ecrire(cle, l); } };
-const mode = () => lire(CLES.mode, "qr") === "virtuel" ? "virtuel" : "qr";   // la géolocalisation est retirée pour l'instant : ses anciens réglages reviennent aux QR codes
+// 26/10 (Sam) : le jeu virtuel s'ouvre une fois les 12 cryptides trouvés dans l'aventure réelle, en une ou plusieurs parties (compte gardé sur ce téléphone)
+const CLE_REELS = "cryptidsParc-trouves-reel", CLE_DEBLOQUE = "cryptidsParc-virtuel-debloque";
+const trouvesReel = () => (lire(CLE_REELS, []) || []).filter(k => TRAQUES[k]);
+const virtuelOuvert = () => lire(CLE_DEBLOQUE, false) === true || ids.every(k => trouvesReel().includes(k));
+const mode = () => lire(CLES.mode, "qr") === "virtuel" && virtuelOuvert() ? "virtuel" : "qr";   // la géolocalisation est retirée pour l'instant : ses anciens réglages reviennent aux QR codes
 // une partie = une sélection de créatures à sauver (la collection du grimoire, elle, se garde d'une partie à l'autre)
 const partie = () => lire(CLES.partie, null);
 const enCours = () => { const p = partie(); return p && p.pris.length < p.liste.length ? p : null; };
@@ -249,23 +253,38 @@ document.addEventListener("pointerdown", e => { const b = e.target.closest("butt
 const LIBELLES = { qr: "Mode : QR codes cachés", interieur: "Mode : intérieur (10 m)", exterieur: "Mode : extérieur (20 m)", virtuel: "Mode : aventure virtuelle (jeu vidéo)" };
 function majModes() { majAccueil(); $("modeParents").textContent = LIBELLES[mode()]; }
 function genre(virtuel) {   // « Choisir son aventure » : réelle (QR codes à imprimer) ou virtuelle (jeu vidéo)
-  $("choixReel").hidden = virtuel;
+  $("choixReel").hidden = virtuel; $("choixVirtuel").hidden = !virtuel || virtuelOuvert();
   $("genreReel").classList.toggle("actif", !virtuel); $("genreVirtuel").classList.toggle("actif", virtuel);
 }
 $("genreReel").addEventListener("click", () => { ecrire(CLES.mode, "qr"); majModes(); genre(false); });
 $("genreVirtuel").addEventListener("click", () => {   // vers le jeu vidéo : on reprend la partie en cours, sinon on choisit d'abord combien de cryptides (sans l'intro)
+  if (!virtuelOuvert()) { dessinerVerrou(); genre(true); return; }   // encore verrouillé : on montre où en est l'aventure réelle
   ecrire(CLES.mode, "virtuel"); majModes();
   if (enCours()) return lancerAventure();
   ecrire(CLES.intro, true); preparerChoix(); montrer("partie");
 });
 $("lancerReel").addEventListener("click", () => { ecrire(CLES.mode, "qr"); majModes(); enCours() ? lancerAventure() : nouvelleAventure(); });
-$("ouvrirParents").addEventListener("click", () => { majModes(); $("choixReel").hidden = true; ["genreReel", "genreVirtuel"].forEach(k => $(k).classList.remove("actif")); montrer("parents"); });
+function dessinerVerrou() {
+  const t = trouvesReel(), reste = ids.length - t.length;
+  $("verrouTexte").textContent = t.length + " / " + ids.length + " cryptides trouvés dans l'aventure réelle. Encore " + reste + " à trouver pour ouvrir le jeu virtuel.";
+  $("grilleVerrou").innerHTML = ids.map(k => '<div class="choix-carte' + (t.includes(k) ? " coche" : "") + '"><img alt="" src="' + TRAQUES[k].ombre + '"><span>' + TRAQUES[k].nom.split(",")[0] + '</span></div>').join("");
+}
+$("debloquerVirtuel").addEventListener("click", () => {   // pour les parents : ouvrir le jeu sans attendre (double appui)
+  const b = $("debloquerVirtuel");
+  if (!b.dataset.ok) { b.dataset.ok = "1"; b.textContent = "Touchez encore pour ouvrir le jeu virtuel"; setTimeout(() => { delete b.dataset.ok; b.textContent = "Ouvrir le jeu virtuel quand même"; }, 4000); return; }
+  delete b.dataset.ok; b.textContent = "Ouvrir le jeu virtuel quand même";
+  ecrire(CLE_DEBLOQUE, true); majVerrou(); $("genreVirtuel").click();
+});
+function majVerrou() { $("genreVirtuel").textContent = virtuelOuvert() ? "Aventure virtuelle" : "🔒 Aventure virtuelle"; }
+majVerrou();
+$("ouvrirParents").addEventListener("click", () => { majModes(); majVerrou(); $("choixReel").hidden = true; $("choixVirtuel").hidden = true; ["genreReel", "genreVirtuel"].forEach(k => $(k).classList.remove("actif")); montrer("parents"); });
 $("fermerParents").addEventListener("click", () => { majModes(); montrer("accueil"); });
 $("raz").addEventListener("click", () => {
   const b = $("raz");
   if (!b.dataset.ok) { b.dataset.ok = "1"; b.textContent = "Touchez encore pour tout effacer"; setTimeout(() => { delete b.dataset.ok; b.textContent = "Remettre toute l'aventure à zéro"; }, 4000); return; }
-  [CLES.pris, CLES.relache, CLES.membres, CLES.intro, CLES.partie].forEach(k => { try { localStorage.removeItem(k); } catch (e) {} });
-  delete b.dataset.ok; b.textContent = "Aventure remise à zéro";
+  [CLES.pris, CLES.relache, CLES.membres, CLES.intro, CLES.partie, CLE_REELS, CLE_DEBLOQUE].forEach(k => { try { localStorage.removeItem(k); } catch (e) {} });
+  if (lire(CLES.mode, "qr") === "virtuel") ecrire(CLES.mode, "qr");
+  majVerrou(); majModes(); delete b.dataset.ok; b.textContent = "Aventure remise à zéro";
 });
 majModes();
 $("entree").addEventListener("click", () => { initAudio(); changerAmbiance("menu"); sfx("valider"); majAccueil(); montrer("accueil"); });
@@ -299,10 +318,14 @@ function apresIntro() { clearInterval(ecrit); taire(); ecrire(CLES.intro, true);
 /* ===================== Nouvelle partie : combien de cryptides ? ===================== */
 let nombre = Math.max(2, Math.min(12, lire("cryptidsParc-nombre", 6))), tirage = [];
 const melanger = l => { l = l.slice(); for (let i = l.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [l[i], l[j]] = [l[j], l[i]]; } return l; };
-function tirer() { tirage = melanger(ids).slice(0, nombre).sort((a, b) => a - b); }
+function tirer() {   // en aventure réelle, les cryptides pas encore trouvés passent d'abord : plusieurs petites parties finissent par couvrir les 12
+  const t = mode() === "qr" ? trouvesReel() : [];
+  tirage = melanger(ids.filter(k => !t.includes(k))).concat(melanger(ids.filter(k => t.includes(k)))).slice(0, nombre).sort((a, b) => a - b);
+}
 let choixLibre = false, coches = new Set(lire("cryptidsParc-coches", ids));
 function dessinerChoix() {
-  $("grilleChoix").innerHTML = ids.map(k => '<button type="button" class="choix-carte' + (coches.has(k) ? " coche" : "") + '" data-k="' + k + '"><img alt="" src="' + TRAQUES[k].ombre + '"><span>' + TRAQUES[k].nom.split(",")[0] + '</span></button>').join("");
+  const t = mode() === "qr" ? trouvesReel() : [];
+  $("grilleChoix").innerHTML = ids.map(k => '<button type="button" class="choix-carte' + (coches.has(k) ? " coche" : "") + (t.includes(k) ? " trouve" : "") + '" data-k="' + k + '"><img alt="" src="' + TRAQUES[k].ombre + '"><span>' + TRAQUES[k].nom.split(",")[0] + '</span></button>').join("");
 }
 function basculer(libre) {
   if (mode() === "exterieur" && places().length) return majChoix();
@@ -317,6 +340,7 @@ $("grilleChoix").addEventListener("click", e => { const b = e.target.closest(".c
   const k = b.dataset.k; coches.has(k) ? coches.delete(k) : coches.add(k); b.classList.toggle("coche", coches.has(k)); majChoix(); });
 $("toutCocher").addEventListener("click", () => { coches = new Set(ids); dessinerChoix(); majChoix(); });
 $("toutDecocher").addEventListener("click", () => { coches = new Set(); dessinerChoix(); majChoix(); });
+$("cocherManquants").addEventListener("click", () => { const t = trouvesReel(); coches = new Set(ids.filter(k => !t.includes(k))); dessinerChoix(); majChoix(); });
 function majChoix() {
   const parc = mode() === "exterieur" && places().length > 0;
   document.querySelector("#partie .onglets").hidden = parc; $("blocParc").hidden = !parc;
@@ -333,7 +357,11 @@ function majChoix() {
   $("nombre").textContent = nombre; $("moins").disabled = nombre <= 2; $("plus").disabled = nombre >= 12;
   $("duree").textContent = nombre < 2 ? "Choisis au moins 2 cryptides" : nombre + " cryptides à sauver";
   document.querySelectorAll("[data-n]").forEach(b => b.classList.toggle("cyan", +b.dataset.n === nombre));
-  if (mode() === "qr") {
+  const reel = mode() === "qr", t = trouvesReel();
+  $("progresReel").hidden = !reel || virtuelOuvert(); $("cocherManquants").hidden = !reel || t.length >= ids.length;
+  if (reel) $("progresReel").textContent = "Déjà trouvés dans l'aventure réelle : " + t.length + " / " + ids.length + ". Le jeu virtuel s'ouvre quand les " + ids.length + " sont trouvés, en une ou plusieurs parties. Les cryptides pas encore trouvés sont tirés en premier.";
+  $("questionNombre").textContent = reel ? "Combien de cryptides cacher dans cette partie ? (choix des parents)" : "Combien de cryptides veux-tu sauver ?";
+  if (reel) {
     $("aCacher").hidden = false;
     $("listeQr").innerHTML = tirage.map(cheminIndices).join("");
   } else $("aCacher").hidden = true;
@@ -671,6 +699,8 @@ function apresCapture() {
 }
 function sauve(id) {   // la créature rejoint la collection : écran « Sauvé ! »
   const t = TRAQUES[id];
+  const avant = virtuelOuvert();
+  if (mode() === "qr") ajouter(CLE_REELS, id);
   ajouter(CLES.pris, id); majPartie(p => { if (!p.pris.includes(id)) p.pris.push(id); }); sfx("victoire");
   $("portrait").src = t.image; $("ficheNom").textContent = t.nom; $("ficheTexte").textContent = t.texte;
   const p = partie() || { liste: ids, pris: pris() }, n = p.pris.length, total = p.liste.length;
@@ -678,6 +708,11 @@ function sauve(id) {   // la créature rejoint la collection : écran « Sauvé 
   $("final").hidden = n < total; $("continuer").hidden = n >= total; $("rejouer").hidden = n < total;
   $("titreVictoire").textContent = "Sauvé !"; $("defi").hidden = !(n >= total && bossDispo());
   $("final").textContent = $("defi").hidden ? TEXTE_FINAL : "Tous les cryptides sont sauvés ! Mais Rune a un dernier défi pour toi…";
+  if (mode() === "qr" && !avant) {   // où en est le déblocage du jeu virtuel
+    const r = ids.length - trouvesReel().length;
+    $("compteur").textContent += (r ? " Encore " + r + " cryptide" + (r > 1 ? "s" : "") + " à trouver pour ouvrir le jeu virtuel !" : " Les " + ids.length + " cryptides sont trouvés : le jeu virtuel est débloqué !");
+    if (!r) { majVerrou(); sfx("victoire"); }
+  }
   $("scene").hidden = true; montrer("victoire");
 }
 function bandeau(texte, duree) { $("bandeau").textContent = texte; $("bandeau").hidden = false; setTimeout(() => $("bandeau").hidden = true, duree); }

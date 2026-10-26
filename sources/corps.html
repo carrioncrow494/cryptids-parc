@@ -67,7 +67,7 @@
       <button id="ongletChoix" class="mini" type="button">Je choisis</button>
     </div>
     <div id="blocHasard" class="colonne">
-    <p>Combien de cryptides veux-tu sauver ?</p>
+    <p id="questionNombre">Combien de cryptides veux-tu sauver ?</p>
     <div class="compteur-choix">
       <button id="moins" class="rond gros" type="button" aria-label="Une créature de moins">−</button>
       <div id="nombre" class="grand-nombre">6</div>
@@ -79,9 +79,10 @@
     <div id="blocChoix" class="colonne" hidden>
       <p>Coche les cryptides à sauver (au moins 2).</p>
       <div id="grilleChoix" class="grille-choix"></div>
-      <div class="boutons"><button id="toutCocher" class="mini" type="button">Tout cocher</button><button id="toutDecocher" class="mini" type="button">Tout décocher</button></div>
+      <div class="boutons"><button id="toutCocher" class="mini" type="button">Tout cocher</button><button id="toutDecocher" class="mini" type="button">Tout décocher</button><button id="cocherManquants" class="mini" type="button" hidden>Ceux pas encore trouvés</button></div>
     </div>
     <p id="duree" class="etat"></p>
+    <p id="progresReel" class="progres-reel" hidden></p>
     <div id="aCacher" class="choix" hidden>
       <h3>Cartes à cacher</h3>
       <p>Pour chaque cryptide, cachez ses 3 cartes indices puis sa carte aux endroits ci-dessous, dans la maison ou dehors, comme vous préférez. Chaque indice dira à votre enfant où chercher la carte suivante.</p>
@@ -114,6 +115,15 @@
         <div class="boutons"><a id="telechargerIndices" class="mini cyan" href="indices-cryptids.pdf" download="indices-cryptids.pdf">Planche des indices</a><a id="telechargerQr" class="mini cyan" href="qr-codes-cryptids.pdf" download="qr-codes-cryptids.pdf">Planche des cryptides</a></div>
       </div>
       <button id="lancerReel" class="planche principal" type="button">Commencer l'aventure réelle</button>
+    </div>
+    <div id="choixVirtuel" class="colonne" hidden>
+      <div class="choix">
+        <h3>🔒 Le jeu virtuel est encore fermé</h3>
+        <p>Il s'ouvre quand votre enfant a trouvé les 12 cryptides dans l'aventure réelle. Pas besoin de tout faire d'un coup : au début de chaque partie, vous choisissez combien de cryptides cacher, et le téléphone garde le compte d'une partie à l'autre.</p>
+        <p id="verrouTexte" class="etat"></p>
+        <div id="grilleVerrou" class="grille-choix verrou"></div>
+      </div>
+      <button id="debloquerVirtuel" class="lien" type="button">Ouvrir le jeu virtuel quand même</button>
     </div>
     <p id="modeParents" class="etat"></p>
     <button id="fermerParents" class="planche petit" type="button">Retour</button>
