@@ -70,7 +70,7 @@ La version 1 est dans le dépôt `carrioncrow494/chasse-monstres` et n'est pas m
   - **un habitant par région** (`PNJ` : le maire Pistache, Lumignon le veilleur, Bergère Mousse, Papy Coyote, Tante Grenouille) : on lui parle avec A, il donne les indices des cryptides de sa région. Il se tourne vers l'enfant qui approche ;
   - le détecteur (5 LED) donne la distance à la créature la plus proche ; en entrant dans une région, son nom et le nombre de cryptides cachés s'affichent ; le panneau de chaque région donne les indices de ses créatures ;
   - tout près d'une cachette, la créature surgit (« ! ») ; le bouton A ouvre alors l'œil magique (RA, caméra), et la capture se fait comme dans les autres modes. Après « Continuer le sauvetage », on revient dans le jeu à la même place. La caméra et les capteurs sont demandés au moment de ce clic, car iOS l'exige ;
-  - le défi de Rune a lieu dans le bois Biscornu, autour de sa cabane : il s'enfuit deux fois dans le jeu, puis la capture se fait en RA.
+  - le défi de Rune a lieu dans le bois Biscornu, autour de sa cabane : elle s'enfuit deux fois dans le jeu, puis la capture se fait en RA.
 
 ## Tout le reste vient de la V1 (état au 12/10/2026)
 
