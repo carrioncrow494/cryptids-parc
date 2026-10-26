@@ -76,10 +76,10 @@
   .choix .boutons { justify-content: flex-start; }
   .etat { font-family: var(--deco); font-weight: 400; letter-spacing: .1em; color: var(--citrouille); }
 
-  /* ---------- Intro : Sporran raconte ---------- */
+  /* ---------- Intro : Rune raconte ---------- */
   #intro { background: radial-gradient(ellipse 80% 60% at 30% 80%, rgba(42,154,166,.6), var(--abysse) 75%); }
   #guide { position: absolute; left: 50%; transform: translateX(-50%); bottom: calc(-4px + env(safe-area-inset-bottom, 0px));
-    width: min(56vw, 260px); z-index: 3; filter: drop-shadow(0 0 16px rgba(79,243,255,.35)); pointer-events: none; }   /* Sporran centré sous la bulle */
+    width: min(56vw, 260px); z-index: 3; filter: drop-shadow(0 0 16px rgba(79,243,255,.35)); pointer-events: none; }   /* Rune centrée sous la bulle */
   .bulle { position: absolute; z-index: 4; left: 16px; right: 16px; bottom: calc(min(56vw, 260px) * .86 + env(safe-area-inset-bottom, 0px));
     max-width: 560px; margin: 0 auto; padding: 18px 20px 16px; border: 2px solid rgba(79,243,255,.55); border-radius: 22px 22px 22px 6px;
     background: rgba(3,14,20,.92); box-shadow: 0 0 22px rgba(79,243,255,.25); display: flex; flex-direction: column; gap: 14px; }
