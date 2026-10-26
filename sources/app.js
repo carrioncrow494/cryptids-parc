@@ -48,8 +48,8 @@ const TRAQUES = {
           texte: "Un bonhomme tout vert, couvert d'algues et de mousse. Son jeu préféré est de sauter dans les flaques de boue, et il n'a jamais besoin de prendre de bain !",
           membres: [{ ar: "ar-swamp.mp4", ratio: 1.067, taille: 1.43, pied: 0.034, altitude: 0 }] }
 };
-const GARDIEN = { cle: "catsith", nom: "Sporran, le Cat sìth",
-  texte: "Un grand chat noir d'Écosse avec une tache blanche en forme de cœur sur le poitrail. Certains disent que c'est en fait une sorcière transformée. Il adore se glisser sans bruit dans les collines et ronronne si fort qu'on le prend pour le vent." };
+const GARDIEN = { cle: "catsith", nom: "Rune, la Cat sìth",
+  texte: "Une grande chatte noire d'Écosse avec une tache blanche en forme de cœur sur le poitrail. Certains disent que c'est en fait une sorcière transformée. Elle adore se glisser sans bruit dans les collines et ronronne si fort qu'on la prend pour le vent." };
 const INTRO = [
   "Chapristi !!!\nOn m'a volé mon précieux grimoire contenant l'ensemble des Cryptides. J'ai pu le retrouver, mais certains se sont égarés et perdus. Aide-moi à les sauver.",
   "Quoi !! Tu ne sais pas ce qu'est un Cryptide ?\nUn Cryptide est une créature souvent craintive, qui vit cachée et qui est difficile à voir avec des yeux d'humains.",
@@ -386,7 +386,7 @@ function dessinerGrimoire() {
   $("compteGrimoire").textContent = n + " / " + ids.length + " cryptides sauvés";
   $("grille").innerHTML =
     '<div class="carte gardien prise"><img alt="" src="' + GARDIEN.image + '"><div class="nom">' + GARDIEN.nom + '</div><div class="astuce">' + GARDIEN.texte + '</div>' +
-    (tousLibres ? '<button class="mini cyan" data-fig="catsith">Figurine de Sporran</button>' + (lire(CLES.merci, false) ? ' <button class="mini" data-merci="1">Revoir son message</button>' : '') : '<div class="astuce"><b>Relâche tous les cryptides pour gagner sa figurine.</b></div>') + '</div>' +
+    (tousLibres ? '<button class="mini cyan" data-fig="catsith">Figurine de Rune</button>' + (lire(CLES.merci, false) ? ' <button class="mini" data-merci="1">Revoir son message</button>' : '') : '<div class="astuce"><b>Relâche tous les cryptides pour gagner sa figurine.</b></div>') + '</div>' +
     ids.map(k => carte(TRAQUES[k], k)).join("");
 }
 let retourGrimoire = "accueil";
@@ -422,15 +422,15 @@ function relacher(k) {
   v.onended = fin; v.onerror = envol;
   v.play().catch(() => { v.muted = true; v.play().catch(envol); });
 }
-// tous les cryptides sont libres : Sporran remercie le joueur dans son monde
+// tous les cryptides sont libres : Rune remercie le joueur dans son monde
 let merciEnAttente = false;
 function merci() {
   changerAmbiance("silence");
   const v = $("videoRelache"); ecrire(CLES.merci, true);
   $("relache").hidden = false; $("envol").hidden = true; $("voirFigurine").hidden = true; figurineAMontrer = "catsith";
-  $("titreRelache").textContent = "Sporran te remercie !"; sfx("victoire");
+  $("titreRelache").textContent = "Rune te remercie !"; sfx("victoire");
   let fini = false;
-  const fin = () => { if (fini) return; fini = true; $("titreRelache").textContent = "Merci d'avoir sauvé tous les cryptides ! Figurine de Sporran débloquée !"; $("voirFigurine").hidden = false; sfx("figurine"); dessinerGrimoire(); };
+  const fin = () => { if (fini) return; fini = true; $("titreRelache").textContent = "Merci d'avoir sauvé tous les cryptides ! Figurine de Rune débloquée !"; $("voirFigurine").hidden = false; sfx("figurine"); dessinerGrimoire(); };
   v.src = "merci-catsith.mp4"; v.hidden = false; v.muted = !sonActif; v.currentTime = 0; v.onended = fin; v.onerror = fin;
   v.play().catch(() => { v.muted = true; v.play().catch(fin); });
 }
@@ -677,7 +677,7 @@ function sauve(id) {   // la créature rejoint la collection : écran « Sauvé 
   $("compteur").textContent = n >= total ? "" : n + " / " + total + " cryptides sauvés dans cette aventure.";
   $("final").hidden = n < total; $("continuer").hidden = n >= total; $("rejouer").hidden = n < total;
   $("titreVictoire").textContent = "Sauvé !"; $("defi").hidden = !(n >= total && bossDispo());
-  $("final").textContent = $("defi").hidden ? TEXTE_FINAL : "Tous les cryptides sont sauvés ! Mais Sporran a un dernier défi pour toi…";
+  $("final").textContent = $("defi").hidden ? TEXTE_FINAL : "Tous les cryptides sont sauvés ! Mais Rune a un dernier défi pour toi…";
   $("scene").hidden = true; montrer("victoire");
 }
 function bandeau(texte, duree) { $("bandeau").textContent = texte; $("bandeau").hidden = false; setTimeout(() => $("bandeau").hidden = true, duree); }
@@ -732,7 +732,7 @@ function lancerMembre() {
   const c = creerCreature(m); c.diff = traque.boss ? 4 : (DIFF[traque.cle] || 2); c.jauge = 0; c.esquives = 0;
   moteur.creature = c; placer(c, traque.angleGPS);
   tDebutRecherche = performance.now();
-  $("nomMonstre").textContent = traque.boss ? "Sporran" : traque.membres.length > 1 ? m.nom + " (" + (membreIdx + 1) + "/2)" : "???";
+  $("nomMonstre").textContent = traque.boss ? "Rune" : traque.membres.length > 1 ? m.nom + " (" + (membreIdx + 1) + "/2)" : "???";
   if (gyro || gyroOK) $("consigne").textContent = "Une créature se cache tout près… Tourne sur toi-même et écoute le tintement !"; else aideDoigt();
 }
 
@@ -912,7 +912,7 @@ const GAIN = { 1: .2, 2: .14, 3: .11, 4: .08 };            // jauge gagnée par 
 const DRAIN = { 1: .03, 2: .06, 3: .09, 4: .12 };          // jauge perdue par seconde
 const ESQUIVES = { 1: [], 2: [.5], 3: [.35, .7], 4: [.25, .5, .75] };   // la créature s'échappe à ces niveaux de jauge
 const SAUT = { 1: 1900, 2: 1500, 3: 1150, 4: 800 };       // sur la carte : temps entre deux sauts (ms)
-const BOSS_MEMBRE = { nom: "Sporran", id: "catsith", ar: "ar-catsith.mp4", ratio: 1.0706, taille: 1.85, pied: 0.046, altitude: 0 };
+const BOSS_MEMBRE = { nom: "Rune", id: "catsith", ar: "ar-catsith.mp4", ratio: 1.0706, taille: 1.85, pied: 0.046, altitude: 0 };
 const DEFI = [
   "Bravo !!! Tu as sauvé tous les Cryptides de mon grimoire. Je n'en reviens pas…",
   "Mais es-tu assez rapide pour attraper le plus malin de tous… MOI ?\nHé hé ! Je me cache tout près. Sors ton détecteur et attrape-moi si tu peux !"
@@ -923,7 +923,7 @@ const pixDe = k => k === "catsith" ? "pix-catsith.gif" : "pix-" + TRAQUES[k].cle
 const rayonJeu = () => mode() === "interieur" ? 10 : 20;
 const restantesJeu = () => { const p = partie(); return p ? p.liste.filter(k => !p.pris.includes(k)) : []; };
 
-// ---------- défi de Sporran ----------
+// ---------- défi de Rune ----------
 function lancerDefi() {
   fermerPixel(); $("scene").hidden = true; $("jauge").hidden = true;
   textesIntro = DEFI; finIntro = demarrerBoss; pageIntro = 0; montrer("intro"); afficherIntro(0);
@@ -939,7 +939,7 @@ function demarrerBossAR() {
   fermerPixel();
   traque = { id: "boss", boss: true, cle: "catsith", nom: GARDIEN.nom, texte: GARDIEN.texte, image: GARDIEN.image, membres: [BOSS_MEMBRE], gpsFait: true, angleGPS: null };
   membreIdx = 0; lancerMembre();
-  $("consigne").textContent = "Sporran se cache autour de toi… Tourne sur toi-même !";
+  $("consigne").textContent = "Rune se cache autour de toi… Tourne sur toi-même !";
 }
 function bossVaincu() {
   ecrire(CLE_BOSS, true); enBoss = false; sfx("victoire");
@@ -988,7 +988,7 @@ function ouvrirPixel() {
   traque = null; $("viseur").hidden = true; $("jauge").hidden = true; $("sceau").disabled = true; $("gauche").hidden = $("droite").hidden = true;
   if (!enBoss && !restantesJeu().length) { fermerPixel(); return prochaineTraque(); }
   $("pixel").hidden = false; $("detecteur").hidden = false;
-  $("nomMonstre").textContent = enBoss ? "Sporran" : "Œil magique";
+  $("nomMonstre").textContent = enBoss ? "Rune" : "Œil magique";
   if (!PXC) PXC = { carte: null, origine: null, joueur: { x: 0, y: 0 }, manuel: false, vise: null, cibles: [], revele: null, signal: 0, dernierBip: 0, raf: 0, t: 0 };
   PXC.revele = null; $("pixelSprites").innerHTML = "";
   const p = partie();
@@ -1046,7 +1046,7 @@ function preparerCarte(orig, fictif) {
       .catch(() => bandeau("La carte du quartier n'a pas pu se charger (réseau ?). Le détecteur marche quand même.", 5000));
   }
   placerCibles();
-  $("consigne").textContent = enBoss ? "Sporran se cache tout près… Suis le détecteur !" : "Marche et suis le détecteur : plus il s'allume, plus un cryptide est proche !";
+  $("consigne").textContent = enBoss ? "Rune se cache tout près… Suis le détecteur !" : "Marche et suis le détecteur : plus il s'allume, plus un cryptide est proche !";
 }
 function placerCibles() {
   const p = partie(); if (!p) return;
@@ -1234,7 +1234,7 @@ function reveler(c) {
   PXC.revele = { c, el, dx: 0, dy: 0, prochain: performance.now() + SAUT[d] + 600, d };
   el.addEventListener("pointerdown", e => { e.stopPropagation(); attraper(); });
   sfx("revele"); if (navigator.vibrate) navigator.vibrate([60, 40, 60]);
-  $("consigne").textContent = enBoss ? "Le voilà ! Touche Sporran avant qu'il ne file !" : "Un cryptide ! Touche-le vite avant qu'il ne bondisse !";
+  $("consigne").textContent = enBoss ? "La voilà ! Touche Rune avant qu'elle ne file !" : "Un cryptide ! Touche-le vite avant qu'il ne bondisse !";
 }
 function majApparition(t) {
   const r = PXC.revele; if (!r) return;
@@ -1258,14 +1258,14 @@ function attraper() {
   const box = r.el.getBoundingClientRect(), pouf = document.createElement("div"); pouf.className = "pouf";
   pouf.style.left = (box.left + box.width / 2) + "px"; pouf.style.top = (box.top + box.height / 2) + "px"; $("pixelSprites").appendChild(pouf); setTimeout(() => pouf.remove(), 600);
   r.el.remove(); PXC.revele = null; if (navigator.vibrate) navigator.vibrate(40);
-  if (enBoss && bossPhase < 2) {   // Sporran file ailleurs deux fois avant de se laisser attraper
+  if (enBoss && bossPhase < 2) {   // Rune file ailleurs deux fois avant de se laisser attraper
     bossPhase++; sfx("fuite");
     const p = partie(), ind = mode() === "interieur", a = Math.random() * 2 * Math.PI, d = ind ? 4 + Math.random() * 4 : 8 + Math.random() * 7;
     p.posBoss = versGeo(PXC.joueur.x + Math.cos(a) * d, PXC.joueur.y + Math.sin(a) * d); ecrire(CLES.partie, p); placerCibles();
     bandeau(bossPhase === 1 ? "Hé hé ! Trop lent ! Attrape-moi si tu peux !" : "Encore raté ! Dernière chance, petit humain !", 3200);
-    $("consigne").textContent = "Sporran s'est enfui ! Suis le détecteur !"; return;
+    $("consigne").textContent = "Rune s'est enfuie ! Suis le détecteur !"; return;
   }
-  sfx("sceau"); bandeau(enBoss ? "Tu as débusqué Sporran ! Ouvre l'œil magique…" : "Débusqué ! Ouvre l'œil magique et cherche-le autour de toi…", 2400);
+  sfx("sceau"); bandeau(enBoss ? "Tu as débusqué Rune ! Ouvre l'œil magique…" : "Débusqué ! Ouvre l'œil magique et cherche-le autour de toi…", 2400);
   const k = r.c.k;
   setTimeout(() => { fermerPixel(); sfx("oeil"); if (enBoss) demarrerBossAR(); else demarrerTraque(k, { gpsFait: true, angleGPS: null }); }, 900);
 }

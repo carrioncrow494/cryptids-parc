@@ -150,7 +150,7 @@ bx, by = repere('foret', 'barque')   # la bateau de pêche : sur l'eau, contre l
 _, x, y = min((abs(x - bx) + abs(y - by), x, y) for y in range(ILE['foret']['oy'], ILE['foret']['oy'] + ILE['foret']['h'] - 1) for x in range(ILE['foret']['ox'], ILE['foret']['ox'] + ILE['foret']['w'] - 1) if M[y][x] == '~' and any(M[y + b][x + a] == '.' for a, b in ((1, 0), (-1, 0), (0, 1), (0, -1))))
 M[y][x] = 'v'; BATEAU = (x, y)   # le bateau de pêche est amarré là (jeu.js le fait naviguer)
 PRIS.update((x + a, y + b) for a in range(-2, 3) for b in range(-2, 3))   # rien de semé contre lui : la rive d'où l'on monte reste libre
-bati('cabane', ['KKKKKK'] * 3 + ['KKkKKK'], cible=centre('cabane'))       # la cabane de Sporran
+bati('cabane', ['KKKKKK'] * 3 + ['KKkKKK'], cible=centre('cabane'))       # la cabane de Rune
 # les habitants et les panneaux : près du pont par lequel on arrive
 ENTREE = {'village': dep}
 for q in PORTAILS: ENTREE.setdefault(q['zone'], (q['ax'], q['ay']))   # on arrive dans une île devant son portail

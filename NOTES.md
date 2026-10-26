@@ -38,10 +38,10 @@ La version 1 est dans le dépôt `carrioncrow494/chasse-monstres` et n'est pas m
 - **Capture AR avec jauge**
   - On tapote la créature (ou le sceau, en visant) pour remplir la jauge. La jauge se vide doucement (`GAIN`, `DRAIN`).
   - Selon la difficulté (1 à 4 étoiles, table `DIFF`), la créature s'échappe à certains niveaux de jauge (`ESQUIVES`) ; des flèches aident à la retrouver.
-- **Boss final : Sporran**
-  - Quand les 12 cryptides sont dans la collection, Sporran lance son défi (écran de victoire, ou bouton « Défi de Sporran » sur l'accueil).
-  - Sur la carte, il s'enfuit deux fois avant de se laisser attraper, puis la capture se fait en AR en difficulté 4 (`ar-catsith.mp4`).
-  - Une fois vaincu, il est enregistré dans la clé `cryptidsParc-boss`.
+- **Boss final : Rune**
+  - Quand les 12 cryptides sont dans la collection, Rune lance son défi (écran de victoire, ou bouton « Défi de Rune » sur l'accueil).
+  - Sur la carte, elle s'enfuit deux fois avant de se laisser attraper, puis la capture se fait en AR en difficulté 4 (`ar-catsith.mp4`).
+  - Une fois vaincue, elle est enregistrée dans la clé `cryptidsParc-boss`.
 - **Sans GPS** (refus, pas de signal pendant 15 s, ou intérieur) : bouton 👣. On avance en touchant la carte.
 - **Interface**
   - Polices (hébergées dans le dépôt) : Creepster, la police dégoulinante, pour les gros titres et les noms des créatures ; IM Fell English SC pour tout le reste.
@@ -50,7 +50,7 @@ La version 1 est dans le dépôt `carrioncrow494/chasse-monstres` et n'est pas m
   - Volume général : le bouton ♪ ouvre un curseur.
   - Picto « livre ouvert » pour le grimoire.
 - **Contenu**
-  - Nouveau texte de Sporran.
+  - Nouveau texte de Rune.
   - Lutins du grimoire refaits sans halo.
   - Nouvelles figurines du Thunderbird, du Barghest et du Jackalope ; Huhuk agrandi (`ECH_FIG`).
 
@@ -62,7 +62,7 @@ La version 1 est dans le dépôt `carrioncrow494/chasse-monstres` et n'est pas m
 - **Le jeu vidéo** (`sources/jeu.js`, ajouté à la suite d'`app.js` par `assemble.py`) :
   - vue en 3D isométrique façon Dofus (three.js, caméra orthographique), formes rondes et douces, couleurs de forêt de pins au crépuscule (`COUL`). La map est un petit diorama construit à partir de la grille (`dioramaJ`) ; les objets immobiles sont fondus par couleur (`fusionnerJ`) pour alléger le rendu sur téléphone ;
   - joystick tactile : la vue est en biais, donc les 4 directions de marche sont les 4 diagonales de l'écran, et le joystick prend la plus proche (avec un peu de marge pour ne pas changer de direction au moindre tremblement). Bouton A (chercher, lire un panneau, ouvrir l'œil magique) et bouton B (s'éloigner, fermer) ; au clavier : flèches ou ZQSD, Espace et Échap ;
-  - **une seule île** de 44 × 40 cases (`CARTE`), découpée en 6 régions (`ZONES`) séparées par des frontières fermées (arbres, rochers, falaises rouges au désert) ; on passe de l'une à l'autre par 9 passages marqués d'une arche en bois (tuile `p`), à la demande de Sam (15/10/2026). Le village est au centre (départ), entouré de : la forêt Sombre (nuit, rivière, pont couvert rouge façon Oregon, lampadaires, cimetière), les Hautes-Terres (lande de bruyère, grand lac, pierres levées, neiges et montagnes au nord), le bayou (eaux boueuses, cyprès, passerelles, lucioles), le désert des Mesas (sable orange, mesas, cactus, ranch) et le bois Biscornu (arbres d'automne, citrouilles, la cabane de travers de Sporran, un dessin original) ;
+  - **une seule île** de 44 × 40 cases (`CARTE`), découpée en 6 régions (`ZONES`) séparées par des frontières fermées (arbres, rochers, falaises rouges au désert) ; on passe de l'une à l'autre par 9 passages marqués d'une arche en bois (tuile `p`), à la demande de Sam (15/10/2026). Le village est au centre (départ), entouré de : la forêt Sombre (nuit, rivière, pont couvert rouge façon Oregon, lampadaires, cimetière), les Hautes-Terres (lande de bruyère, grand lac, pierres levées, neiges et montagnes au nord), le bayou (eaux boueuses, cyprès, passerelles, lucioles), le désert des Mesas (sable orange, mesas, cactus, ranch) et le bois Biscornu (arbres d'automne, citrouilles, la cabane de travers de Rune, un dessin original) ;
   - la lumière glisse d'une région à l'autre (`AMB`) ; 4 lumières seulement suivent les lampadaires les plus proches, pour ménager le téléphone ; les objets immobiles sont fondus par couleur et par morceau de l'île ;
   - la grille est une suite de lettres (légende sous `TUILES`) : pour une carte de Sam, un plan dessiné suffit. Le plan actuel a été produit par un petit script puis retouché ;
   - chaque créature se cache dans sa région (`HABITAT`, choix de Sam du 15/10/2026), au meilleur endroit (`scoreJ`) : barghest et mothman dans la forêt Sombre, Nessie, le Kraken et le Yeti dans les Hautes-Terres, le monstre des marais et la faery au bayou, la gargouille et les lutins au village, le chupacabra, le thunderbird et le jackalope au désert. Positions dans `partie.jeu` (`v: 2` ; une partie de l'ancien jeu à 4 maps repart du village) ;
@@ -70,21 +70,21 @@ La version 1 est dans le dépôt `carrioncrow494/chasse-monstres` et n'est pas m
   - **un habitant par région** (`PNJ` : le maire Pistache, Lumignon le veilleur, Bergère Mousse, Papy Coyote, Tante Grenouille) : on lui parle avec A, il donne les indices des cryptides de sa région. Il se tourne vers l'enfant qui approche ;
   - le détecteur (5 LED) donne la distance à la créature la plus proche ; en entrant dans une région, son nom et le nombre de cryptides cachés s'affichent ; le panneau de chaque région donne les indices de ses créatures ;
   - tout près d'une cachette, la créature surgit (« ! ») ; le bouton A ouvre alors l'œil magique (RA, caméra), et la capture se fait comme dans les autres modes. Après « Continuer le sauvetage », on revient dans le jeu à la même place. La caméra et les capteurs sont demandés au moment de ce clic, car iOS l'exige ;
-  - le défi de Sporran a lieu dans le bois Biscornu, autour de sa cabane : il s'enfuit deux fois dans le jeu, puis la capture se fait en RA.
+  - le défi de Rune a lieu dans le bois Biscornu, autour de sa cabane : il s'enfuit deux fois dans le jeu, puis la capture se fait en RA.
 
 ## Tout le reste vient de la V1 (état au 12/10/2026)
 
-- **Contenu** : 12 traques et 13 créatures. Kumquat et Kiwi, les lutins, forment une seule traque. Sporran le Cat sìth est le guide.
+- **Contenu** : 12 traques et 13 créatures. Kumquat et Kiwi, les lutins, forment une seule traque. Rune, la Cat sìth, est la guide.
 - **Parcours** :
-  - écran d'entrée (pour la musique), puis l'accueil avec l'animation 3 de Sporran ;
-  - à chaque « Commencer l'aventure » : l'intro de Sporran (texte sans voix ; Sporran est centré sous la bulle), puis le choix des créatures.
+  - écran d'entrée (pour la musique), puis l'accueil avec l'animation 3 de Rune ;
+  - à chaque « Commencer l'aventure » : l'intro de Rune (texte sans voix ; Rune est centrée sous la bulle), puis le choix des créatures.
 - **Œil magique** :
   - three.js 0.169 ; chaque créature est un plan qui joue une vidéo, couleur en haut et transparence en bas (`ar-*.mp4`) ;
   - gyroscope, avec attente de la première mesure avant de placer la créature ;
   - sans capteurs de mouvement, on regarde autour de soi en glissant le doigt ;
   - toutes les créatures ont la même taille apparente et apparaissent à 3,2 m ;
   - sceau magique, cris, flèches.
-- **Grimoire et figurines** : grimoire en animations 2D, relâche en vidéo, figurines 360° (`figurine-*.glb`), remerciement de Sporran.
+- **Grimoire et figurines** : grimoire en animations 2D, relâche en vidéo, figurines 360° (`figurine-*.glb`), remerciement de Rune.
 - **Son** : musique « Tim Burton » et bruitages fabriqués par code (Web Audio).
 
 ## Modifier l'app
@@ -117,7 +117,7 @@ Ensuite, on publie avec git : commit puis push sur `main`. GitHub Pages est serv
 - `jeu-decor.webp` : tous les objets (nature, objets du village, marais/désert/cimetière, bâtiments, maisons, cachettes). Leur place est dans `sources/decor-atlas.js` (`ATLAS_DECOR`), leur hauteur dans `TAILLE_DECOR`. Chaque objet est une image debout face à la caméra ; les bâtiments couvrent tout leur bloc de cases. Un objet qui cache le héros devient transparent (`estomperJ`).
 - La caméra est inclinée comme les dessins : le losange d'une tuile est 0,675 fois moins haut que large (`HAUT_CAM.flat`, `SIN_CAM`).
 - Héros : `jeu-heros.webp` (marche et attente, 4 directions sans miroir) et `jeu-heros-actions.webp` (fouiller vers la gauche, vers la droite, surprise, joie ; images de 320×360). On fouille à chaque A, surprise quand un cryptide sort, joie au retour après une capture.
-- Créatures : `jeu-crea-<clé>.webp`, 4×4 images de 256 (apparition, attente, action, disparition ; Sporran : attente, attente, disparition, réapparition). Elle sort de sa cachette au premier A, et disparaît si on fuit avec B.
+- Créatures : `jeu-crea-<clé>.webp`, 4×4 images de 256 (apparition, attente, action, disparition ; Rune : attente, attente, disparition, réapparition). Elle sort de sa cachette au premier A, et disparaît si on fuit avec B.
 - La nuit (forêt, cabane, bayou), tout le décor se teinte de bleu et les lampadaires brillent ; les cachettes restent claires.
 - Fabriqués avec `sources/decoupe-flat.py` (héros), `sources/decoupe-creatures.py`, `sources/decoupe-decor.py` (outils communs dans `sources/planches.py` : fond vert ou magenta, un dessin = une tache, même s'il déborde de sa case).
 - Les habitants sont encore en volumes, en attendant leurs planches.

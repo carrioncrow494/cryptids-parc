@@ -1,5 +1,5 @@
 # Les 13 créatures animées (planches flat 4×4) : une image par créature, jeu-crea-<clé>.webp, 4 lignes de 4 images de 256×256.
-# Lignes : apparition, attente, action, disparition (Sporran : attente, attente, disparition, réapparition).
+# Lignes : apparition, attente, action, disparition (Rune : attente, attente, disparition, réapparition).
 import sys; sys.path.insert(0, 'sources')
 from planches import *
 P = {'kraken': ('32a7e53a-Anim_flat_KRAKEN.png', 'vert'), 'nessie': ('4181d39b-Anim_flat_NESSIE.png', 'vert'), 'swamp': ('42fefc7e-Anim_flat_SWAMP.png', 'magenta'),
