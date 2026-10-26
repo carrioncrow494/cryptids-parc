@@ -550,41 +550,41 @@ import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
      altitude : hauteur au-dessus du sol (mètres)
    image : animation du grimoire ; ombre : silhouette ; relache : vidéo de relâche ; figurine : modèle 3D HIGH */
 const TRAQUES = {
-  "1":  { cle: "mothman", nom: "Michmuche, le Mothman", indice: "aime la lumière",
+  "1":  { cle: "mothman", nom: "Michmuche, le Mothman", indice: "tourne autour des lampes et des lampadaires",
           texte: "Un papillon de nuit géant aux grands yeux rouges. On ne sait pas d'où il vient, mais il apparaît pour prévenir d'un danger. Il est très timide et ne résiste jamais à une lampe allumée.",
           membres: [{ ar: "ar-mothman.mp4", ratio: 1.237, taille: 1.57, pied: 0.199, altitude: 0.2 }] },
-  "2":  { cle: "nessie", nom: "Ness, le monstre du loch", indice: "vit dans l'eau",
+  "2":  { cle: "nessie", nom: "Ness, le monstre du loch", indice: "se cache au bord de l'eau : mare, étang ou rivière",
           texte: "Elle vit au fond d'un lac très profond et ne sort que son long cou pour dire bonjour. Elle adore faire des farces et personne n'arrive à la prendre en photo, car elle plonge toujours juste avant le clic !",
           membres: [{ ar: "ar-nessie.mp4", ratio: 0.994, taille: 2.68, pied: 0.04, altitude: 0 }] },
-  "3":  { cle: "thunderbird", nom: "Huhuk, le Thunderbird", indice: "crée de l'électricité", son: "cri-thunderbird.m4a",
+  "3":  { cle: "thunderbird", nom: "Huhuk, le Thunderbird", indice: "aime les grands espaces, pour voir le ciel", son: "cri-thunderbird.m4a",
           texte: "Un oiseau immense qui vole au-dessus des nuages. Quand il bat des ailes, on entend le tonnerre, et quand il cligne des yeux, on voit des éclairs.",
           membres: [{ ar: "ar-thunderbird.mp4", ratio: 0.979, taille: 2.12, pied: 0.103, altitude: 0.3 }] },
-  "4":  { cle: "barghest", nom: "Whitby, le Barghest", indice: "vit dans les endroits sombres",
+  "4":  { cle: "barghest", nom: "Whitby, le Barghest", indice: "cherche un bâton sous les arbres",
           texte: "Un gros chien fantôme, noir et tout ébouriffé, qui se promène la nuit sur les landes. Il a l'air impressionnant, mais il cherche surtout quelqu'un pour lui lancer un bâton.",
           membres: [{ ar: "ar-barghest.mp4", ratio: 1.014, taille: 1.70, pied: 0.011, altitude: 0 }] },
-  "5":  { cle: "faery", nom: "Loupiote, la Faery", indice: "adore la musique",
+  "5":  { cle: "faery", nom: "Loupiote, la Faery", indice: "brille le long des chemins pour guider les promeneurs",
           texte: "Une toute petite fée qui brille comme une veilleuse. Elle éclaire le chemin de ceux qui ont un peu peur du noir ou qui se sont perdus.",
           membres: [{ ar: "ar-faery.mp4", ratio: 1.006, taille: 1.96, pied: 0.198, altitude: 0.5 }] },
-  "6":  { cle: "lutins", nom: "Kumquat & Kiwi, les lutins", indice: "se cachent dans les jardins et adorent les marrons",
+  "6":  { cle: "lutins", nom: "Kumquat & Kiwi, les lutins", indice: "préparent leurs farces cachés dans les buissons",
           texte: "Deux lutins inséparables : l'un orange et farceur, l'autre vert et râleur. Kumquat invente des farces, Kiwi ronchonne, et ils finissent toujours par rire ensemble.",
           membres: [{ nom: "Kiwi", ar: "ar-lutin_green.mp4", ratio: 1.011, taille: 1.22, pied: 0.036, altitude: 0 },
                     { nom: "Kumquat", ar: "ar-lutin_orange.mp4", ratio: 1.01, taille: 1.31, pied: 0.043, altitude: 0 }] },
-  "7":  { cle: "jackalope", nom: "Bucky, le Jackalope", indice: "court plus vite que le vent",
+  "7":  { cle: "jackalope", nom: "Bucky, le Jackalope", indice: "galope là où il y a de la place pour courir",
           texte: "Un lapin malicieux qui porte de petits bois de cerf sur la tête. Il adore la musique et reprend les chansons des voyageurs. Mais il court si vite que personne n'a jamais réussi à le rattraper.",
           membres: [{ ar: "ar-jackalope.mp4", ratio: 1.416, taille: 2.33, pied: 0.356, altitude: 0 }] },
-  "8":  { cle: "yeti", nom: "Migou, le Yeti", indice: "laisse d'énormes traces de pas",
+  "8":  { cle: "yeti", nom: "Migou, le Yeti", indice: "laisse d'énormes traces de pas sur les chemins",
           texte: "Un géant tout blanc et tout doux qui vit dans les montagnes enneigées. Il laisse d'énormes traces de pas et fait les meilleurs câlins du monde.",
           membres: [{ ar: "ar-yeti.mp4", ratio: 1.0, taille: 1.61, pied: 0.066, altitude: 0 }] },
-  "9":  { cle: "gargouille", nom: "Ardoise, la Gargouille", indice: "aime se percher tout en haut",
+  "9":  { cle: "gargouille", nom: "Ardoise, la Gargouille", indice: "se perche sur les toits pour surveiller les maisons",
           texte: "Perchée sur le toit, elle reste immobile comme une pierre toute la journée. La nuit, elle s'étire, bâille et surveille le quartier pour que tout le monde dorme tranquille. Mais attention, elle crache de l'eau sur ceux qui font trop de bruit !",
           membres: [{ ar: "ar-gargouille.mp4", ratio: 1.119, taille: 1.32, pied: 0.048, altitude: 0.2 }] },
-  "10": { cle: "chupacabra", nom: "Moca, le Chupacabra", indice: "a toujours un petit creux",
+  "10": { cle: "chupacabra", nom: "Moca, le Chupacabra", indice: "rôde près des maisons, à la recherche d'un goûter",
           texte: "Une petite créature à piquants qui vient des pays chauds. On la dit farouche, mais elle est surtout très gourmande et raffole du lait de chèvre.",
           membres: [{ ar: "ar-chupacabra.mp4", ratio: 1.421, taille: 2.62, pied: 0.32, altitude: 0 }] },
-  "11": { cle: "kraken", nom: "Bloop, le Kraken", indice: "collectionne les trésors",
+  "11": { cle: "kraken", nom: "Bloop, le Kraken", indice: "cache ses trésors au bord de l'eau",
           texte: "Une pieuvre géante qui habite tout au fond de l'océan. Elle collectionne les trésors des bateaux pirates qui ont coulé. Avec ses huit bras, elle peut chatouiller huit poissons à la fois.",
           membres: [{ ar: "ar-kraken.mp4", ratio: 1.022, taille: 1.39, pied: 0.035, altitude: 0.1 }] },
-  "12": { cle: "swamp", nom: "Gadoo, le monstre des marais", indice: "adore les flaques de boue",
+  "12": { cle: "swamp", nom: "Gadoo, le monstre des marais", indice: "patauge là où c'est mouillé : près de l'eau ou sous les arbres",
           texte: "Un bonhomme tout vert, couvert d'algues et de mousse. Son jeu préféré est de sauter dans les flaques de boue, et il n'a jamais besoin de prendre de bain !",
           membres: [{ ar: "ar-swamp.mp4", ratio: 1.067, taille: 1.43, pied: 0.034, altitude: 0 }] }
 };
@@ -902,6 +902,8 @@ $("suiteIntro").addEventListener("click", () => {
 });
 
 /* ===================== Grimoire ===================== */
+const FEMININ = ["nessie", "faery", "gargouille", "chupacabra", "kraken"];   // d'après les textes (« elle »)
+const relachee = t => t.membres.length > 1 ? "Relâchés dans leur environnement" : "Relâché" + (FEMININ.includes(t.cle) ? "e" : "") + " dans son environnement";
 function carte(t, k) {
   const p = pris().includes(k), r = relaches().includes(t.cle);
   let actions = "";
@@ -910,7 +912,7 @@ function carte(t, k) {
   return '<div class="carte' + (p ? " prise" : "") + (r ? " libre" : "") + '">' +
     '<img alt="" loading="lazy" src="' + (p ? t.image : t.ombre) + '"' + (p ? "" : ' class="ombre"') + '>' +
     '<div class="nom">' + (p ? t.nom : "???") + '</div>' +
-    '<div class="astuce">' + (p ? (r ? "Relâché dans son monde" : "Sauvé !") : "<b>Indice :</b> " + t.indice) + '</div>' + actions + '</div>';
+    '<div class="astuce">' + (p ? (r ? relachee(t) : "Sauvé !") : "<b>Indice :</b> " + t.indice) + '</div>' + actions + '</div>';
 }
 function dessinerGrimoire() {
   const n = pris().length, tousLibres = ids.every(k => relaches().includes(TRAQUES[k].cle));
@@ -937,7 +939,7 @@ function relacher(k) {
   changerAmbiance("silence");
   const t = TRAQUES[k], v = $("videoRelache"), img = $("envol");
   $("relache").hidden = false; $("voirFigurine").hidden = true; figurineAMontrer = t.cle;
-  $("titreRelache").textContent = t.nom.split(",")[0] + (t.membres.length > 1 ? " retournent dans leur monde…" : " retourne dans son monde…");
+  $("titreRelache").textContent = t.nom.split(",")[0] + (t.membres.length > 1 ? " sont " : " est ") + relachee(t).toLowerCase() + "…";
   sfx("relache");
   let fini = false, envole = false;
   const fin = () => {
@@ -1560,7 +1562,7 @@ function preparerCarte(orig, fictif) {
     const ind = mode() === "interieur"; PXC.H = ind ? 40 : 70; PXC.ppm = ind ? 3 : 2; PXC.zoom = ind ? 4 : 3;
     PXC.joueur = fixPX && !fictif ? versM(fixPX.lat, fixPX.lon) : { x: 0, y: 0 };
     dessinerCarte(null);
-    if (!fictif) chargerOSM(orig).then(d => { if (PXC.origine === orig) dessinerCarte(d); })
+    if (!fictif) chargerOSM(orig).then(d => { if (PXC.origine === orig) { dessinerCarte(d); habiter(); } })
       .catch(() => bandeau("La carte du quartier n'a pas pu se charger (réseau ?). Le détecteur marche quand même.", 5000));
   }
   placerCibles();
@@ -1573,13 +1575,89 @@ function placerCibles() {
   const pris = Object.values(p.pos).map(g => versM(g[0], g[1]));
   const tirer = (rMin, rMax, cx, cy) => { let b = null;
     for (let i = 0; i < 60; i++) { const a = Math.random() * 2 * Math.PI, r = rMin + Math.random() * (rMax - rMin), x = cx + Math.cos(a) * r, y = cy + Math.sin(a) * r;
-      b = { x, y }; if (pris.every(e => Math.hypot(e.x - x, e.y - y) >= ecart)) break; }
+      b = { x, y }; if (pris.every(e => Math.hypot(e.x - x, e.y - y) >= ecart) && (ind || accessible(x, y))) break; }
     pris.push(b); return b; };
-  p.liste.forEach(k => { if (p.pos[k]) return; if (l[k]) { p.pos[k] = l[k]; return; } const b = tirer(mini, R, 0, 0); p.pos[k] = versGeo(b.x, b.y); });
-  if (enBoss && !p.posBoss) { const b = tirer(ind ? 4 : 8, ind ? 9 : 16, PXC.joueur.x, PXC.joueur.y); p.posBoss = versGeo(b.x, b.y); }
+  const habitats = !ind && !PXC.fictif;   // en extérieur, la créature tirée au hasard ira dans son habitat dès que la carte du quartier sera chargée
+  p.auHasard = p.auHasard || [];
+  p.liste.forEach(k => { if (p.pos[k]) return; if (l[k]) { p.pos[k] = l[k]; return; } const b = tirer(mini, R, 0, 0); p.pos[k] = versGeo(b.x, b.y); if (habitats) p.auHasard.push(k); });
+  if (enBoss && !p.posBoss) { const b = caseSure(PXC.joueur.x, PXC.joueur.y, 8, 16) || tirer(ind ? 4 : 8, ind ? 9 : 16, PXC.joueur.x, PXC.joueur.y); p.posBoss = versGeo(b.x, b.y); }
   ecrire(CLES.partie, p);
   PXC.cibles = enBoss ? [Object.assign({ k: "catsith" }, versM(p.posBoss[0], p.posBoss[1]))]
                       : restantesJeu().map(k => Object.assign({ k }, versM(p.pos[k][0], p.pos[k][1])));
+}
+
+// ---------- habitats : chaque créature se cache sur un terrain qui lui ressemble ----------
+// règles essayées dans l'ordre : [couleurs de la palette, distance maximale en mètres] ; "lampe" = lampadaire OSM
+const ARBRES = ["arbre1", "arbre2", "arbre3"];
+const HABITAT = {
+  mothman: [["lampe", 3], [["chemin", "chemin2", "dalle"], 1]],    // sous un lampadaire, sinon le long d'un chemin
+  nessie: [[["eau"], 3]],                                           // au bord de l'eau
+  thunderbird: [[["terrain"], 0], [["parc"], 0]],                   // les grands espaces
+  barghest: [[ARBRES, 1], [["bois"], 0]],                           // un bâton sous les arbres
+  faery: [[["chemin", "chemin2"], 1], [["dalle"], 1]],              // le long des chemins
+  lutins: [[ARBRES, 1], [["parc", "quartier"], 0]],                 // les buissons
+  jackalope: [[["terrain", "parc"], 0], [["chemin", "chemin2"], 1]],   // là où l'on peut courir
+  yeti: [[["chemin", "chemin2"], 1]],                               // ses traces sur les sentiers
+  gargouille: [[["toit", "facade", "mur"], 2]],                     // au pied d'un bâtiment
+  chupacabra: [[["facade"], 3], [["quartier"], 0]],                // près des maisons
+  kraken: [[["eau"], 4]],                                           // ses trésors au bord de l'eau
+  swamp: [[["eau"], 4], [ARBRES, 1], [["bois"], 0]]                // là où c'est mouillé : près de l'eau ou sous les arbres
+};
+const INTERDIT = new Set(["eau", "eau2", "toit", "toitClair", "facade", "mur", "route", "bordure", "marquage", "parking"]);   // ni dans l'eau, ni dans un bâtiment, ni sur la route
+const terrain = (x, y) => { const g = PXC && PXC.grille, S = 2 * PXC.H, i = Math.floor(x + PXC.H), j = Math.floor(y + PXC.H); return g && i >= 0 && j >= 0 && i < S && j < S ? g[j * S + i] : null; };
+const accessible = (x, y) => !PXC || !PXC.grille || !INTERDIT.has(terrain(x, y));
+function pres(x, y, couleurs, dist) {   // distance 0 : la case est bien à l'intérieur de ce terrain (au moins 7 cases sur 9)
+  if (couleurs === "lampe") return PXC.lampes.some(q => Math.hypot(q.x - x, q.y - y) <= dist);
+  if (!dist) { if (!couleurs.includes(terrain(x, y))) return false; let n = 0;
+    for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) n += couleurs.includes(terrain(x + dx, y + dy));
+    return n >= 7; }
+  let n = 0;   // les bords des formes donnent des pixels de couleur intermédiaire : on demande au moins 3 cases, pas une seule isolée
+  for (let dy = -dist; dy <= dist; dy++) for (let dx = -dist; dx <= dist; dx++)
+    if (dx * dx + dy * dy <= dist * dist && couleurs.includes(terrain(x + dx, y + dy)) && ++n >= 3) return true;
+  return false;
+}
+// zone de jeu : les cases qu'on rejoint à pied depuis (cx, cy) sans traverser de rue, d'eau ni de bâtiment (pour que les enfants ne traversent pas la route)
+function zoneSure(cx, cy, R) {
+  if (!PXC.grille || mode() === "interieur") return null;
+  const S = 2 * PXC.H, H = PXC.H, libre = (i, j) => i >= 0 && j >= 0 && i < S && j < S && !INTERDIT.has(PXC.grille[j * S + i]) && Math.hypot(i + .5 - H - cx, j + .5 - H - cy) <= R + 1;
+  let i0 = Math.floor(cx + H), j0 = Math.floor(cy + H), d0 = 1e9;
+  if (!libre(i0, j0)) {   // le GPS place parfois le joueur sur la chaussée : on part de la case libre la plus proche
+    const ci = i0, cj = j0;
+    for (let dj = -4; dj <= 4; dj++) for (let di = -4; di <= 4; di++) if (libre(ci + di, cj + dj) && di * di + dj * dj < d0) { d0 = di * di + dj * dj; i0 = ci + di; j0 = cj + dj; }
+    if (d0 === 1e9) return new Set();
+  }
+  const vu = new Set([j0 * S + i0]), file = [[i0, j0]];
+  while (file.length) { const [i, j] = file.pop();
+    for (const [a, b] of [[i + 1, j], [i - 1, j], [i, j + 1], [i, j - 1]]) { const n = b * S + a; if (!vu.has(n) && libre(a, b)) { vu.add(n); file.push([a, b]); } } }
+  return vu;
+}
+const dansZone = (z, x, y) => !z || z.has(Math.floor(y + PXC.H) * 2 * PXC.H + Math.floor(x + PXC.H));
+function caseSure(cx, cy, rMin, rMax) {   // une case au hasard dans la zone sûre autour de (cx, cy), ou null sans carte
+  const z = zoneSure(cx, cy, rMax); if (!z) return null;
+  const S = 2 * PXC.H, l = [...z].map(n => ({ x: n % S - PXC.H + .5, y: Math.floor(n / S) - PXC.H + .5 }));
+  const ok = l.filter(c => Math.hypot(c.x - cx, c.y - cy) >= rMin), t = ok.length ? ok : l;
+  return t.length ? t[Math.floor(Math.random() * t.length)] : null;
+}
+function caseHabitat(k, rMin, rMax, autres, ecart, z) {
+  const regles = HABITAT[TRAQUES[k].cle] || [], cases = [];
+  for (let y = -rMax; y <= rMax; y++) for (let x = -rMax; x <= rMax; x++) {
+    const cx = x + .5, cy = y + .5, r = Math.hypot(cx, cy);
+    if (r >= rMin && r <= rMax && accessible(cx, cy) && dansZone(z, cx, cy) && autres.every(e => Math.hypot(e.x - cx, e.y - cy) >= ecart)) cases.push({ x: cx, y: cy });
+  }
+  for (const [couleurs, dist] of regles) { const ok = cases.filter(c => pres(c.x, c.y, couleurs, dist)); if (ok.length) return ok[Math.floor(Math.random() * ok.length)]; }
+  return cases.length ? cases[Math.floor(Math.random() * cases.length)] : null;
+}
+function habiter() {
+  const p = partie(); if (!p || !p.pos || !p.auHasard || !p.auHasard.length || !PXC.grille || enBoss) return;
+  const R = rayonJeu(), vu = PXC.revele && PXC.revele.c.k, z = zoneSure(0, 0, R);
+  const autres = Object.keys(p.pos).filter(k => !p.auHasard.includes(k)).map(k => versM(p.pos[k][0], p.pos[k][1]));
+  p.auHasard.slice().forEach(k => {
+    if (p.pris.includes(k) || k === vu) return;
+    const c = caseHabitat(k, 6, R, autres, 6, z) || caseHabitat(k, 3, R, autres, 3, z);   // petite zone : on rapproche les créatures
+    if (!c) return;
+    p.pos[k] = versGeo(c.x, c.y); autres.push(c); p.auHasard.splice(p.auHasard.indexOf(k), 1);
+  });
+  ecrire(CLES.partie, p); placerCibles();
 }
 
 async function chargerOSM(orig) {
@@ -1589,7 +1667,7 @@ async function chargerOSM(orig) {
   const a = `(around:${R},${la},${lo})`;
   const q = `[out:json][timeout:25];(way["building"]${a};way["highway"]${a};way["natural"~"water|wood|scrub|grassland|wetland|beach|sand"]${a};relation["natural"="water"]${a};` +
     `way["waterway"]${a};way["landuse"~"grass|forest|meadow|recreation_ground|village_green|cemetery|allotments|residential|basin|reservoir"]${a};` +
-    `way["leisure"~"park|garden|pitch|playground|swimming_pool"]${a};way["amenity"="parking"]${a};node["natural"="tree"]${a};way["barrier"~"wall|fence|hedge"]${a};);out geom;`;
+    `way["leisure"~"park|garden|pitch|playground|swimming_pool"]${a};way["amenity"="parking"]${a};node["natural"="tree"]${a};node["highway"="street_lamp"]${a};way["barrier"~"wall|fence|hedge"]${a};);out geom;`;
   let dernier = null;
   for (const url of ["https://overpass-api.de/api/interpreter", "https://overpass.kumi.systems/api/interpreter"]) {
     try {
@@ -1654,6 +1732,13 @@ function dessinerCarte(d) {
   }
   g.putImageData(img, 0, 0);
   PXC.carte = cv; PXC.eau = eau; PXC.N = N;
+  // grille du terrain, une case par mètre (couleur de la palette au centre de la case) : sert à cacher les créatures dans leur habitat
+  const S = 2 * H, cles = Object.keys(PAL); PXC.grille = null; PXC.lampes = [];
+  if (d && d.elements) {
+    PXC.grille = new Array(S * S);
+    for (let j = 0; j < S; j++) for (let i = 0; i < S; i++) { const n = Math.floor((j + .5) * k) * N + Math.floor((i + .5) * k); PXC.grille[j * S + i] = cles[PAL_RGB.findIndex(q => q[0] === px[n * 4] && q[1] === px[n * 4 + 1] && q[2] === px[n * 4 + 2])]; }
+    PXC.lampes = d.elements.filter(e => e.type === "node" && (e.tags || {}).highway === "street_lamp").map(e => versM(e.lat, e.lon));
+  }
 }
 function dessinerArbre(g, x, y, k) {
   const r = Math.max(3, 2.1 * k);
@@ -1779,7 +1864,8 @@ function attraper() {
   if (enBoss && bossPhase < 2) {   // Rune file ailleurs deux fois avant de se laisser attraper
     bossPhase++; sfx("fuite");
     const p = partie(), ind = mode() === "interieur", a = Math.random() * 2 * Math.PI, d = ind ? 4 + Math.random() * 4 : 8 + Math.random() * 7;
-    p.posBoss = versGeo(PXC.joueur.x + Math.cos(a) * d, PXC.joueur.y + Math.sin(a) * d); ecrire(CLES.partie, p); placerCibles();
+    const sur = caseSure(PXC.joueur.x, PXC.joueur.y, 8, 15);
+    p.posBoss = sur ? versGeo(sur.x, sur.y) : versGeo(PXC.joueur.x + Math.cos(a) * d, PXC.joueur.y + Math.sin(a) * d); ecrire(CLES.partie, p); placerCibles();
     bandeau(bossPhase === 1 ? "Hé hé ! Trop lent ! Attrape-moi si tu peux !" : "Encore raté ! Dernière chance, petit humain !", 3200);
     $("consigne").textContent = "Rune s'est enfuie ! Suis le détecteur !"; return;
   }
@@ -1793,7 +1879,8 @@ window.__test = { ouvrir: () => { montrer(null); $("scene").hidden = false; init
   regarder: () => { const c = moteur.creature; if (c) c.angle = lacetCamera(); },
   dbg: () => { const m = versM(fixPX.lat, fixPX.lon); return { m, manuel: PXC.manuel, fictif: PXC.fictif, org: PXC.origine, jo: PXC.joueur }; },
   pixel: () => PXC && { t: PXC.t, raf: PXC.raf, fix: fixPX, fictif: PXC.fictif, origine: PXC.origine, joueur: PXC.joueur, cibles: PXC.cibles, revele: PXC.revele && PXC.revele.c.k, manuel: PXC.manuel, carte: !!PXC.carte, N: PXC.N, signal: PXC.signal },
-  aller: (x, y) => { PXC.manuel = true; PXC.vise = { x, y }; }, attraper: () => attraper(), frapper: () => frapper(),
+  zone: () => { const z = zoneSure(0, 0, rayonJeu()); return z && z.size; },
+  aller: (x, y) => { PXC.manuel = true; PXC.vise = { x, y }; }, terrain: (x, y) => terrain(x, y), carte: () => PXC.carte && { url: PXC.carte.toDataURL(), H: PXC.H, ppm: PXC.ppm }, attraper: () => attraper(), frapper: () => frapper(),
   jauge: () => moteur && moteur.creature && moteur.creature.jauge, figurine: c => ouvrirFigurine(c),
   etat: () => { const c = moteur && moteur.creature; return { angle: c && c.angle, lacet: moteur && lacetCamera(), gyro, gyroOK, trouve: c && c.trouve, consigne: $("consigne").textContent }; } };
 </script>
