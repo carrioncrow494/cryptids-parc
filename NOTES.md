@@ -38,10 +38,10 @@ La version 1 est dans le dépôt `carrioncrow494/chasse-monstres` et n'est pas m
 - **Capture AR avec jauge**
   - On tapote la créature (ou le sceau, en visant) pour remplir la jauge. La jauge se vide doucement (`GAIN`, `DRAIN`).
   - Selon la difficulté (1 à 4 étoiles, table `DIFF`), la créature s'échappe à certains niveaux de jauge (`ESQUIVES`) ; des flèches aident à la retrouver.
-- **Boss final : Sporran**
-  - Quand les 12 cryptides sont dans la collection, Sporran lance son défi (écran de victoire, ou bouton « Défi de Sporran » sur l'accueil).
-  - Sur la carte, il s'enfuit deux fois avant de se laisser attraper, puis la capture se fait en AR en difficulté 4 (`ar-catsith.mp4`).
-  - Une fois vaincu, il est enregistré dans la clé `cryptidsParc-boss`.
+- **Boss final : Rune**
+  - Quand les 12 cryptides sont dans la collection, Rune lance son défi (écran de victoire, ou bouton « Défi de Rune » sur l'accueil).
+  - Sur la carte, elle s'enfuit deux fois avant de se laisser attraper, puis la capture se fait en AR en difficulté 4 (`ar-catsith.mp4`).
+  - Une fois vaincue, elle est enregistrée dans la clé `cryptidsParc-boss`.
 - **Sans GPS** (refus, pas de signal pendant 15 s, ou intérieur) : bouton 👣. On avance en touchant la carte.
 - **Interface**
   - Polices (hébergées dans le dépôt) : Creepster, la police dégoulinante, pour les gros titres et les noms des créatures ; IM Fell English SC pour tout le reste.
@@ -50,7 +50,7 @@ La version 1 est dans le dépôt `carrioncrow494/chasse-monstres` et n'est pas m
   - Volume général : le bouton ♪ ouvre un curseur.
   - Picto « livre ouvert » pour le grimoire.
 - **Contenu**
-  - Nouveau texte de Sporran.
+  - Nouveau texte de Rune.
   - Lutins du grimoire refaits sans halo.
   - Nouvelles figurines du Thunderbird, du Barghest et du Jackalope ; Huhuk agrandi (`ECH_FIG`).
 
@@ -59,7 +59,7 @@ La version 1 est dans le dépôt `carrioncrow494/chasse-monstres` et n'est pas m
 - Une fois la carte OSM chargée, chaque créature tirée au hasard est déplacée dans l'habitat que décrit son indice (table `HABITAT`, fonction `habiter`) : Michmuche sous un lampadaire (`highway=street_lamp`), Ness et Bloop au bord de l'eau, Huhuk dans les grands espaces, Whitby sous les arbres, Loupiote et Migou sur les chemins, les lutins dans les buissons, Bucky dans l'herbe, Ardoise et Moca près des maisons, Gadoo près de l'eau ou sous les arbres.
 - Les indices du grimoire (14/10/2026) ont été réécrits pour des enfants de 10 ans, et pour marcher en ville comme à la campagne.
 - Le terrain est lu dans une grille d'une case par mètre (`PXC.grille`), prise sur la carte pixel art déjà dessinée. Une créature n'est jamais posée dans l'eau, dans un bâtiment, sur une route ou un parking (`INTERDIT`).
-- **Sans traverser de rue** : les créatures restent dans la zone qu'on rejoint à pied depuis le point de départ sans traverser de route, d'eau ni de bâtiment (`zoneSure`, parcours de la grille case par case). Si le GPS place le joueur sur la chaussée, la zone part du trottoir le plus proche. Sporran (boss) suit la même règle quand il s'enfuit.
+- **Sans traverser de rue** : les créatures restent dans la zone qu'on rejoint à pied depuis le point de départ sans traverser de route, d'eau ni de bâtiment (`zoneSure`, parcours de la grille case par case). Si le GPS place le joueur sur la chaussée, la zone part du trottoir le plus proche. Rune (boss) suit la même règle quand il s'enfuit.
 - Si aucune case ne correspond, la créature va sur n'importe quelle case accessible. Sans carte OSM (réseau, Overpass), on garde le tirage au hasard.
 - Les créatures posées par un parent ne bougent pas. Le mode intérieur n'est pas concerné.
 
@@ -79,17 +79,17 @@ La version 1 est dans le dépôt `carrioncrow494/chasse-monstres` et n'est pas m
 
 ## Tout le reste vient de la V1 (état au 12/10/2026)
 
-- **Contenu** : 12 traques et 13 créatures. Kumquat et Kiwi, les lutins, forment une seule traque. Sporran le Cat sìth est le guide.
+- **Contenu** : 12 traques et 13 créatures. Kumquat et Kiwi, les lutins, forment une seule traque. Rune, la Cat sìth, est la guide.
 - **Parcours** :
-  - écran d'entrée (pour la musique), puis l'accueil avec l'animation 3 de Sporran ;
-  - à chaque « Commencer l'aventure » : l'intro de Sporran (texte sans voix ; Sporran est centré sous la bulle), puis le choix des créatures.
+  - écran d'entrée (pour la musique), puis l'accueil avec l'animation 3 de Rune ;
+  - à chaque « Commencer l'aventure » : l'intro de Rune (texte sans voix ; Rune est centrée sous la bulle), puis le choix des créatures.
 - **Œil magique** :
   - three.js 0.169 ; chaque créature est un plan qui joue une vidéo, couleur en haut et transparence en bas (`ar-*.mp4`) ;
   - gyroscope, avec attente de la première mesure avant de placer la créature ;
   - sans capteurs de mouvement, on regarde autour de soi en glissant le doigt ;
   - toutes les créatures ont la même taille apparente et apparaissent à 3,2 m ;
   - sceau magique, cris, flèches.
-- **Grimoire et figurines** : grimoire en animations 2D, relâche en vidéo, figurines 360° (`figurine-*.glb`), remerciement de Sporran.
+- **Grimoire et figurines** : grimoire en animations 2D, relâche en vidéo, figurines 360° (`figurine-*.glb`), remerciement de Rune.
 - **Son** : musique « Tim Burton » et bruitages fabriqués par code (Web Audio).
 
 ## Modifier l'app
