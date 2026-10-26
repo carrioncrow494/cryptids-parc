@@ -22,7 +22,7 @@ const CARTE = MONDE.carte;   // fabriquée par sources/monde.py : 6 îles peinte
 const LARG = CARTE[0].length, HAUT = CARTE.length;
 // Les régions de l'île : la première qui contient la case gagne. Chaque créature a la sienne (HABITAT).
 const ZONES = {
-  cabane: { nom: "Le bois Biscornu", panneau: "Le bois Biscornu. Dans la cabane de travers vit… Sporran !" },
+  cabane: { nom: "Le bois Biscornu", panneau: "Le bois Biscornu. Dans la cabane de travers vit… Rune !" },
   foret: { nom: "Le lac Carcajou", panneau: "Le lac Carcajou : le grand lac et ses deux kelpies de pierre, le chalet et le cercle de pierres." },
   bayou: { nom: "Le bayou Barbouille", panneau: "Le bayou Barbouille : passerelles, cyprès et eaux boueuses." },
   village: { nom: "Le vieux village", panneau: "Le vieux village et sa cathédrale. Un pont part vers chaque région." },
@@ -166,7 +166,7 @@ function placerJeu(p) {   // chaque créature de l'aventure se cache dans sa ré
     j.pos[k] = [0, c[0], c[1]];
   });
 }
-function cacherBoss(p) {   // Sporran rôde dans le bois Biscornu, autour de sa cabane
+function cacherBoss(p) {   // Rune rôde dans le bois Biscornu, autour de sa cabane
   const l = cachettesJ("catsith", [], JEU ? [JEU.x, JEU.y] : DEPART);
   p.jeu.boss = [0].concat(auHasardJ(l.length ? l : casesAccessibles().filter(([x, y]) => zoneJ(x, y) === "cabane")));
 }
@@ -213,7 +213,7 @@ function arriverJ(debut) {   // on entre dans une région : son nom, et combien 
   musiqueZonesJ();
   majPartie(p => { if (p.jeu) { p.jeu.vus = p.jeu.vus || ["village"]; if (!p.jeu.vus.includes(z)) p.jeu.vus.push(z); } });   // les régions déjà visitées : la carte les débloque
   let txt = n ? n + (n > 1 ? " cryptides se cachent ici" : " cryptide se cache ici") : "Aucun cryptide ici. Cherche ailleurs !";
-  if (enBoss) txt = z === "cabane" ? "Sporran rôde autour de sa cabane…" : "Sporran t'attend dans le bois Biscornu, après le lac Carcajou !";
+  if (enBoss) txt = z === "cabane" ? "Rune rôde autour de sa cabane…" : "Rune t'attend dans le bois Biscornu, après le lac Carcajou !";
   if (MASQUES[z] && !aMasqueJ(z) && coffresCases()[z]) txt += " Un coffre à masque est caché quelque part !";
   titreJ(Z.nom, txt); if (!debut) sfx("page");
 }
@@ -484,7 +484,7 @@ function approcheJ() {
 }
 function revelerJ(q) {
   JEU.revele = { q, t0: performance.now() + 400 }; JEU.portail = null; sfx("revele"); if (navigator.vibrate) navigator.vibrate([60, 40, 60]);
-  dialogueJ(q.k === "catsith" ? "C'est Sporran ! Appuie sur A pour l'attraper !" : "Un cryptide sort de sa cachette ! Appuie sur A pour l'attraper avec l'œil magique !", 60000);
+  dialogueJ(q.k === "catsith" ? "C'est Rune ! Appuie sur A pour l'attraper !" : "Un cryptide sort de sa cachette ! Appuie sur A pour l'attraper avec l'œil magique !", 60000);
 }
 function boutonA() {
   if (!JEU) return;
@@ -505,14 +505,14 @@ function boutonA() {
   sfx("clic"); fouilleJ(); dialogueJ(["Rien par ici…", "Cherche ce qui bouge ! Approche-toi et le cryptide sortira.", "Le détecteur t'aide : plus il s'allume, plus un cryptide est proche !"][Math.floor(Math.random() * 3)], 2400);
 }
 function texteHabitant(n) {   // ce que dit l'habitant d'une région : bonjour, puis les indices
-  if (enBoss) return "Sporran ? Il est parti vers sa cabane, dans le bois Biscornu, à l'ouest du village !";
+  if (enBoss) return "Rune ? Elle est partie vers sa cabane, dans le bois Biscornu, à l'ouest du village !";
   const l = ciblesJ().filter(q => zoneJ(q.x, q.y) === n.zone).map(q => TRAQUES[q.k].indice);
   if (!l.length) return n.bonjour + " Ici, tous les cryptides sont sauvés. Bravo !";
   return n.bonjour + " " + (l.length > 1 ? l.length + " cryptides se cachent par ici. " : "Un cryptide se cache par ici. ") + (l.length > 1 ? "Indices : " : "Un indice : ") + l.map(t => "« " + t + " »").join(", ") + ". Cherche une cachette qui bouge !";
 }
 function texteSigne(x, y) {   // le panneau d'une région donne les indices des créatures qui s'y cachent
   const z = zoneJ(x, y), txt = ZONES[z].panneau;
-  if (enBoss) return txt + (z === "cabane" ? " Sporran rôde tout près…" : " Sporran t'attend dans le bois Biscornu !");
+  if (enBoss) return txt + (z === "cabane" ? " Rune rôde tout près…" : " Rune t'attend dans le bois Biscornu !");
   const l = ciblesJ().filter(q => zoneJ(q.x, q.y) === z).map(q => TRAQUES[q.k].indice);
   return l.length ? txt + " Indices : " + l.map(s => "« " + s + " »").join(", ") + "." : txt + " Aucun cryptide ne se cache par ici.";
 }
@@ -528,14 +528,14 @@ function trouveJ() {   // appelé depuis un « clic » ou une touche : iOS n'aut
   const k = r.q.k; JEU.revele = null; $("jeuDialogue").hidden = true;
   if (k === "catsith" && bossPhase < 2) { partirCrea(r.q); return fuiteBoss(); }
   fermerJeu(); sfx("oeil");
-  bandeau(k === "catsith" ? "Tu as débusqué Sporran ! Ouvre l'œil magique…" : "Débusqué ! Cherche-le autour de toi avec l'œil magique…", 2400);
+  bandeau(k === "catsith" ? "Tu as débusqué Rune ! Ouvre l'œil magique…" : "Débusqué ! Cherche-le autour de toi avec l'œil magique…", 2400);
   ouvrirOeil(() => k === "catsith" ? demarrerBossAR() : demarrerTraque(k, { gpsFait: true, angleGPS: null }));
 }
 function fuirJ() {
   JEU.ignore = JEU.revele.q; partirCrea(JEU.revele.q); JEU.revele = null; JEU.action = null; sfx("clic");
   dialogueJ("Tu laisses le cryptide tranquille… Il reste caché ici. Reviens quand tu veux !", 3000);
 }
-function fuiteBoss() {   // comme sur la carte GPS : Sporran file ailleurs deux fois avant de se laisser attraper
+function fuiteBoss() {   // comme sur la carte GPS : Rune file ailleurs deux fois avant de se laisser attraper
   bossPhase++; sfx("fuite"); JEU.action = null;
   const p = partie(); cacherBoss(p); ecrire(CLES.partie, p);
   dialogueJ(bossPhase === 1 ? "Hé hé ! Trop lent ! Attrape-moi si tu peux !" : "Encore raté ! Dernière chance, petit humain !", 3400);
@@ -1166,7 +1166,7 @@ function etincelleJ() {   // une petite étoile qui brille
   return R.etoile = new THREE.SpriteMaterial({ map: t, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending });
 }
 // Les créatures animées : jeu-crea-<clé>.webp, 4 lignes de 4 images (apparition, attente, action, disparition ;
-// pour Sporran : attente, attente, disparition, réapparition). Elle sort de sa cachette quand on la trouve.
+// pour Rune : attente, attente, disparition, réapparition). Elle sort de sa cachette quand on la trouve.
 const TEX_CREA = {};
 function texCrea(k) {
   if (TEX_CREA[k] !== undefined) return TEX_CREA[k];

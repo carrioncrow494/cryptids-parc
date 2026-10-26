@@ -84,10 +84,10 @@
   .choix .boutons { justify-content: flex-start; }
   .etat { font-family: var(--deco); font-weight: 400; letter-spacing: .1em; color: var(--citrouille); }
 
-  /* ---------- Intro : Sporran raconte ---------- */
+  /* ---------- Intro : Rune raconte ---------- */
   #intro { background: radial-gradient(ellipse 80% 60% at 30% 80%, rgba(42,154,166,.6), var(--abysse) 75%); }
   #guide { position: absolute; left: 50%; transform: translateX(-50%); bottom: calc(-4px + env(safe-area-inset-bottom, 0px));
-    width: min(56vw, 260px); z-index: 3; filter: drop-shadow(0 0 16px rgba(79,243,255,.35)); pointer-events: none; }   /* Sporran centré sous la bulle */
+    width: min(56vw, 260px); z-index: 3; filter: drop-shadow(0 0 16px rgba(79,243,255,.35)); pointer-events: none; }   /* Rune centrée sous la bulle */
   .bulle { position: absolute; z-index: 4; left: 16px; right: 16px; bottom: calc(min(56vw, 260px) * .86 + env(safe-area-inset-bottom, 0px));
     max-width: 560px; margin: 0 auto; padding: 18px 20px 16px; border: 2px solid rgba(79,243,255,.55); border-radius: 22px 22px 22px 6px;
     background: rgba(3,14,20,.92); box-shadow: 0 0 22px rgba(79,243,255,.25); display: flex; flex-direction: column; gap: 14px; }
@@ -451,12 +451,12 @@
       <h1>Cryptids</h1>
       <div class="sous-titre">Le grimoire des créatures perdues</div>
     </div>
-    <p id="intro-accueil">Des créatures se sont échappées du grimoire de Sporran. Aide-le à les retrouver !</p>
+    <p id="intro-accueil">Des créatures se sont échappées du grimoire de Rune. Aide-la à les retrouver !</p>
     <div class="colonne">
       <button id="commencer" class="planche principal" type="button">Commencer l'aventure</button>
       <button id="nouvelle" class="lien" type="button" hidden>Commencer une nouvelle aventure</button>
       <button class="planche petit ouvrir-grimoire avec-picto" type="button"><svg class="picto-livre" viewBox="0 0 48 36" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"><path d="M24 8C18 4 10 3 3 5v26c7-2 15-1 21 3 6-4 14-5 21-3V5c-7-2-15-1-21 3z"/><path d="M24 8v26"/><path d="M8 11c4-.6 8-.2 11.5 1.4M8 16c4-.6 8-.2 11.5 1.4M8 21c4-.6 8-.2 11.5 1.4M40 11c-4-.6-8-.2-11.5 1.4"/></g><path d="M34.5 16.5l1.3 2.8 3 .4-2.2 2 .6 3-2.7-1.5-2.7 1.5.6-3-2.2-2 3-.4z" fill="currentColor"/></svg>Mon grimoire</button>
-      <button id="defiAccueil" class="planche petit orange" type="button" hidden>Défi de Sporran</button>
+      <button id="defiAccueil" class="planche petit orange" type="button" hidden>Défi de Rune</button>
     <button id="ouvrirParents" class="planche petit orange" type="button">Choisir son aventure</button>
     </div>
     <p id="modeActuel" class="etat"></p>
@@ -554,12 +554,12 @@
   </div>
 </div>
 
-<!-- Introduction : Sporran le Cat sìth -->
+<!-- Introduction : Rune, la Cat sìth -->
 <div id="intro" class="ecran" hidden>
   <button class="croix" type="button" data-ferme="intro" aria-label="Fermer">✕</button>
-  <img id="guide" src="menu-catsith-1.webp" alt="Sporran, le Cat sìth">
+  <img id="guide" src="menu-catsith-1.webp" alt="Rune, la Cat sìth">
   <div class="bulle">
-    <div class="qui">Sporran, le Cat sìth</div>
+    <div class="qui">Rune, la Cat sìth</div>
     <p id="texteIntro"></p>
     <div class="boutons"><button id="passerIntro" class="lien" type="button">Passer</button><button id="suiteIntro" class="planche petit" type="button">Suite</button></div>
   </div>
@@ -671,7 +671,7 @@
     <p id="final" class="final" hidden>Aventure terminée, tous les cryptides sont sauvés ! Ouvre ton grimoire pour les relâcher et gagner leurs figurines, ou lance une nouvelle aventure.</p>
     <div class="boutons">
       <button id="continuer" class="planche petit" type="button">Continuer le sauvetage</button>
-      <button id="defi" class="planche petit orange" type="button" hidden>Relever le défi de Sporran</button>
+      <button id="defi" class="planche petit orange" type="button" hidden>Relever le défi de Rune</button>
       <button id="rejouer" class="planche petit orange" type="button" hidden>Nouvelle aventure</button>
       <button class="planche petit ouvrir-grimoire avec-picto" type="button"><svg class="picto-livre" viewBox="0 0 48 36" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"><path d="M24 8C18 4 10 3 3 5v26c7-2 15-1 21 3 6-4 14-5 21-3V5c-7-2-15-1-21 3z"/><path d="M24 8v26"/><path d="M8 11c4-.6 8-.2 11.5 1.4M8 16c4-.6 8-.2 11.5 1.4M8 21c4-.6 8-.2 11.5 1.4M40 11c-4-.6-8-.2-11.5 1.4"/></g><path d="M34.5 16.5l1.3 2.8 3 .4-2.2 2 .6 3-2.7-1.5-2.7 1.5.6-3-2.2-2 3-.4z" fill="currentColor"/></svg>Grimoire</button>
     </div>
@@ -763,8 +763,8 @@ const TRAQUES = {
           texte: "Un bonhomme tout vert, couvert d'algues et de mousse. Son jeu préféré est de sauter dans les flaques de boue, et il n'a jamais besoin de prendre de bain !",
           membres: [{ ar: "ar-swamp.mp4", ratio: 1.067, taille: 1.43, pied: 0.034, altitude: 0 }] }
 };
-const GARDIEN = { cle: "catsith", nom: "Sporran, le Cat sìth",
-  texte: "Un grand chat noir d'Écosse avec une tache blanche en forme de cœur sur le poitrail. Certains disent que c'est en fait une sorcière transformée. Il adore se glisser sans bruit dans les collines et ronronne si fort qu'on le prend pour le vent." };
+const GARDIEN = { cle: "catsith", nom: "Rune, la Cat sìth",
+  texte: "Une grande chatte noire d'Écosse avec une tache blanche en forme de cœur sur le poitrail. Certains disent que c'est en fait une sorcière transformée. Elle adore se glisser sans bruit dans les collines et ronronne si fort qu'on la prend pour le vent." };
 const INTRO = [
   "Chapristi !!!\nOn m'a volé mon précieux grimoire contenant l'ensemble des Cryptides. J'ai pu le retrouver, mais certains se sont égarés et perdus. Aide-moi à les sauver.",
   "Quoi !! Tu ne sais pas ce qu'est un Cryptide ?\nUn Cryptide est une créature souvent craintive, qui vit cachée et qui est difficile à voir avec des yeux d'humains.",
@@ -1097,7 +1097,7 @@ function dessinerGrimoire() {
   $("compteGrimoire").textContent = n + " / " + ids.length + " cryptides sauvés";
   $("grille").innerHTML =
     '<div class="carte gardien prise"><img alt="" src="' + GARDIEN.image + '"><div class="nom">' + GARDIEN.nom + '</div><div class="astuce">' + GARDIEN.texte + '</div>' +
-    (tousLibres ? '<button class="mini cyan" data-fig="catsith">Figurine de Sporran</button>' + (lire(CLES.merci, false) ? ' <button class="mini" data-merci="1">Revoir son message</button>' : '') : '<div class="astuce"><b>Relâche tous les cryptides pour gagner sa figurine.</b></div>') + '</div>' +
+    (tousLibres ? '<button class="mini cyan" data-fig="catsith">Figurine de Rune</button>' + (lire(CLES.merci, false) ? ' <button class="mini" data-merci="1">Revoir son message</button>' : '') : '<div class="astuce"><b>Relâche tous les cryptides pour gagner sa figurine.</b></div>') + '</div>' +
     ids.map(k => carte(TRAQUES[k], k)).join("");
 }
 let retourGrimoire = "accueil";
@@ -1133,15 +1133,15 @@ function relacher(k) {
   v.onended = fin; v.onerror = envol;
   v.play().catch(() => { v.muted = true; v.play().catch(envol); });
 }
-// tous les cryptides sont libres : Sporran remercie le joueur dans son monde
+// tous les cryptides sont libres : Rune remercie le joueur dans son monde
 let merciEnAttente = false;
 function merci() {
   changerAmbiance("silence");
   const v = $("videoRelache"); ecrire(CLES.merci, true);
   $("relache").hidden = false; $("envol").hidden = true; $("voirFigurine").hidden = true; figurineAMontrer = "catsith";
-  $("titreRelache").textContent = "Sporran te remercie !"; sfx("victoire");
+  $("titreRelache").textContent = "Rune te remercie !"; sfx("victoire");
   let fini = false;
-  const fin = () => { if (fini) return; fini = true; $("titreRelache").textContent = "Merci d'avoir sauvé tous les cryptides ! Figurine de Sporran débloquée !"; $("voirFigurine").hidden = false; sfx("figurine"); dessinerGrimoire(); };
+  const fin = () => { if (fini) return; fini = true; $("titreRelache").textContent = "Merci d'avoir sauvé tous les cryptides ! Figurine de Rune débloquée !"; $("voirFigurine").hidden = false; sfx("figurine"); dessinerGrimoire(); };
   v.src = "merci-catsith.mp4"; v.hidden = false; v.muted = !sonActif; v.currentTime = 0; v.onended = fin; v.onerror = fin;
   v.play().catch(() => { v.muted = true; v.play().catch(fin); });
 }
@@ -1388,7 +1388,7 @@ function sauve(id) {   // la créature rejoint la collection : écran « Sauvé 
   $("compteur").textContent = n >= total ? "" : n + " / " + total + " cryptides sauvés dans cette aventure.";
   $("final").hidden = n < total; $("continuer").hidden = n >= total; $("rejouer").hidden = n < total;
   $("titreVictoire").textContent = "Sauvé !"; $("defi").hidden = !(n >= total && bossDispo());
-  $("final").textContent = $("defi").hidden ? TEXTE_FINAL : "Tous les cryptides sont sauvés ! Mais Sporran a un dernier défi pour toi…";
+  $("final").textContent = $("defi").hidden ? TEXTE_FINAL : "Tous les cryptides sont sauvés ! Mais Rune a un dernier défi pour toi…";
   $("scene").hidden = true; montrer("victoire");
 }
 function bandeau(texte, duree) { $("bandeau").textContent = texte; $("bandeau").hidden = false; setTimeout(() => $("bandeau").hidden = true, duree); }
@@ -1443,7 +1443,7 @@ function lancerMembre() {
   const c = creerCreature(m); c.diff = traque.boss ? 4 : (DIFF[traque.cle] || 2); c.jauge = 0; c.esquives = 0;
   moteur.creature = c; placer(c, traque.angleGPS);
   tDebutRecherche = performance.now();
-  $("nomMonstre").textContent = traque.boss ? "Sporran" : traque.membres.length > 1 ? m.nom + " (" + (membreIdx + 1) + "/2)" : "???";
+  $("nomMonstre").textContent = traque.boss ? "Rune" : traque.membres.length > 1 ? m.nom + " (" + (membreIdx + 1) + "/2)" : "???";
   if (gyro || gyroOK) $("consigne").textContent = "Une créature se cache tout près… Tourne sur toi-même et écoute le tintement !"; else aideDoigt();
 }
 
@@ -1623,7 +1623,7 @@ const GAIN = { 1: .2, 2: .14, 3: .11, 4: .08 };            // jauge gagnée par 
 const DRAIN = { 1: .03, 2: .06, 3: .09, 4: .12 };          // jauge perdue par seconde
 const ESQUIVES = { 1: [], 2: [.5], 3: [.35, .7], 4: [.25, .5, .75] };   // la créature s'échappe à ces niveaux de jauge
 const SAUT = { 1: 1900, 2: 1500, 3: 1150, 4: 800 };       // sur la carte : temps entre deux sauts (ms)
-const BOSS_MEMBRE = { nom: "Sporran", id: "catsith", ar: "ar-catsith.mp4", ratio: 1.0706, taille: 1.85, pied: 0.046, altitude: 0 };
+const BOSS_MEMBRE = { nom: "Rune", id: "catsith", ar: "ar-catsith.mp4", ratio: 1.0706, taille: 1.85, pied: 0.046, altitude: 0 };
 const DEFI = [
   "Bravo !!! Tu as sauvé tous les Cryptides de mon grimoire. Je n'en reviens pas…",
   "Mais es-tu assez rapide pour attraper le plus malin de tous… MOI ?\nHé hé ! Je me cache tout près. Sors ton détecteur et attrape-moi si tu peux !"
@@ -1634,7 +1634,7 @@ const pixDe = k => k === "catsith" ? "pix-catsith.gif" : "pix-" + TRAQUES[k].cle
 const rayonJeu = () => mode() === "interieur" ? 10 : 20;
 const restantesJeu = () => { const p = partie(); return p ? p.liste.filter(k => !p.pris.includes(k)) : []; };
 
-// ---------- défi de Sporran ----------
+// ---------- défi de Rune ----------
 function lancerDefi() {
   fermerPixel(); $("scene").hidden = true; $("jauge").hidden = true;
   textesIntro = DEFI; finIntro = demarrerBoss; pageIntro = 0; montrer("intro"); afficherIntro(0);
@@ -1650,7 +1650,7 @@ function demarrerBossAR() {
   fermerPixel();
   traque = { id: "boss", boss: true, cle: "catsith", nom: GARDIEN.nom, texte: GARDIEN.texte, image: GARDIEN.image, membres: [BOSS_MEMBRE], gpsFait: true, angleGPS: null };
   membreIdx = 0; lancerMembre();
-  $("consigne").textContent = "Sporran se cache autour de toi… Tourne sur toi-même !";
+  $("consigne").textContent = "Rune se cache autour de toi… Tourne sur toi-même !";
 }
 function bossVaincu() {
   ecrire(CLE_BOSS, true); enBoss = false; sfx("victoire");
@@ -1699,7 +1699,7 @@ function ouvrirPixel() {
   traque = null; $("viseur").hidden = true; $("jauge").hidden = true; $("sceau").disabled = true; $("gauche").hidden = $("droite").hidden = true;
   if (!enBoss && !restantesJeu().length) { fermerPixel(); return prochaineTraque(); }
   $("pixel").hidden = false; $("detecteur").hidden = false;
-  $("nomMonstre").textContent = enBoss ? "Sporran" : "Œil magique";
+  $("nomMonstre").textContent = enBoss ? "Rune" : "Œil magique";
   if (!PXC) PXC = { carte: null, origine: null, joueur: { x: 0, y: 0 }, manuel: false, vise: null, cibles: [], revele: null, signal: 0, dernierBip: 0, raf: 0, t: 0 };
   PXC.revele = null; $("pixelSprites").innerHTML = "";
   const p = partie();
@@ -1757,7 +1757,7 @@ function preparerCarte(orig, fictif) {
       .catch(() => bandeau("La carte du quartier n'a pas pu se charger (réseau ?). Le détecteur marche quand même.", 5000));
   }
   placerCibles();
-  $("consigne").textContent = enBoss ? "Sporran se cache tout près… Suis le détecteur !" : "Marche et suis le détecteur : plus il s'allume, plus un cryptide est proche !";
+  $("consigne").textContent = enBoss ? "Rune se cache tout près… Suis le détecteur !" : "Marche et suis le détecteur : plus il s'allume, plus un cryptide est proche !";
 }
 function placerCibles() {
   const p = partie(); if (!p) return;
@@ -1945,7 +1945,7 @@ function reveler(c) {
   PXC.revele = { c, el, dx: 0, dy: 0, prochain: performance.now() + SAUT[d] + 600, d };
   el.addEventListener("pointerdown", e => { e.stopPropagation(); attraper(); });
   sfx("revele"); if (navigator.vibrate) navigator.vibrate([60, 40, 60]);
-  $("consigne").textContent = enBoss ? "Le voilà ! Touche Sporran avant qu'il ne file !" : "Un cryptide ! Touche-le vite avant qu'il ne bondisse !";
+  $("consigne").textContent = enBoss ? "La voilà ! Touche Rune avant qu'elle ne file !" : "Un cryptide ! Touche-le vite avant qu'il ne bondisse !";
 }
 function majApparition(t) {
   const r = PXC.revele; if (!r) return;
@@ -1969,14 +1969,14 @@ function attraper() {
   const box = r.el.getBoundingClientRect(), pouf = document.createElement("div"); pouf.className = "pouf";
   pouf.style.left = (box.left + box.width / 2) + "px"; pouf.style.top = (box.top + box.height / 2) + "px"; $("pixelSprites").appendChild(pouf); setTimeout(() => pouf.remove(), 600);
   r.el.remove(); PXC.revele = null; if (navigator.vibrate) navigator.vibrate(40);
-  if (enBoss && bossPhase < 2) {   // Sporran file ailleurs deux fois avant de se laisser attraper
+  if (enBoss && bossPhase < 2) {   // Rune file ailleurs deux fois avant de se laisser attraper
     bossPhase++; sfx("fuite");
     const p = partie(), ind = mode() === "interieur", a = Math.random() * 2 * Math.PI, d = ind ? 4 + Math.random() * 4 : 8 + Math.random() * 7;
     p.posBoss = versGeo(PXC.joueur.x + Math.cos(a) * d, PXC.joueur.y + Math.sin(a) * d); ecrire(CLES.partie, p); placerCibles();
     bandeau(bossPhase === 1 ? "Hé hé ! Trop lent ! Attrape-moi si tu peux !" : "Encore raté ! Dernière chance, petit humain !", 3200);
-    $("consigne").textContent = "Sporran s'est enfui ! Suis le détecteur !"; return;
+    $("consigne").textContent = "Rune s'est enfuie ! Suis le détecteur !"; return;
   }
-  sfx("sceau"); bandeau(enBoss ? "Tu as débusqué Sporran ! Ouvre l'œil magique…" : "Débusqué ! Ouvre l'œil magique et cherche-le autour de toi…", 2400);
+  sfx("sceau"); bandeau(enBoss ? "Tu as débusqué Rune ! Ouvre l'œil magique…" : "Débusqué ! Ouvre l'œil magique et cherche-le autour de toi…", 2400);
   const k = r.c.k;
   setTimeout(() => { fermerPixel(); sfx("oeil"); if (enBoss) demarrerBossAR(); else demarrerTraque(k, { gpsFait: true, angleGPS: null }); }, 900);
 }
@@ -2160,7 +2160,7 @@ const CARTE = MONDE.carte;   // fabriquée par sources/monde.py : 6 îles peinte
 const LARG = CARTE[0].length, HAUT = CARTE.length;
 // Les régions de l'île : la première qui contient la case gagne. Chaque créature a la sienne (HABITAT).
 const ZONES = {
-  cabane: { nom: "Le bois Biscornu", panneau: "Le bois Biscornu. Dans la cabane de travers vit… Sporran !" },
+  cabane: { nom: "Le bois Biscornu", panneau: "Le bois Biscornu. Dans la cabane de travers vit… Rune !" },
   foret: { nom: "Le lac Carcajou", panneau: "Le lac Carcajou : le grand lac et ses deux kelpies de pierre, le chalet et le cercle de pierres." },
   bayou: { nom: "Le bayou Barbouille", panneau: "Le bayou Barbouille : passerelles, cyprès et eaux boueuses." },
   village: { nom: "Le vieux village", panneau: "Le vieux village et sa cathédrale. Un pont part vers chaque région." },
@@ -2304,7 +2304,7 @@ function placerJeu(p) {   // chaque créature de l'aventure se cache dans sa ré
     j.pos[k] = [0, c[0], c[1]];
   });
 }
-function cacherBoss(p) {   // Sporran rôde dans le bois Biscornu, autour de sa cabane
+function cacherBoss(p) {   // Rune rôde dans le bois Biscornu, autour de sa cabane
   const l = cachettesJ("catsith", [], JEU ? [JEU.x, JEU.y] : DEPART);
   p.jeu.boss = [0].concat(auHasardJ(l.length ? l : casesAccessibles().filter(([x, y]) => zoneJ(x, y) === "cabane")));
 }
@@ -2351,7 +2351,7 @@ function arriverJ(debut) {   // on entre dans une région : son nom, et combien 
   musiqueZonesJ();
   majPartie(p => { if (p.jeu) { p.jeu.vus = p.jeu.vus || ["village"]; if (!p.jeu.vus.includes(z)) p.jeu.vus.push(z); } });   // les régions déjà visitées : la carte les débloque
   let txt = n ? n + (n > 1 ? " cryptides se cachent ici" : " cryptide se cache ici") : "Aucun cryptide ici. Cherche ailleurs !";
-  if (enBoss) txt = z === "cabane" ? "Sporran rôde autour de sa cabane…" : "Sporran t'attend dans le bois Biscornu, après le lac Carcajou !";
+  if (enBoss) txt = z === "cabane" ? "Rune rôde autour de sa cabane…" : "Rune t'attend dans le bois Biscornu, après le lac Carcajou !";
   if (MASQUES[z] && !aMasqueJ(z) && coffresCases()[z]) txt += " Un coffre à masque est caché quelque part !";
   titreJ(Z.nom, txt); if (!debut) sfx("page");
 }
@@ -2622,7 +2622,7 @@ function approcheJ() {
 }
 function revelerJ(q) {
   JEU.revele = { q, t0: performance.now() + 400 }; JEU.portail = null; sfx("revele"); if (navigator.vibrate) navigator.vibrate([60, 40, 60]);
-  dialogueJ(q.k === "catsith" ? "C'est Sporran ! Appuie sur A pour l'attraper !" : "Un cryptide sort de sa cachette ! Appuie sur A pour l'attraper avec l'œil magique !", 60000);
+  dialogueJ(q.k === "catsith" ? "C'est Rune ! Appuie sur A pour l'attraper !" : "Un cryptide sort de sa cachette ! Appuie sur A pour l'attraper avec l'œil magique !", 60000);
 }
 function boutonA() {
   if (!JEU) return;
@@ -2643,14 +2643,14 @@ function boutonA() {
   sfx("clic"); fouilleJ(); dialogueJ(["Rien par ici…", "Cherche ce qui bouge ! Approche-toi et le cryptide sortira.", "Le détecteur t'aide : plus il s'allume, plus un cryptide est proche !"][Math.floor(Math.random() * 3)], 2400);
 }
 function texteHabitant(n) {   // ce que dit l'habitant d'une région : bonjour, puis les indices
-  if (enBoss) return "Sporran ? Il est parti vers sa cabane, dans le bois Biscornu, à l'ouest du village !";
+  if (enBoss) return "Rune ? Elle est partie vers sa cabane, dans le bois Biscornu, à l'ouest du village !";
   const l = ciblesJ().filter(q => zoneJ(q.x, q.y) === n.zone).map(q => TRAQUES[q.k].indice);
   if (!l.length) return n.bonjour + " Ici, tous les cryptides sont sauvés. Bravo !";
   return n.bonjour + " " + (l.length > 1 ? l.length + " cryptides se cachent par ici. " : "Un cryptide se cache par ici. ") + (l.length > 1 ? "Indices : " : "Un indice : ") + l.map(t => "« " + t + " »").join(", ") + ". Cherche une cachette qui bouge !";
 }
 function texteSigne(x, y) {   // le panneau d'une région donne les indices des créatures qui s'y cachent
   const z = zoneJ(x, y), txt = ZONES[z].panneau;
-  if (enBoss) return txt + (z === "cabane" ? " Sporran rôde tout près…" : " Sporran t'attend dans le bois Biscornu !");
+  if (enBoss) return txt + (z === "cabane" ? " Rune rôde tout près…" : " Rune t'attend dans le bois Biscornu !");
   const l = ciblesJ().filter(q => zoneJ(q.x, q.y) === z).map(q => TRAQUES[q.k].indice);
   return l.length ? txt + " Indices : " + l.map(s => "« " + s + " »").join(", ") + "." : txt + " Aucun cryptide ne se cache par ici.";
 }
@@ -2666,14 +2666,14 @@ function trouveJ() {   // appelé depuis un « clic » ou une touche : iOS n'aut
   const k = r.q.k; JEU.revele = null; $("jeuDialogue").hidden = true;
   if (k === "catsith" && bossPhase < 2) { partirCrea(r.q); return fuiteBoss(); }
   fermerJeu(); sfx("oeil");
-  bandeau(k === "catsith" ? "Tu as débusqué Sporran ! Ouvre l'œil magique…" : "Débusqué ! Cherche-le autour de toi avec l'œil magique…", 2400);
+  bandeau(k === "catsith" ? "Tu as débusqué Rune ! Ouvre l'œil magique…" : "Débusqué ! Cherche-le autour de toi avec l'œil magique…", 2400);
   ouvrirOeil(() => k === "catsith" ? demarrerBossAR() : demarrerTraque(k, { gpsFait: true, angleGPS: null }));
 }
 function fuirJ() {
   JEU.ignore = JEU.revele.q; partirCrea(JEU.revele.q); JEU.revele = null; JEU.action = null; sfx("clic");
   dialogueJ("Tu laisses le cryptide tranquille… Il reste caché ici. Reviens quand tu veux !", 3000);
 }
-function fuiteBoss() {   // comme sur la carte GPS : Sporran file ailleurs deux fois avant de se laisser attraper
+function fuiteBoss() {   // comme sur la carte GPS : Rune file ailleurs deux fois avant de se laisser attraper
   bossPhase++; sfx("fuite"); JEU.action = null;
   const p = partie(); cacherBoss(p); ecrire(CLES.partie, p);
   dialogueJ(bossPhase === 1 ? "Hé hé ! Trop lent ! Attrape-moi si tu peux !" : "Encore raté ! Dernière chance, petit humain !", 3400);
@@ -3304,7 +3304,7 @@ function etincelleJ() {   // une petite étoile qui brille
   return R.etoile = new THREE.SpriteMaterial({ map: t, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending });
 }
 // Les créatures animées : jeu-crea-<clé>.webp, 4 lignes de 4 images (apparition, attente, action, disparition ;
-// pour Sporran : attente, attente, disparition, réapparition). Elle sort de sa cachette quand on la trouve.
+// pour Rune : attente, attente, disparition, réapparition). Elle sort de sa cachette quand on la trouve.
 const TEX_CREA = {};
 function texCrea(k) {
   if (TEX_CREA[k] !== undefined) return TEX_CREA[k];
