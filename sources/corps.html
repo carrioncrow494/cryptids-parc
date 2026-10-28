@@ -43,6 +43,11 @@
     <button id="ouvrirParents" class="planche petit orange" type="button">Choisir son aventure</button>
     </div>
     <p id="modeActuel" class="etat"></p>
+    <!-- version appli : l'installer sur l'écran d'accueil du téléphone -->
+    <div id="installer" class="installer" hidden>
+      <button id="boutonInstaller" class="mini cyan" type="button" hidden>Installer l'appli sur ce téléphone</button>
+      <p id="aideInstaller"></p>
+    </div>
   </div>
 </div>
 
@@ -119,11 +124,21 @@
     <div id="choixVirtuel" class="colonne" hidden>
       <div class="choix">
         <h3>🔒 Le jeu virtuel est encore fermé</h3>
-        <p>Il s'ouvre quand votre enfant a trouvé les 12 cryptides dans l'aventure réelle. Pas besoin de tout faire d'un coup : au début de chaque partie, vous choisissez combien de cryptides cacher, et le téléphone garde le compte d'une partie à l'autre.</p>
+        <p id="texteVerrou">Il s'ouvre quand votre enfant a trouvé les 12 cryptides dans l'aventure réelle. Pas besoin de tout faire d'un coup : au début de chaque partie, vous choisissez combien de cryptides cacher, et le téléphone garde le compte d'une partie à l'autre.</p>
         <p id="verrouTexte" class="etat"></p>
         <div id="grilleVerrou" class="grille-choix verrou"></div>
       </div>
       <button id="debloquerVirtuel" class="lien" type="button">Ouvrir le jeu virtuel quand même</button>
+    </div>
+    <!-- version appli : les codes des parents (6 autres cryptides, jeu virtuel) -->
+    <div id="blocCodes" class="choix" hidden>
+      <h3>Codes des parents</h3>
+      <p id="etatCodes"></p>
+      <form id="formCode" class="ligne-code">
+        <input id="champCode" type="text" autocomplete="off" autocapitalize="characters" autocorrect="off" spellcheck="false" placeholder="Entrer un code" aria-label="Code">
+        <button class="mini cyan" type="submit">Valider</button>
+      </form>
+      <p id="retourCode" class="etat" aria-live="polite"></p>
     </div>
     <p id="modeParents" class="etat"></p>
     <button id="fermerParents" class="planche petit" type="button">Retour</button>

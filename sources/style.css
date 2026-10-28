@@ -390,3 +390,14 @@
   .indice-lieu small { font-size: .9rem; line-height: 1.25; opacity: .85; margin-top: 2px; }
   .chemin small { font-size: .85rem; opacity: .8; }
   .chemin b { color: var(--cyan); font-weight: 400; }
+
+  /* version appli : codes des parents et installation */
+  .ligne-code { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .ligne-code input { flex: 1 1 160px; min-width: 0; padding: 10px 14px; border: 2px solid var(--cyan); border-radius: 999px; background: rgba(4,18,26,.7);
+    color: var(--brume); font: inherit; font-size: 1.1rem; letter-spacing: .12em; text-transform: uppercase; }
+  .ligne-code input::placeholder { letter-spacing: .03em; text-transform: none; color: #6f9ea3; }
+  #etatCodes { white-space: pre-line; }
+  .ligne-code input:focus { outline: 2px solid var(--citrouille); outline-offset: 2px; }
+  .ligne-code .mini { margin-top: 0; }
+  .installer { display: flex; flex-direction: column; align-items: center; gap: 6px; max-width: 420px; text-align: center; }
+  .installer p { margin: 0; font-size: .95rem; color: #8fbfc4; }

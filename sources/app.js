@@ -65,6 +65,19 @@ const FIGURINES = { mothman: ["figurine-mothman.glb"], nessie: ["figurine-nessie
   faery: ["figurine-faery.glb"], lutins: ["figurine-lutin_green.glb", "figurine-lutin_orange.glb"], jackalope: ["figurine-jackalope.glb"], yeti: ["figurine-yeti.glb"],
   gargouille: ["figurine-gargouille.glb"], chupacabra: ["figurine-chupacabra.glb"], kraken: ["figurine-kraken.glb"], swamp: ["figurine-swamp.glb"], catsith: ["figurine-catsith.glb"] };
 
+/* ===================== Version appli (dossier appli/, installable sur le téléphone) =====================
+   28/10 (Sam) : l'appli ne montre que les 6 cryptides les plus célèbres. Un code des parents ouvre les 6 autres, un autre code ouvre le jeu virtuel.
+   sources/appli.py met APPLI à true et remplit les empreintes des codes ; la page de test et index.html gardent les 12 et le déblocage par l'aventure réelle. */
+const APPLI = false;
+const CODES = { tous: "", virtuel: "" };   // empreintes SHA-256 des codes (les codes eux-mêmes sont dans sources/appli.py)
+const CELEBRES = ["1", "2", "3", "8", "10", "11"];   // Mothman, Nessie, Thunderbird, Yeti, Chupacabra, Kraken
+// l'appli et la page de test sont sur le même site : l'appli range sa sauvegarde à part pour ne pas mélanger les parties
+const STOCK = { getItem: k => localStorage.getItem((APPLI ? "appli:" : "") + k), setItem: (k, v) => localStorage.setItem((APPLI ? "appli:" : "") + k, v), removeItem: k => localStorage.removeItem((APPLI ? "appli:" : "") + k) };
+const CLE_CODE_TOUS = "cryptidsParc-code-tous", CLE_CODE_VIRTUEL = "cryptidsParc-code-virtuel";
+const codeOk = cle => { try { return STOCK.getItem(cle) === "true"; } catch (e) { return false; } };
+const VERROUILLES = {};   // les cryptides encore fermés par le code
+if (APPLI && !codeOk(CLE_CODE_TOUS)) for (const k of Object.keys(TRAQUES)) if (!CELEBRES.includes(k)) { VERROUILLES[k] = TRAQUES[k]; delete TRAQUES[k]; }
+
 const $ = id => document.getElementById(id);
 const ids = Object.keys(TRAQUES);
 const DEG = Math.PI / 180;
@@ -73,21 +86,21 @@ const montrer = (id) => { ["entree", "accueil", "parents", "carteParents", "part
 
 /* ===================== Sauvegarde (sur ce téléphone) ===================== */
 const CLES = { merci: "cryptidsParc-merci", partie: "cryptidsParc-partie", pris: "cryptidsParc-pris", relache: "cryptidsParc-relaches", mode: "cryptidsParc-mode", membres: "cryptidsParc-membres", intro: "cryptidsParc-intro-vue", son: "cryptidsParc-son" };
-const lire = (k, def) => { try { const v = localStorage.getItem(k); return v == null ? def : JSON.parse(v); } catch (e) { return def; } };
-const ecrire = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+const lire = (k, def) => { try { const v = STOCK.getItem(k); return v == null ? def : JSON.parse(v); } catch (e) { return def; } };
+const ecrire = (k, v) => { try { STOCK.setItem(k, JSON.stringify(v)); } catch (e) {} };
 const pris = () => lire(CLES.pris, []).filter(k => TRAQUES[k]);
 const relaches = () => lire(CLES.relache, []);
 const ajouter = (cle, val) => { const l = lire(cle, []); if (!l.includes(val)) { l.push(val); ecrire(cle, l); } };
 // 26/10 (Sam) : le jeu virtuel s'ouvre une fois les 12 cryptides trouvés dans l'aventure réelle, en une ou plusieurs parties (compte gardé sur ce téléphone)
 const CLE_REELS = "cryptidsParc-trouves-reel", CLE_DEBLOQUE = "cryptidsParc-virtuel-debloque";
 const trouvesReel = () => (lire(CLE_REELS, []) || []).filter(k => TRAQUES[k]);
-const virtuelOuvert = () => lire(CLE_DEBLOQUE, false) === true || ids.every(k => trouvesReel().includes(k));
+const virtuelOuvert = () => APPLI ? lire(CLE_CODE_VIRTUEL, false) === true : lire(CLE_DEBLOQUE, false) === true || ids.every(k => trouvesReel().includes(k));
 const mode = () => lire(CLES.mode, "qr") === "virtuel" && virtuelOuvert() ? "virtuel" : "qr";   // la géolocalisation est retirée pour l'instant : ses anciens réglages reviennent aux QR codes
 // une partie = une sélection de créatures à sauver (la collection du grimoire, elle, se garde d'une partie à l'autre)
 const partie = () => lire(CLES.partie, null);
 const enCours = () => { const p = partie(); return p && p.pris.length < p.liste.length ? p : null; };
 function majPartie(f) { const p = partie(); if (!p) return; f(p); ecrire(CLES.partie, p); }
-try { ["monstresPris", "chasseMonstres-inventaire-v2", "chasseMonstres-relaches-v1"].forEach(k => localStorage.removeItem(k)); } catch (e) {}
+try { ["monstresPris", "chasseMonstres-inventaire-v2", "chasseMonstres-relaches-v1"].forEach(k => STOCK.removeItem(k)); } catch (e) {}
 
 /* ===================== Sons : musique et bruitages fabriqués par code ===================== */
 let audio = null, maitre = null, musiqueOn = false;
@@ -282,11 +295,53 @@ $("fermerParents").addEventListener("click", () => { majModes(); montrer("accuei
 $("raz").addEventListener("click", () => {
   const b = $("raz");
   if (!b.dataset.ok) { b.dataset.ok = "1"; b.textContent = "Touchez encore pour tout effacer"; setTimeout(() => { delete b.dataset.ok; b.textContent = "Remettre toute l'aventure à zéro"; }, 4000); return; }
-  [CLES.pris, CLES.relache, CLES.membres, CLES.intro, CLES.partie, CLE_REELS, CLE_DEBLOQUE].forEach(k => { try { localStorage.removeItem(k); } catch (e) {} });
+  [CLES.pris, CLES.relache, CLES.membres, CLES.intro, CLES.partie, CLE_REELS, CLE_DEBLOQUE].forEach(k => { try { STOCK.removeItem(k); } catch (e) {} });
   if (lire(CLES.mode, "qr") === "virtuel") ecrire(CLES.mode, "qr");
   majVerrou(); majModes(); delete b.dataset.ok; b.textContent = "Aventure remise à zéro";
 });
 majModes();
+
+/* ===================== Version appli : codes des parents, installation ===================== */
+const normaliserCode = c => c.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+async function empreinte(c) { const b = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(normaliserCode(c))); return [...new Uint8Array(b)].map(x => x.toString(16).padStart(2, "0")).join(""); }
+function majCodes() {
+  const tous = codeOk(CLE_CODE_TOUS), virt = codeOk(CLE_CODE_VIRTUEL);
+  $("etatCodes").textContent = (tous ? "✓ Les 12 cryptides sont ouverts." : "🔒 " + Object.keys(VERROUILLES).length + " cryptides attendent leur code.") + "\n" + (virt ? "✓ Le jeu virtuel est ouvert." : "🔒 Le jeu virtuel attend son code.");
+}
+if (APPLI) {
+  $("blocCodes").hidden = false; $("debloquerVirtuel").hidden = true; $("grilleVerrou").hidden = true; $("verrouTexte").hidden = true;
+  $("texteVerrou").textContent = "Il s'ouvre avec un code. Entrez-le juste en dessous, dans « Codes des parents ».";
+  majCodes();
+  $("formCode").addEventListener("submit", async e => {
+    e.preventDefault();
+    const champ = $("champCode"), h = champ.value.trim() ? await empreinte(champ.value).catch(() => "") : "";
+    champ.value = ""; champ.blur();
+    if (h && h === CODES.tous && !codeOk(CLE_CODE_TOUS)) {
+      ecrire(CLE_CODE_TOUS, true); sfx("victoire"); $("retourCode").textContent = "Les 6 autres cryptides sortent du grimoire !";
+      setTimeout(() => location.reload(), 1500); return;   // on recharge pour les ajouter partout (grimoire, parties, QR codes)
+    }
+    if (h && h === CODES.virtuel && !codeOk(CLE_CODE_VIRTUEL)) {
+      ecrire(CLE_CODE_VIRTUEL, true); sfx("victoire"); $("retourCode").textContent = "Le jeu virtuel est ouvert !"; majCodes(); majVerrou(); genre(true); return;
+    }
+    sfx(h === CODES.tous || h === CODES.virtuel ? "clic" : "rate");
+    $("retourCode").textContent = h === CODES.tous || h === CODES.virtuel ? "Ce code est déjà utilisé sur ce téléphone." : "Ce code ne marche pas.";
+  });
+  // installation : Android (Chrome) propose un vrai bouton ; sur iPhone, Safari ne le permet pas, on explique le geste à faire
+  const installee = matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
+  const ios = /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  if (!installee) {
+    $("installer").hidden = false;
+    $("aideInstaller").textContent = ios ? "Pour l'installer : dans Safari, touche le bouton Partager (le carré avec une flèche), puis « Sur l'écran d'accueil »."
+      : "Pour l'installer : menu ⋮ du navigateur, puis « Installer l'application » ou « Ajouter à l'écran d'accueil ».";
+    const proposer = () => { if (window.__inviteInstall) { $("boutonInstaller").hidden = false; $("aideInstaller").textContent = ""; } };
+    proposer(); addEventListener("invite-installation", proposer);
+    $("boutonInstaller").addEventListener("click", async () => {
+      const inv = window.__inviteInstall; if (!inv) return; window.__inviteInstall = null;
+      inv.prompt(); try { const r = await inv.userChoice; if (r.outcome === "accepted") $("installer").hidden = true; else $("boutonInstaller").hidden = true; } catch (e) {}
+    });
+    addEventListener("appinstalled", () => { $("installer").hidden = true; });
+  }
+}
 $("entree").addEventListener("click", () => { initAudio(); changerAmbiance("menu"); sfx("valider"); majAccueil(); montrer("accueil"); });
 
 /* ===================== Introduction ===================== */
@@ -316,7 +371,7 @@ $("nouvelle").addEventListener("click", nouvelleAventure);
 function apresIntro() { clearInterval(ecrit); taire(); ecrire(CLES.intro, true); preparerChoix(); montrer("partie"); }
 
 /* ===================== Nouvelle partie : combien de cryptides ? ===================== */
-let nombre = Math.max(2, Math.min(12, lire("cryptidsParc-nombre", 6))), tirage = [];
+let nombre = Math.max(2, Math.min(ids.length, lire("cryptidsParc-nombre", 6))), tirage = [];
 const melanger = l => { l = l.slice(); for (let i = l.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [l[i], l[j]] = [l[j], l[i]]; } return l; };
 function tirer() {   // en aventure réelle, les cryptides pas encore trouvés passent d'abord : plusieurs petites parties finissent par couvrir les 12
   const t = mode() === "qr" ? trouvesReel() : [];
@@ -354,11 +409,11 @@ function majChoix() {
   }
   if (choixLibre) { tirage = ids.filter(k => coches.has(k)); nombre = tirage.length; ecrire("cryptidsParc-coches", tirage); }
   $("cestParti").disabled = tirage.length < 2;
-  $("nombre").textContent = nombre; $("moins").disabled = nombre <= 2; $("plus").disabled = nombre >= 12;
+  $("nombre").textContent = nombre; $("moins").disabled = nombre <= 2; $("plus").disabled = nombre >= ids.length;
   $("duree").textContent = nombre < 2 ? "Choisis au moins 2 cryptides" : nombre + " cryptides à sauver";
-  document.querySelectorAll("[data-n]").forEach(b => b.classList.toggle("cyan", +b.dataset.n === nombre));
+  document.querySelectorAll("[data-n]").forEach(b => { b.classList.toggle("cyan", +b.dataset.n === nombre); b.hidden = +b.dataset.n > ids.length; });
   const reel = mode() === "qr", t = trouvesReel();
-  $("progresReel").hidden = !reel || virtuelOuvert(); $("cocherManquants").hidden = !reel || t.length >= ids.length;
+  $("progresReel").hidden = !reel || virtuelOuvert() || APPLI; $("cocherManquants").hidden = !reel || t.length >= ids.length;
   if (reel) $("progresReel").textContent = "Déjà trouvés dans l'aventure réelle : " + t.length + " / " + ids.length + ". Le jeu virtuel s'ouvre quand les " + ids.length + " sont trouvés, en une ou plusieurs parties. Les cryptides pas encore trouvés sont tirés en premier.";
   $("questionNombre").textContent = reel ? "Combien de cryptides cacher dans cette partie ? (choix des parents)" : "Combien de cryptides veux-tu sauver ?";
   if (reel) {
@@ -373,7 +428,7 @@ function preparerChoix() {
   basculer(choixLibre);
 }
 $("moins").addEventListener("click", () => { nombre = Math.max(2, nombre - 1); tirer(); majChoix(); });
-$("plus").addEventListener("click", () => { nombre = Math.min(12, nombre + 1); tirer(); majChoix(); });
+$("plus").addEventListener("click", () => { nombre = Math.min(ids.length, nombre + 1); tirer(); majChoix(); });
 document.querySelectorAll("[data-n]").forEach(b => b.addEventListener("click", () => { nombre = +b.dataset.n; tirer(); majChoix(); }));
 $("retirer").addEventListener("click", () => { tirer(); majChoix(); });
 $("fermerPartie").addEventListener("click", () => { majAccueil(); montrer("accueil"); });
@@ -411,7 +466,8 @@ function carte(t, k) {
 }
 function dessinerGrimoire() {
   const n = pris().length, tousLibres = ids.every(k => relaches().includes(TRAQUES[k].cle));
-  $("compteGrimoire").textContent = n + " / " + ids.length + " cryptides sauvés";
+  const fermes = Object.keys(VERROUILLES).length;
+  $("compteGrimoire").textContent = n + " / " + ids.length + " cryptides sauvés" + (fermes ? " · " + fermes + " autres attendent le code des parents" : "");
   $("grille").innerHTML =
     '<div class="carte gardien prise"><img alt="" src="' + GARDIEN.image + '"><div class="nom">' + GARDIEN.nom + '</div><div class="astuce">' + GARDIEN.texte + '</div>' +
     (tousLibres ? '<button class="mini cyan" data-fig="catsith">Figurine de Rune</button>' + (lire(CLES.merci, false) ? ' <button class="mini" data-merci="1">Revoir son message</button>' : '') : '<div class="astuce"><b>Relâche tous les cryptides pour gagner sa figurine.</b></div>') + '</div>' +
@@ -708,7 +764,7 @@ function sauve(id) {   // la créature rejoint la collection : écran « Sauvé 
   $("final").hidden = n < total; $("continuer").hidden = n >= total; $("rejouer").hidden = n < total;
   $("titreVictoire").textContent = "Sauvé !"; $("defi").hidden = !(n >= total && bossDispo());
   $("final").textContent = $("defi").hidden ? TEXTE_FINAL : "Tous les cryptides sont sauvés ! Mais Rune a un dernier défi pour toi…";
-  if (mode() === "qr" && !avant) {   // où en est le déblocage du jeu virtuel
+  if (mode() === "qr" && !avant && !APPLI) {   // où en est le déblocage du jeu virtuel
     const r = ids.length - trouvesReel().length;
     $("compteur").textContent += (r ? " Encore " + r + " cryptide" + (r > 1 ? "s" : "") + " à trouver pour ouvrir le jeu virtuel !" : " Les " + ids.length + " cryptides sont trouvés : le jeu virtuel est débloqué !");
     if (!r) { majVerrou(); sfx("victoire"); }
@@ -786,7 +842,8 @@ function scanner() {
       if (ind) {
         const p = partie() || { liste: ids, pris: [] };
         if (navigator.vibrate) navigator.vibrate(80);
-        if (!p.liste.includes(ind.k)) $("consigne").textContent = "Cet indice est pour une créature qui ne fait pas partie de cette aventure. Cherche un autre QR code.";
+        if (VERROUILLES[ind.k]) $("consigne").textContent = "Ce cryptide est encore enfermé dans le grimoire : il faut le code des parents.";
+        else if (!p.liste.includes(ind.k)) $("consigne").textContent = "Cet indice est pour une créature qui ne fait pas partie de cette aventure. Cherche un autre QR code.";
         else if (p.pris.includes(ind.k)) $("consigne").textContent = TRAQUES[ind.k].nom.split(",")[0] + " est déjà sauvé ! Cherche un autre QR code.";
         else return montrerIndice(ind.k, ind.i, () => { $("viseur").hidden = false; $("consigne").textContent = "Cherche la carte suivante, puis vise-la avec l'œil magique."; setTimeout(lireQR, 900); });
       } else if (code && code.data) {
@@ -797,7 +854,7 @@ function scanner() {
           if (!p.liste.includes(k)) $("consigne").textContent = "Cette créature ne fait pas partie de cette aventure. Cherche un autre QR code.";
           else if (p.pris.includes(k)) $("consigne").textContent = TRAQUES[k].nom.split(",")[0] + " est déjà sauvé ! Cherche un autre QR code.";
           else { $("viseur").hidden = true; sfx("oeil"); demarrerTraque(k); return; }
-        } else $("consigne").textContent = "Ce QR code n'appartient pas au grimoire.";
+        } else $("consigne").textContent = k && VERROUILLES[k] ? "Ce cryptide est encore enfermé dans le grimoire : il faut le code des parents." : "Ce QR code n'appartient pas au grimoire.";
       }
     }
     setTimeout(lireQR, 220);
